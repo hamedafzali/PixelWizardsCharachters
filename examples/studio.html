@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Character Actor · استودیو</title>
+<style>
+  :root{
+    --bg:#0f1220; --panel:#181c30; --panel2:#20263f; --line:#2c3350;
+    --ink:#eef1ff; --dim:#98a0c8; --accent:#7c8bff; --accent2:#5fd884;
+    --radius:14px; font-family:system-ui,'Segoe UI',Vazirmatn,sans-serif;
+  }
+  @media (prefers-color-scheme:light){
+    :root{--bg:#eef1fa;--panel:#fff;--panel2:#f3f5fc;--line:#dfe4f2;--ink:#1a1e35;--dim:#5a6288}
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);min-height:100vh;padding:22px;display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start}
+  h1{font-size:17px;margin:0 0 2px}
+  .sub{color:var(--dim);font-size:12.5px;margin:0 0 16px}
+  .stage{flex:1 1 320px;min-width:300px;position:relative;background:
+    radial-gradient(120% 90% at 50% 0%,var(--panel2),var(--panel));
+    border:1px solid var(--line);border-radius:var(--radius);
+    display:flex;align-items:center;justify-content:center;padding:28px;min-height:360px;overflow:hidden}
+  .stage-actor{width:min(340px,70vw);cursor:crosshair}
+  .panel{flex:1 1 300px;min-width:280px;max-width:380px;background:var(--panel);
+    border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+  .picker{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+  .picker button{background:var(--panel2);border:1.5px solid var(--line);color:var(--ink);
+    border-radius:10px;padding:6px 11px;font-size:13px;cursor:pointer;font-family:inherit}
+  .picker button.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 18%,transparent)}
+  label{display:block;font-size:12px;color:var(--dim);margin:12px 0 5px}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  select,input[type=text]{width:100%;background:var(--panel2);border:1px solid var(--line);
+    color:var(--ink);border-radius:9px;padding:8px 10px;font-family:inherit;font-size:13px}
+  input[type=range]{width:100%;accent-color:var(--accent)}
+  .val{color:var(--accent2);font-variant-numeric:tabular-nums}
+  .seg{display:flex;gap:6px;flex-wrap:wrap}
+  .seg button{flex:1;min-width:56px;background:var(--panel2);border:1px solid var(--line);
+    color:var(--ink);border-radius:8px;padding:6px;font-size:12px;cursor:pointer;font-family:inherit}
+  .seg button.on{border-color:var(--accent2);background:color-mix(in srgb,var(--accent2) 16%,transparent)}
+  .actions{display:flex;gap:8px;margin-top:12px}
+  .actions button{flex:1;background:var(--accent);border:0;color:#0b0e1c;font-weight:600;
+    border-radius:9px;padding:9px;cursor:pointer;font-family:inherit;font-size:13px}
+  .speak{display:flex;gap:8px;margin-top:10px}
+  .speak button{background:var(--accent2);border:0;color:#062012;font-weight:600;border-radius:9px;padding:0 14px;cursor:pointer}
+  pre{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px;
+    font-size:11.5px;line-height:1.5;overflow:auto;direction:ltr;text-align:left;color:var(--dim);margin:14px 0 0}
+  pre .k{color:var(--accent)} pre .n{color:var(--accent2)} pre .s{color:#ffb86c}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <div id="host" class="stage-actor"></div>
+  </div>
+
+  <div class="panel">
+    <h1>🎭 استودیو بازیگر</h1>
+    <p class="sub">هر پارامتر یک فیلد از قرارداد <code>ActorFrame</code> است.</p>
+
+    <div class="picker" id="picker"></div>
+
+    <label>احساس (emotion)</label>
+    <select id="emotion"></select>
+
+    <label>شدت (intensity) · <span class="val" id="intensityV">0.70</span></label>
+    <input type="range" id="intensity" min="0" max="1" step="0.05" value="0.7">
+
+    <label>ویزیم / دهان (viseme)</label>
+    <select id="viseme"></select>
+
+    <label>باز بودن دهان (mouthOpen) · <span class="val" id="mouthOpenV">0.00</span></label>
+    <input type="range" id="mouthOpen" min="0" max="1" step="0.05" value="0">
+
+    <label>ابرو (browRaise) · <span class="val" id="browRaiseV">0.00</span></label>
+    <input type="range" id="browRaise" min="0" max="1" step="0.05" value="0">
+
+    <label>نگاه (gaze) — یا با اشاره‌گر روی صحنه</label>
+    <div class="row">
+      <input type="range" id="gazeX" min="-1" max="1" step="0.05" value="0">
+      <input type="range" id="gazeY" min="-1" max="1" step="0.05" value="0">
+    </div>
+
+    <label>حرکت (locomotion)</label>
+    <div class="seg" id="loco">
+      <button data-v="idle" class="on">ایستاده</button>
+      <button data-v="walk">راه‌رفتن</button>
+      <button data-v="fly">پرواز</button>
+    </div>
+
+    <label>سرعت (speed) · <span class="val" id="speedV">1.0</span></label>
+    <input type="range" id="speed" min="0.5" max="2" step="0.1" value="1">
+
+    <label>جهت (facing)</label>
+    <div class="seg" id="facing">
+      <button data-v="right" class="on">راست</button>
+      <button data-v="left">چپ</button>
+    </div>
+
+    <div class="actions">
+      <button data-g="wave">👋 سلام</button>
+      <button data-g="jump">⤴️ پرش</button>
+      <button data-g="spin">🌀 چرخش</button>
+    </div>
+
+    <label>گفتار (لب‌خوانی فارسی)</label>
+    <div class="speak">
+      <input type="text" id="say" value="سلام! من روزی هستم">
+      <button id="sayBtn">بگو</button>
+    </div>
+
+    <pre id="json"></pre>
+  </div>
+
+<script type="module">
+import { ActorRig, CHARACTERS, CHARACTER_SLUGS, EMOTIONS, EMOTION_LABELS, VISEMES, defaultFrame }
+  from '../dist/index.js'
+
+const host = document.getElementById('host')
+let slug = CHARACTER_SLUGS[0]
+let rig = new ActorRig(CHARACTERS[slug], { size: 340 }).mount(host)
+let frame = defaultFrame(slug)
+
+// picker
+const picker = document.getElementById('picker')
+for (const s of CHARACTER_SLUGS) {
+  const b = document.createElement('button')
+  b.textContent = CHARACTERS[s].name
+  b.className = s === slug ? 'on' : ''
+  b.onclick = () => {
+    slug = s; frame.character = s
+    rig.setCharacter(CHARACTERS[s])
+    ;[...picker.children].forEach(c => c.classList.toggle('on', c === b))
+    document.getElementById('say').value = `سلام! من ${CHARACTERS[s].name} هستم`
+    push()
+  }
+  picker.appendChild(b)
+}
+
+// selects
+const emoSel = document.getElementById('emotion')
+for (const e of Object.keys(EMOTIONS)) {
+  const o = document.createElement('option'); o.value = e; o.textContent = `${EMOTION_LABELS[e]} · ${e}`
+  emoSel.appendChild(o)
+}
+const visSel = document.getElementById('viseme')
+for (const v of Object.keys(VISEMES)) {
+  const o = document.createElement('option'); o.value = v; o.textContent = `${v} · ${VISEMES[v].label}`
+  visSel.appendChild(o)
+}
+
+function push(extra) {
+  if (extra) frame = { ...frame, ...extra }
+  rig.apply(frame)
+  renderJSON()
+}
+function bindRange(id, key, dp=2) {
+  const el = document.getElementById(id), out = document.getElementById(id+'V')
+  el.oninput = () => { const n = +el.value; if (out) out.textContent = n.toFixed(dp); push({ [key]: n }) }
+}
+bindRange('intensity','intensity'); bindRange('mouthOpen','mouthOpen')
+bindRange('browRaise','browRaise'); bindRange('speed','speed',1)
+document.getElementById('gazeX').oninput = e => push({ gaze:{ ...frame.gaze, x:+e.target.value } })
+document.getElementById('gazeY').oninput = e => push({ gaze:{ ...frame.gaze, y:+e.target.value } })
+emoSel.onchange = e => push({ emotion: e.target.value })
+visSel.onchange = e => push({ viseme: e.target.value })
+
+for (const grp of ['loco','facing']) {
+  const box = document.getElementById(grp), key = grp === 'loco' ? 'locomotion' : 'facing'
+  box.onclick = e => { const b = e.target.closest('button'); if (!b) return
+    [...box.children].forEach(c => c.classList.toggle('on', c === b)); push({ [key]: b.dataset.v }) }
+}
+document.querySelector('.actions').onclick = e => {
+  const b = e.target.closest('button'); if (!b) return
+  rig.playGesture(b.dataset.g)
+}
+document.getElementById('sayBtn').onclick = () => rig.speak(document.getElementById('say').value)
+
+// pointer-follow gaze
+host.addEventListener('pointermove', e => {
+  const r = host.getBoundingClientRect()
+  const gx = Math.max(-1, Math.min(1, (e.clientX - r.left - r.width/2) / (r.width/2)))
+  const gy = Math.max(-1, Math.min(1, (e.clientY - r.top - r.height*0.42) / (r.height/2)))
+  document.getElementById('gazeX').value = gx.toFixed(2)
+  document.getElementById('gazeY').value = gy.toFixed(2)
+  push({ gaze:{ x:gx, y:gy } })
+})
+
+function renderJSON() {
+  const j = JSON.stringify(frame, null, 2)
+    .replace(/"([^"]+)":/g, '"<span class="k">$1</span>":')
+    .replace(/: (-?\d+\.?\d*)/g, ': <span class="n">$1</span>')
+    .replace(/: (".*?")/g, (m,p)=> m.includes('span')?m:`: <span class="s">${p}</span>`)
+  document.getElementById('json').innerHTML = j
+}
+push()
+</script>
+</body>
+</html>

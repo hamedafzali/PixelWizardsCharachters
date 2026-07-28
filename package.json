@@ -1,0 +1,47 @@
+{
+  "name": "character-actor",
+  "version": "0.1.0",
+  "description": "A framework-agnostic library of animated, actable children's characters. An ActorFrame is one moment of performance — emotion, Persian-viseme lip-sync, gaze, brows, gestures and locomotion.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./react": {
+      "types": "./dist/react.d.ts",
+      "default": "./dist/react.js"
+    }
+  },
+  "files": ["dist", "README.md"],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "characters",
+    "animation",
+    "svg",
+    "lip-sync",
+    "persian",
+    "children",
+    "avatar",
+    "react"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "peerDependenciesMeta": {
+    "react": { "optional": true }
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.0",
+    "typescript": "^5.5.0"
+  }
+}
