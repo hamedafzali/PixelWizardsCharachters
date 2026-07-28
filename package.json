@@ -23,6 +23,7 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
+    "demo": "npm run build && node scripts/serve.mjs",
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "npm run build"
   },
