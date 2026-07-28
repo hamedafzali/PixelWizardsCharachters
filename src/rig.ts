@@ -62,7 +62,7 @@ let cssInjected = false
 function ensureCSS(doc: Document): void {
   if (cssInjected) return
   const style = doc.createElement('style')
-  style.setAttribute('data-character-actor', '')
+  style.setAttribute('data-pixel-wizards-charachters', '')
   style.textContent = RIG_CSS
   doc.head.appendChild(style)
   cssInjected = true

@@ -40,7 +40,7 @@ const server = createServer(async (req, res) => {
 
 server.listen(port, () => {
   const url = `http://localhost:${port}${entry}`
-  console.log(`\n  🎭  character-actor studio → ${url}\n  (Ctrl+C to stop)\n`)
+  console.log(`\n  🎭  PixelWizardsCharachters studio → ${url}\n  (Ctrl+C to stop)\n`)
   const opener = process.platform === 'darwin' ? 'open'
     : process.platform === 'win32' ? 'cmd' : 'xdg-open'
   const args = process.platform === 'win32' ? ['/c', 'start', '', url] : [url]

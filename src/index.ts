@@ -1,5 +1,5 @@
 /**
- * character-actor — a framework-agnostic library of animated, "actable"
+* PixelWizardsCharachters — a framework-agnostic library of animated, "actable"
  * children's characters.
  *
  * A character is a puppet; an {@link ActorFrame} is one moment of performance.

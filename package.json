@@ -1,5 +1,5 @@
 {
-  "name": "character-actor",
+  "name": "pixel-wizards-charachters",
   "version": "0.1.0",
   "description": "A framework-agnostic library of animated, actable children's characters. An ActorFrame is one moment of performance — emotion, Persian-viseme lip-sync, gaze, brows, gestures and locomotion.",
   "type": "module",

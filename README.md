@@ -1,4 +1,4 @@
-# character-actor
+# PixelWizardsCharachters
 
 A framework-agnostic library of animated, **actable** children's characters.
 
@@ -15,11 +15,11 @@ Built for [KoodakBook](../KoodakBook) but standalone and reusable.
 Published to npm:
 
 ```bash
-npm install character-actor
+npm install pixel-wizards-charachters
 ```
 
 The package ships ESM + `.d.ts`. React is an optional peer dependency (only
-needed for the `character-actor/react` binding).
+needed for the `pixel-wizards-charachters/react` binding).
 
 ### Local development (before publishing)
 
@@ -29,9 +29,9 @@ the tarball — this is byte-identical to what `npm publish` ships and, unlike a
 Turbopack) that refuse to follow symlinks outside the project root:
 
 ```bash
-npm run build && npm pack        # -> character-actor-<version>.tgz
+npm run build && npm pack        # -> pixel-wizards-charachters-<version>.tgz
 # in the consumer app's package.json:
-#   "character-actor": "file:/abs/path/to/character-actor-<version>.tgz"
+#   "pixel-wizards-charachters": "file:/abs/path/to/pixel-wizards-charachters-<version>.tgz"
 ```
 
 ## The roster
@@ -39,7 +39,7 @@ npm run build && npm pack        # -> character-actor-<version>.tgz
 `roozi` · `ava` · `pashmak` · `laki` · `tondpa` · `boomi` · `khersi`
 
 ```ts
-import { CHARACTERS, CHARACTER_SLUGS } from 'character-actor'
+import { CHARACTERS, CHARACTER_SLUGS } from 'pixel-wizards-charachters'
 ```
 
 ## The contract: `ActorFrame`
@@ -66,8 +66,8 @@ fields it wants to change; partial frames merge onto the current one.
 ## React
 
 ```tsx
-import { CharacterActor } from 'character-actor/react'
-import type { ActorRig } from 'character-actor'
+import { CharacterActor } from 'pixel-wizards-charachters/react'
+import type { ActorRig } from 'pixel-wizards-charachters'
 
 const rig = useRef<ActorRig | null>(null)
 
@@ -90,7 +90,7 @@ changes (character / emotion / facing).
 ## Vanilla DOM
 
 ```ts
-import { ActorRig, CHARACTERS } from 'character-actor'
+import { ActorRig, CHARACTERS } from 'pixel-wizards-charachters'
 
 const rig = new ActorRig(CHARACTERS.pashmak, { size: 200 }).mount(el)
 rig.apply({ emotion: 'excited', locomotion: 'walk', speed: 1.4 })
@@ -100,7 +100,7 @@ rig.speak('پشمک اینجاست')
 ## Static SVG (SSR / thumbnails / tests)
 
 ```ts
-import { renderActorSVG, CHARACTERS, defaultFrame } from 'character-actor'
+import { renderActorSVG, CHARACTERS, defaultFrame } from 'pixel-wizards-charachters'
 
 const svg = renderActorSVG(CHARACTERS.laki, defaultFrame('laki'))
 ```
