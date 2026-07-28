@@ -1,5 +1,5 @@
 import * as React from 'react'
-import type { ActorFrame } from './types.js'
+import type { ActorFrame, EmotionOverrides } from './types.js'
 import { ActorRig } from './rig.js'
 import { CHARACTERS } from './characters/index.js'
 
@@ -8,6 +8,8 @@ export interface CharacterActorProps {
   character: string
   /** the frame to perform; partial frames merge onto the current one */
   frame?: Partial<ActorFrame>
+  /** per-emotion tuning — overrides any channel of any emotion preset */
+  emotions?: EmotionOverrides
   size?: number
   blink?: boolean
   className?: string
@@ -26,6 +28,7 @@ export interface CharacterActorProps {
 export function CharacterActor({
   character,
   frame,
+  emotions,
   size = 160,
   blink = true,
   className,
@@ -40,7 +43,7 @@ export function CharacterActor({
   React.useEffect(() => {
     const spec = CHARACTERS[character]
     if (!hostRef.current || !spec) return
-    const r = new ActorRig(spec, { size, blink, onFrame })
+    const r = new ActorRig(spec, { size, blink, emotions, onFrame })
     r.mount(hostRef.current)
     rig.current = r
     if (rigRef) rigRef.current = r
@@ -51,6 +54,12 @@ export function CharacterActor({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [character, size, blink])
+
+  // Retune emotions live (editor preview / saved overrides).
+  React.useEffect(() => {
+    rig.current?.setEmotions(emotions)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [emotions])
 
   // Feed frames on update.
   React.useEffect(() => {

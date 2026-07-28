@@ -1,4 +1,4 @@
-import type { ActorFrame, CharacterSpec, Gesture } from './types.js';
+import type { ActorFrame, CharacterSpec, Gesture, EmotionOverrides } from './types.js';
 /**
  * CSS the rig needs: body-motion keyframes (one per emotion mood), locomotion
  * cycles, one-shot gestures, blink transition and the owl wing-flap. Injected
@@ -9,6 +9,8 @@ export interface RigOptions {
     size?: number;
     /** disable the random blink loop */
     blink?: boolean;
+    /** per-emotion tuning — overrides any channel of any emotion preset */
+    emotions?: EmotionOverrides;
     /** callback with the frame after each `apply` */
     onFrame?: (frame: ActorFrame) => void;
 }
@@ -36,6 +38,12 @@ export declare class ActorRig {
     mount(host: HTMLElement): this;
     /** Swap to a different character (keeps the current frame's behaviour). */
     setCharacter(spec: CharacterSpec): void;
+    /**
+     * Retune the emotion presets live. Overrides don't change the art key, so we
+     * force a full re-render (the squint/widen/brow are baked into the art), then
+     * re-apply the live channels. Used by editor UIs for instant preview.
+     */
+    setEmotions(emotions?: EmotionOverrides): void;
     /** Full render — only when the drawn art changes. Re-caches rig hooks. */
     private render;
     /** Blink lids over each eye, positioned from the spec's eye anchors. */

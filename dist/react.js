@@ -7,7 +7,7 @@ import { CHARACTERS } from './characters/index.js';
  * imperatively; React only feeds it frames, so lip-sync and gaze never trigger
  * a React re-render. Grab `rigRef` to call `speak()` / `playGesture()`.
  */
-export function CharacterActor({ character, frame, size = 160, blink = true, className, style, onFrame, rigRef, }) {
+export function CharacterActor({ character, frame, emotions, size = 160, blink = true, className, style, onFrame, rigRef, }) {
     const hostRef = React.useRef(null);
     const rig = React.useRef(null);
     // Mount / re-mount when the character changes.
@@ -15,7 +15,7 @@ export function CharacterActor({ character, frame, size = 160, blink = true, cla
         const spec = CHARACTERS[character];
         if (!hostRef.current || !spec)
             return;
-        const r = new ActorRig(spec, { size, blink, onFrame });
+        const r = new ActorRig(spec, { size, blink, emotions, onFrame });
         r.mount(hostRef.current);
         rig.current = r;
         if (rigRef)
@@ -29,6 +29,11 @@ export function CharacterActor({ character, frame, size = 160, blink = true, cla
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [character, size, blink]);
+    // Retune emotions live (editor preview / saved overrides).
+    React.useEffect(() => {
+        rig.current?.setEmotions(emotions);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [emotions]);
     // Feed frames on update.
     React.useEffect(() => {
         if (rig.current && frame)

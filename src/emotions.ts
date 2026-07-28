@@ -1,4 +1,4 @@
-import type { EmotionName, EmotionSpec } from './types.js'
+import type { EmotionName, EmotionSpec, EmotionOverrides } from './types.js'
 
 /**
  * Emotion presets. Each maps to concrete pose channels — a squint, an eye
@@ -16,6 +16,17 @@ export const EMOTIONS: Record<EmotionName, EmotionSpec> = {
   surprised: { squint: 0, wide: 1, mouth: 'o', brow: 'surprised' },
   sleepy: { squint: 0.6, wide: 0, mouth: 'soft', brow: 'sleepy' },
   love: { squint: 0.4, wide: 0.2, mouth: 'big', brow: 'happy' },
+}
+
+/**
+ * Resolve the effective spec for an emotion, merging any per-character
+ * overrides onto the built-in preset. Missing/undefined overrides fall through
+ * to the preset, so callers can pass a sparse map (only the changed fields).
+ */
+export function resolveEmotion(name: EmotionName, overrides?: EmotionOverrides): EmotionSpec {
+  const base = EMOTIONS[name]
+  const o = overrides?.[name]
+  return o ? { ...base, ...o } : base
 }
 
 /** Persian display labels for each emotion (for editor UIs). */

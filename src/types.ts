@@ -74,6 +74,13 @@ export interface EmotionSpec {
   brow: BrowKey
 }
 
+/**
+ * Per-emotion tuning: override any channel of any emotion preset. A partial
+ * spec merges onto the built-in {@link EmotionSpec}, so an editor can save just
+ * the fields it changed. Consumed by the rig / renderer / React binding.
+ */
+export type EmotionOverrides = Partial<Record<EmotionName, Partial<EmotionSpec>>>
+
 export interface VisemeSpec {
   /** openness 0..1 */
   o: number

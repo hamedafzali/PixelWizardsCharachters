@@ -1,4 +1,4 @@
-import { EMOTIONS } from './emotions.js';
+import { resolveEmotion } from './emotions.js';
 import { VISEMES } from './visemes.js';
 /**
  * Build the mouth `<path>`/`<g>` markup for a viseme + explicit openness. The
@@ -44,9 +44,12 @@ export function drawMouth(mouth, viseme, mouthOpen) {
  *
  * The SVG uses a 200×200 art space inside a 120×120 viewBox-friendly scale so
  * it composes with the wider studio art; pass `size` for the pixel box.
+ *
+ * `emotions` (optional) tunes the emotion presets per character — an editor can
+ * override any channel of any emotion.
  */
-export function renderActorSVG(spec, frame, size = 120) {
-    const emotion = EMOTIONS[frame.emotion];
+export function renderActorSVG(spec, frame, size = 120, emotions) {
+    const emotion = resolveEmotion(frame.emotion, emotions);
     const { grads, art, mouth } = spec.render({ emotion, intensity: frame.intensity });
     const viseme = VISEMES[frame.viseme];
     const mouthMarkup = drawMouth(mouth, viseme, frame.mouthOpen);

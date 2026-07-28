@@ -1,7 +1,7 @@
-import type { ActorFrame, CharacterSpec, Gesture } from './types.js'
+import type { ActorFrame, CharacterSpec, Gesture, EmotionOverrides } from './types.js'
 import { defaultFrame } from './types.js'
 import { renderActorSVG, drawMouth } from './render.js'
-import { EMOTIONS } from './emotions.js'
+import { resolveEmotion } from './emotions.js'
 import { VISEMES, textToVisemes } from './visemes.js'
 
 /**
@@ -72,6 +72,8 @@ export interface RigOptions {
   size?: number
   /** disable the random blink loop */
   blink?: boolean
+  /** per-emotion tuning — overrides any channel of any emotion preset */
+  emotions?: EmotionOverrides
   /** callback with the frame after each `apply` */
   onFrame?: (frame: ActorFrame) => void
 }
@@ -119,10 +121,22 @@ export class ActorRig {
     this.apply(this.frame)
   }
 
+  /**
+   * Retune the emotion presets live. Overrides don't change the art key, so we
+   * force a full re-render (the squint/widen/brow are baked into the art), then
+   * re-apply the live channels. Used by editor UIs for instant preview.
+   */
+  setEmotions(emotions?: EmotionOverrides): void {
+    this.opts.emotions = emotions
+    this.lastArtKey = ''
+    this.render()
+    this.apply(this.frame)
+  }
+
   /** Full render — only when the drawn art changes. Re-caches rig hooks. */
   private render(): void {
     if (!this.host) return
-    this.host.innerHTML = renderActorSVG(this.spec, this.frame, this.opts.size)
+    this.host.innerHTML = renderActorSVG(this.spec, this.frame, this.opts.size, this.opts.emotions)
     this.svg = this.host.querySelector('svg')
     if (!this.svg) return
     this.svg.classList.add('ca-svg')
@@ -171,7 +185,7 @@ export class ActorRig {
   private updateMouth(): void {
     if (!this.mouthG) return
     const spec = this.spec.render({
-      emotion: EMOTIONS[this.frame.emotion],
+      emotion: resolveEmotion(this.frame.emotion, this.opts.emotions),
       intensity: this.frame.intensity,
     })
     this.mouthG.innerHTML = drawMouth(spec.mouth, VISEMES[this.frame.viseme], this.frame.mouthOpen)

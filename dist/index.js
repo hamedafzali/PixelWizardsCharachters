@@ -8,7 +8,7 @@
  * locomotion. See the README for the full contract.
  */
 export { defaultFrame } from './types.js';
-export { EMOTIONS, EMOTION_LABELS } from './emotions.js';
+export { EMOTIONS, EMOTION_LABELS, resolveEmotion } from './emotions.js';
 export { VISEMES, PMAP, textToVisemes } from './visemes.js';
 export { eyes, brows } from './draw.js';
 export { CHARACTERS, CHARACTER_SLUGS } from './characters/index.js';

@@ -1,6 +1,6 @@
 import { defaultFrame } from './types.js';
 import { renderActorSVG, drawMouth } from './render.js';
-import { EMOTIONS } from './emotions.js';
+import { resolveEmotion } from './emotions.js';
 import { VISEMES, textToVisemes } from './visemes.js';
 /**
  * CSS the rig needs: body-motion keyframes (one per emotion mood), locomotion
@@ -99,11 +99,22 @@ export class ActorRig {
         this.render();
         this.apply(this.frame);
     }
+    /**
+     * Retune the emotion presets live. Overrides don't change the art key, so we
+     * force a full re-render (the squint/widen/brow are baked into the art), then
+     * re-apply the live channels. Used by editor UIs for instant preview.
+     */
+    setEmotions(emotions) {
+        this.opts.emotions = emotions;
+        this.lastArtKey = '';
+        this.render();
+        this.apply(this.frame);
+    }
     /** Full render — only when the drawn art changes. Re-caches rig hooks. */
     render() {
         if (!this.host)
             return;
-        this.host.innerHTML = renderActorSVG(this.spec, this.frame, this.opts.size);
+        this.host.innerHTML = renderActorSVG(this.spec, this.frame, this.opts.size, this.opts.emotions);
         this.svg = this.host.querySelector('svg');
         if (!this.svg)
             return;
@@ -152,7 +163,7 @@ export class ActorRig {
         if (!this.mouthG)
             return;
         const spec = this.spec.render({
-            emotion: EMOTIONS[this.frame.emotion],
+            emotion: resolveEmotion(this.frame.emotion, this.opts.emotions),
             intensity: this.frame.intensity,
         });
         this.mouthG.innerHTML = drawMouth(spec.mouth, VISEMES[this.frame.viseme], this.frame.mouthOpen);
