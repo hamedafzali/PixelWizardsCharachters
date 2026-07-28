@@ -13,6 +13,7 @@ export declare const laki: CharacterSpec;
 export declare const tondpa: CharacterSpec;
 export declare const boomi: CharacterSpec;
 export declare const khersi: CharacterSpec;
+export declare const simorgh: CharacterSpec;
 /** The built-in roster, keyed by slug. */
 export declare const CHARACTERS: Record<string, CharacterSpec>;
 export declare const CHARACTER_SLUGS: string[];

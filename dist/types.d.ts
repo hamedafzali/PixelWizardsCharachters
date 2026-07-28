@@ -1,5 +1,5 @@
 /**
- * character-actor — core types.
+* PixelWizardsCharachters — core types.
  *
  * A character is a puppet. An {@link ActorFrame} is one moment of performance:
  * a connected AI emits a stream of frames while a story plays, and the rig

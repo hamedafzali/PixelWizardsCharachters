@@ -241,9 +241,48 @@ export const khersi: CharacterSpec = {
   },
 }
 
+export const simorgh: CharacterSpec = {
+  slug: 'simorgh', name: 'سیمرغ', role: 'راهنما',
+  eyes: { x: [80, 120], y: 76, r: 11 }, lidColor: '#fbb26a', browColor: '#b45309',
+  render({ emotion, intensity }) {
+    const e = eyes(80, 120, 76, 11, 'smIris', emotion.squint * intensity, emotion.wide * intensity)
+    const b = brows(80, 120, 58, emotion.brow, '#b45309')
+    return {
+      grads: `
+      <radialGradient id="smH" cx="40%" cy="26%" r="80%"><stop offset="0" stop-color="#ffd9a0"/><stop offset=".55" stop-color="#f9852f"/><stop offset="1" stop-color="#d9660f"/></radialGradient>
+      <radialGradient id="smB" cx="42%" cy="28%" r="82%"><stop offset="0" stop-color="#fbb26a"/><stop offset=".6" stop-color="#f4820f"/><stop offset="1" stop-color="#c05a0c"/></radialGradient>
+      <linearGradient id="smC" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3d6"/><stop offset="1" stop-color="#ffe0ad"/></linearGradient>
+      <radialGradient id="smIris" cx="36%" cy="28%" r="80%"><stop offset="0" stop-color="#6a4a2a"/><stop offset=".6" stop-color="#3a2410"/><stop offset="1" stop-color="#1a0e04"/></radialGradient>
+      <radialGradient id="smCo" cx="50%" cy="40%" r="60%"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#7a3a00" stop-opacity=".18"/></radialGradient>`,
+      art: `<ellipse cx="100" cy="188" rx="52" ry="8" fill="#000" opacity=".10"/>
+      <ellipse cx="54" cy="152" rx="30" ry="12" transform="rotate(-32 54 152)" fill="#ef4444" opacity=".85"/>
+      <ellipse cx="74" cy="162" rx="30" ry="11" transform="rotate(-16 74 162)" fill="#f97316" opacity=".85"/>
+      <ellipse cx="100" cy="166" rx="30" ry="11" fill="#eab308" opacity=".85"/>
+      <ellipse cx="126" cy="162" rx="30" ry="11" transform="rotate(16 126 162)" fill="#22c55e" opacity=".85"/>
+      <ellipse cx="146" cy="152" rx="30" ry="12" transform="rotate(32 146 152)" fill="#3b82f6" opacity=".85"/>
+      <g class="wingL"><ellipse cx="52" cy="128" rx="24" ry="13" transform="rotate(-20 52 128)" fill="#fb923c"/><ellipse cx="54" cy="126" rx="17" ry="9" transform="rotate(-20 54 126)" fill="#fdba74"/></g>
+      <g class="wingR"><ellipse cx="148" cy="128" rx="24" ry="13" transform="rotate(20 148 128)" fill="#fb923c"/><ellipse cx="146" cy="126" rx="17" ry="9" transform="rotate(20 146 126)" fill="#fdba74"/></g>
+      <ellipse cx="100" cy="140" rx="40" ry="42" fill="url(#smB)"/><ellipse cx="100" cy="146" rx="26" ry="30" fill="url(#smC)"/><ellipse cx="100" cy="140" rx="40" ry="42" fill="url(#smCo)"/>
+      <ellipse cx="100" cy="150" rx="14" ry="16" fill="#fef3c7" opacity=".5"/>
+      <ellipse cx="84" cy="30" rx="7" ry="18" transform="rotate(-16 84 30)" fill="#ef4444"/>
+      <ellipse cx="100" cy="26" rx="7" ry="20" fill="#eab308"/>
+      <ellipse cx="116" cy="30" rx="7" ry="18" transform="rotate(16 116 30)" fill="#3b82f6"/>
+      <circle cx="100" cy="80" r="42" fill="url(#smH)"/><circle cx="100" cy="84" r="42" fill="url(#smCo)"/>
+      <ellipse cx="100" cy="90" rx="22" ry="15" fill="url(#smC)" opacity=".55"/>
+      ${e}
+      ${b}
+      <ellipse cx="72" cy="94" rx="8" ry="5" fill="#fca5a5" opacity=".5"/><ellipse cx="128" cy="94" rx="8" ry="5" fill="#fca5a5" opacity=".5"/>
+      <g id="mouthG"></g>
+      <path d="M84 180 l-6 12 M84 180 v13 M84 180 l6 12" stroke="#d97706" stroke-width="4" stroke-linecap="round"/>
+      <path d="M116 180 l-6 12 M116 180 v13 M116 180 l6 12" stroke="#d97706" stroke-width="4" stroke-linecap="round"/>`,
+      mouth: { cx: 100, cy: 100, color: '#e0850e', beak: true },
+    }
+  },
+}
+
 /** The built-in roster, keyed by slug. */
 export const CHARACTERS: Record<string, CharacterSpec> = {
-  roozi, ava, pashmak, laki, tondpa, boomi, khersi,
+  roozi, ava, pashmak, laki, tondpa, boomi, khersi, simorgh,
 }
 
 export const CHARACTER_SLUGS = Object.keys(CHARACTERS)
