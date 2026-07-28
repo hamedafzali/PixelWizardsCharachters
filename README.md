@@ -12,15 +12,27 @@ Built for [KoodakBook](../KoodakBook) but standalone and reusable.
 
 ## Install
 
-It's a workspace-local package. From a consumer app:
+Published to npm:
 
-```jsonc
-// package.json
-"dependencies": { "character-actor": "file:../character-actor" }
+```bash
+npm install character-actor
 ```
 
-Then `npm install`. The package ships ESM + `.d.ts`. Build it once with
-`npm run build` (or `npm run dev` to watch).
+The package ships ESM + `.d.ts`. React is an optional peer dependency (only
+needed for the `character-actor/react` binding).
+
+### Local development (before publishing)
+
+To consume an unpublished checkout from another project, pack it and depend on
+the tarball — this is byte-identical to what `npm publish` ships and, unlike a
+`file:` directory symlink, resolves cleanly under strict bundlers (e.g. Next's
+Turbopack) that refuse to follow symlinks outside the project root:
+
+```bash
+npm run build && npm pack        # -> character-actor-<version>.tgz
+# in the consumer app's package.json:
+#   "character-actor": "file:/abs/path/to/character-actor-<version>.tgz"
+```
 
 ## The roster
 
