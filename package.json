@@ -1,6 +1,6 @@
 {
   "name": "pixel-wizards-charachters",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "A framework-agnostic library of animated, actable children's characters. An ActorFrame is one moment of performance — emotion, Persian-viseme lip-sync, gaze, brows, gestures and locomotion.",
   "type": "module",
   "main": "./dist/index.js",
@@ -25,7 +25,8 @@
     "dev": "tsc --watch",
     "demo": "npm run build && node scripts/serve.mjs",
     "typecheck": "tsc --noEmit",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "test": "npm run build && node --test \"test/*.test.mjs\""
   },
   "keywords": [
     "characters",
@@ -48,6 +49,7 @@
   },
   "devDependencies": {
     "@types/react": "^18.3.0",
+    "jsdom": "^29.1.1",
     "typescript": "^5.5.0"
   },
   "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"

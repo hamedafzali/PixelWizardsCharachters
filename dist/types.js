@@ -21,4 +21,16 @@ export function defaultFrame(character) {
         gesture: null,
     };
 }
+/**
+ * Paint order for {@link LayerName}.
+ *
+ * Flat order only — it does not express the *nesting* (`head` inside `torso`,
+ * ears inside `head`), which `buildLayers` owns. The two are checked against
+ * each other by test rather than derived, because the nesting is what makes
+ * transforms compound and a flat list cannot say it.
+ */
+export const LAYER_ORDER = [
+    'shadow', 'accBack', 'tail', 'farArm', 'farLeg', 'torso',
+    'nearLeg', 'nearArm', 'earL', 'earR', 'head', 'torsoFront', 'accFront',
+];
 //# sourceMappingURL=types.js.map

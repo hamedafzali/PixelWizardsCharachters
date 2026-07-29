@@ -16,6 +16,22 @@ export const EMOTIONS: Record<EmotionName, EmotionSpec> = {
   surprised: { squint: 0, wide: 1, mouth: 'o', brow: 'surprised' },
   sleepy: { squint: 0.6, wide: 0, mouth: 'soft', brow: 'sleepy' },
   love: { squint: 0.4, wide: 0.2, mouth: 'big', brow: 'happy' },
+  // ── added in the emotion-depth pass ─────────────────────────────────────
+  // Each is stated as a delta from `neutral` in the port report, and each is
+  // held apart from its nearest existing neighbour by a channel that neighbour
+  // does not use — see the distinctness test, which fails if any pair drifts
+  // together.
+  //
+  // گیج: the eyes go up and off, which is the single most legible "working it
+  // out" cue. Tilts the head the *opposite* way from `thinking`, which is the
+  // emotion it would otherwise collide with.
+  confused: { squint: 0.05, wide: 0.3, mouth: 'o', brow: 'confused', gaze: { x: 0.28, y: -0.3 } },
+  // سربلند: chin up, chest out, a satisfied narrowing rather than a grin.
+  // `happy` is the neighbour here, and the separation is carried by posture.
+  proud: { squint: 0.3, wide: 0, mouth: 'big', brow: 'proud', gaze: { x: 0, y: -0.18 } },
+  // خجالتی: looks down and away. The neighbours are `sad` and `sleepy`, and the
+  // thing neither of them does is *avert* — hence the largest gaze offset here.
+  shy: { squint: 0.45, wide: 0, mouth: 'soft', brow: 'shy', gaze: { x: -0.36, y: 0.3 } },
 }
 
 /**
@@ -40,4 +56,7 @@ export const EMOTION_LABELS: Record<EmotionName, string> = {
   surprised: 'شگفت',
   sleepy: 'خواب‌آلود',
   love: 'عاشق',
+  confused: 'گیج',
+  proud: 'سربلند',
+  shy: 'خجالتی',
 }

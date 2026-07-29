@@ -1,4 +1,4 @@
-import type { ActorFrame, CharacterSpec, VisemeSpec, EmotionOverrides } from './types.js'
+import type { ActorFrame, CharacterSpec, VisemeSpec, EmotionOverrides, RigLayer, RigLayers } from './types.js'
 import { resolveEmotion } from './emotions.js'
 import { VISEMES } from './visemes.js'
 
@@ -48,13 +48,71 @@ export function drawMouth(
   return parts.join('')
 }
 
+/** One layer group, carrying its own pivot so transforms on it turn correctly. */
+function layerG(cls: string, layer: RigLayer | undefined, inner = ''): string {
+  if (!layer && !inner) return ''
+  const o = layer?.origin
+  const style = o ? ` style="transform-origin:${o[0]}px ${o[1]}px"` : ''
+  // `inner` paints *behind* this layer's own art. The only caller that passes it
+  // is the head, whose ears must sit behind the skull exactly as they did in the
+  // original flat art — painting them after put the base of every ear triangle
+  // on top of the forehead.
+  return `<g class="${cls}"${style}>${inner}${layer?.art ?? ''}</g>`
+}
+
+/**
+ * Assemble the articulated tree from a character's layers.
+ *
+ * Far limbs are painted before the torso art and near limbs after it, so depth
+ * reads correctly while every limb stays independently rotatable. The head is a
+ * *child* of the torso — bow the spine and the head follows, as it should.
+ */
+function buildLayers(l: RigLayers): string {
+  // Ears sit behind the head art and ride it: tilt the head, the ears go too.
+  const ears = layerG('lyr-earL', l.earL) + layerG('lyr-earR', l.earR)
+  // A character with no visible neck declares no head layer, and its face rides
+  // the torso. The ears must then hang off the torso directly — wrapping them in
+  // an implicit `.lyr-head` would resurrect the layer with *no* origin, so it
+  // would pivot about its own bounding-box centre and posture's headDrop would
+  // land on it after all. That is exactly the improvised pivot the no-head rule
+  // exists to prevent.
+  const head = l.head ? layerG('lyr-head', l.head, ears) : ears
+  const torsoInner =
+    layerG('lyr-tail', l.tail) +
+    layerG('lyr-farArm', l.farArm) +
+    layerG('lyr-farLeg', l.farLeg)
+  // `torsoFront` is torso art that must occlude the head: a shell rim, a collar,
+  // a scarf. It is *inside* `.lyr-torso`, so it leans with the spine and stays
+  // registered with the rest of the body — an outer sibling would slide off the
+  // torso the moment posture moved it. It is the only way a head can tuck
+  // *behind* the body without inverting the order for every other character,
+  // which needs the head in front.
+  const torsoAfter =
+    layerG('lyr-nearLeg', l.nearLeg) +
+    layerG('lyr-nearArm', l.nearArm) +
+    head +
+    layerG('lyr-torsoFront', l.torsoFront)
+  const o = l.torso?.origin
+  const torsoStyle = o ? ` style="transform-origin:${o[0]}px ${o[1]}px"` : ''
+  const torso =
+    `<g class="lyr-torso"${torsoStyle}>` +
+    `${torsoInner}${l.torso?.art ?? ''}${torsoAfter}` +
+    `</g>`
+  return layerG('lyr-accBack', l.accBack) + torso + layerG('lyr-accFront', l.accFront)
+}
+
 /**
  * Render a complete, self-contained `<svg>` for one frame. This is the pure /
  * stateless path — handy for SSR, thumbnails and tests. The interactive
  * {@link ActorRig} renders once with this then mutates in place.
  *
- * The SVG uses a 200×200 art space inside a 120×120 viewBox-friendly scale so
- * it composes with the wider studio art; pass `size` for the pixel box.
+ * The art space is 200×200; pass `size` for the pixel box.
+ *
+ * Three nested transform carriers sit between the flip and the art —
+ * `.rig-root` (locomotion), `.rig-body` (gesture + squash/stretch) and
+ * `.rig-mood` (emotion idle). They exist so those three channels compose
+ * instead of overwriting one shared `transform`, and they are emitted for
+ * layered and unlayered characters alike.
  *
  * `emotions` (optional) tunes the emotion presets per character — an editor can
  * override any channel of any emotion.
@@ -66,16 +124,23 @@ export function renderActorSVG(
   emotions?: EmotionOverrides,
 ): string {
   const emotion = resolveEmotion(frame.emotion, emotions)
-  const { grads, art, mouth } = spec.render({ emotion, intensity: frame.intensity })
+  const { grads, art, layers, mouth } = spec.render({ emotion, intensity: frame.intensity })
   const viseme = VISEMES[frame.viseme]
   const mouthMarkup = drawMouth(mouth, viseme, frame.mouthOpen)
-  const mounted = art.replace('<g id="mouthG"></g>', `<g id="mouthG">${mouthMarkup}</g>`)
+
+  const shadow = layers ? layerG('lyr-shadow', layers.shadow) : ''
+  const inner = layers ? buildLayers(layers) : art
+  if (!layers && !art) return ''
+
+  const body =
+    `${shadow}<g class="rig-root"><g class="rig-body"><g class="rig-mood">${inner}</g></g></g>`
+  const mounted = body.replace('<g id="mouthG"></g>', `<g id="mouthG">${mouthMarkup}</g>`)
   const flip = frame.facing === 'left' ? ' transform="scale(-1,1) translate(-200,0)"' : ''
   return (
     `<svg width="${size}" height="${size}" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" ` +
     `style="--lidfill:${spec.lidColor}" data-character="${spec.slug}">` +
     `<defs>${grads}</defs>` +
-    `<g${flip}>${art ? mounted : ''}</g>` +
+    `<g class="rig-flip"${flip}>${mounted}</g>` +
     `</svg>`
   )
 }

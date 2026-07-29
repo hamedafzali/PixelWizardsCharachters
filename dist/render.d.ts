@@ -17,8 +17,13 @@ export declare function drawMouth(mouth: {
  * stateless path — handy for SSR, thumbnails and tests. The interactive
  * {@link ActorRig} renders once with this then mutates in place.
  *
- * The SVG uses a 200×200 art space inside a 120×120 viewBox-friendly scale so
- * it composes with the wider studio art; pass `size` for the pixel box.
+ * The art space is 200×200; pass `size` for the pixel box.
+ *
+ * Three nested transform carriers sit between the flip and the art —
+ * `.rig-root` (locomotion), `.rig-body` (gesture + squash/stretch) and
+ * `.rig-mood` (emotion idle). They exist so those three channels compose
+ * instead of overwriting one shared `transform`, and they are emitted for
+ * layered and unlayered characters alike.
  *
  * `emotions` (optional) tunes the emotion presets per character — an editor can
  * override any channel of any emotion.
