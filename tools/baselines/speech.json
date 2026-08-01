@@ -1,0 +1,228 @@
+{
+  "$about": [
+    "Hand-marked Persian reference corpus for lip-sync. This is INPUT data, not",
+    "measurement output: every syllable break and phoneme here was marked by hand,",
+    "and nothing in src/ produced any of it. That is the whole point — the library",
+    "currently has no ground truth to be measured against, so `speak('سلام')` can",
+    "be neither right nor wrong, only unexamined.",
+    "",
+    "Structure is words → syllables → phonemes, three levels deep, because all",
+    "three matter to lip-sync and each is a separate claim that can be checked:",
+    "word boundaries decide where the mouth rests, syllable count decides how long",
+    "the utterance is, and phonemes decide which shapes appear.",
+    "",
+    "Nothing here is derived from the other levels, so test/speech-corpus.test.mjs",
+    "can cross-check them: every syllable must have exactly one vowel (true of",
+    "Persian by construction), and the phonemes must concatenate back to `roman`.",
+    "A hand-marked file with no such check would rot silently."
+  ],
+  "$transcription": [
+    "Romanization: â a e i o u for vowels; š č ž x q ɣ ʔ for the consonants without",
+    "a plain Latin letter; y and v are the glides. Long/short is not marked because",
+    "modern Persian does not contrast it phonemically.",
+    "",
+    "Register: careful standard Persian, as written. Colloquial Tehrani differs and",
+    "differs a lot — می‌خواهم is /mixâham/ here and /mixâm/ in speech, which is 3",
+    "syllables against 2. Marked as written because that is what a driver passes to",
+    "`speak()`; where the two diverge sharply the entry carries a `colloquial` note",
+    "and the gap tool reports both."
+  ],
+  "$caveat": [
+    "These annotations are mine, not a native speaker's and not from a pronouncing",
+    "lexicon. They are standard enough that the aggregate measurements will hold,",
+    "but individual entries should be treated as reviewable rather than settled —",
+    "especially the four carrying `colloquial` notes, and ستاره / متشکرم, where",
+    "the unstressed vowels are the kind a fluent speaker reduces further than I",
+    "have marked. Review by a Persian speaker is the cheapest improvement available",
+    "to this file."
+  ],
+  "items": [
+    {
+      "text": "آب",
+      "roman": "âb",
+      "gloss": "water",
+      "words": [[["â", "b"]]]
+    },
+    {
+      "text": "توپ",
+      "roman": "tup",
+      "gloss": "ball",
+      "words": [[["t", "u", "p"]]]
+    },
+    {
+      "text": "سگ",
+      "roman": "sag",
+      "gloss": "dog",
+      "words": [[["s", "a", "g"]]]
+    },
+    {
+      "text": "دست",
+      "roman": "dast",
+      "gloss": "hand",
+      "words": [[["d", "a", "s", "t"]]]
+    },
+    {
+      "text": "چشم",
+      "roman": "češm",
+      "gloss": "eye",
+      "words": [[["č", "e", "š", "m"]]]
+    },
+    {
+      "text": "دوست",
+      "roman": "dust",
+      "gloss": "friend",
+      "words": [[["d", "u", "s", "t"]]]
+    },
+    {
+      "text": "سلام",
+      "roman": "salâm",
+      "gloss": "hello",
+      "words": [[["s", "a"], ["l", "â", "m"]]]
+    },
+    {
+      "text": "بابا",
+      "roman": "bâbâ",
+      "gloss": "dad",
+      "words": [[["b", "â"], ["b", "â"]]]
+    },
+    {
+      "text": "مامان",
+      "roman": "mâmân",
+      "gloss": "mum",
+      "words": [[["m", "â"], ["m", "â", "n"]]]
+    },
+    {
+      "text": "کتاب",
+      "roman": "ketâb",
+      "gloss": "book",
+      "words": [[["k", "e"], ["t", "â", "b"]]],
+      "note": "the /e/ of ke- is spoken and unwritten — the clearest case of the short-vowel problem"
+    },
+    {
+      "text": "گربه",
+      "roman": "gorbe",
+      "gloss": "cat",
+      "words": [[["g", "o", "r"], ["b", "e"]]]
+    },
+    {
+      "text": "خوبی",
+      "roman": "xubi",
+      "gloss": "are you well?",
+      "words": [[["x", "u"], ["b", "i"]]],
+      "note": "خو here is /xu/ — the same و is /v/ elsewhere, which a grapheme map cannot know"
+    },
+    {
+      "text": "درخت",
+      "roman": "deraxt",
+      "gloss": "tree",
+      "words": [[["d", "e"], ["r", "a", "x", "t"]]]
+    },
+    {
+      "text": "خورشید",
+      "roman": "xoršid",
+      "gloss": "sun",
+      "words": [[["x", "o", "r"], ["š", "i", "d"]]]
+    },
+    {
+      "text": "آفتاب",
+      "roman": "âftâb",
+      "gloss": "sunshine",
+      "words": [[["â", "f"], ["t", "â", "b"]]]
+    },
+    {
+      "text": "ستاره",
+      "roman": "setâre",
+      "gloss": "star",
+      "words": [[["s", "e"], ["t", "â"], ["r", "e"]]]
+    },
+    {
+      "text": "پروانه",
+      "roman": "parvâne",
+      "gloss": "butterfly",
+      "words": [[["p", "a", "r"], ["v", "â"], ["n", "e"]]]
+    },
+    {
+      "text": "مدرسه",
+      "roman": "madrese",
+      "gloss": "school",
+      "words": [[["m", "a", "d"], ["r", "e"], ["s", "e"]]]
+    },
+    {
+      "text": "بستنی",
+      "roman": "bastani",
+      "gloss": "ice cream",
+      "words": [[["b", "a", "s"], ["t", "a"], ["n", "i"]]]
+    },
+    {
+      "text": "آفرین",
+      "roman": "âfarin",
+      "gloss": "well done",
+      "words": [[["â"], ["f", "a"], ["r", "i", "n"]]]
+    },
+    {
+      "text": "متشکرم",
+      "roman": "motešakkeram",
+      "gloss": "thank you",
+      "words": [[["m", "o"], ["t", "e"], ["š", "a", "k"], ["k", "e"], ["r", "a", "m"]]],
+      "note": "five syllables from six letters — the one item where letters undercount rather than overcount"
+    },
+    {
+      "text": "خیلی خوب",
+      "roman": "xeyli xub",
+      "gloss": "very good",
+      "words": [[["x", "e", "y"], ["l", "i"]], [["x", "u", "b"]]]
+    },
+    {
+      "text": "شب بخیر",
+      "roman": "šab bexeyr",
+      "gloss": "good night",
+      "words": [[["š", "a", "b"]], [["b", "e"], ["x", "e", "y", "r"]]]
+    },
+    {
+      "text": "دوستت دارم",
+      "roman": "dustet dâram",
+      "gloss": "I love you",
+      "words": [[["d", "u", "s"], ["t", "e", "t"]], [["d", "â"], ["r", "a", "m"]]]
+    },
+    {
+      "text": "من گرسنه‌ام",
+      "roman": "man gorosneam",
+      "gloss": "I am hungry",
+      "words": [[["m", "a", "n"]], [["g", "o"], ["r", "o", "s"], ["n", "e"], ["a", "m"]]],
+      "note": "carries a ZWNJ (U+200C), which textToVisemes skips — correctly, by accident of being unmapped"
+    },
+    {
+      "text": "سلام بچه‌ها",
+      "roman": "salâm baččehâ",
+      "gloss": "hello children",
+      "words": [[["s", "a"], ["l", "â", "m"]], [["b", "a", "č"], ["č", "e"], ["h", "â"]]]
+    },
+    {
+      "text": "اسم من روزی است",
+      "roman": "esme man ruzi ast",
+      "gloss": "my name is Roozi",
+      "words": [[["e", "s"], ["m", "e"]], [["m", "a", "n"]], [["r", "u"], ["z", "i"]], [["a", "s", "t"]]]
+    },
+    {
+      "text": "کجا می‌روی",
+      "roman": "kojâ miravi",
+      "gloss": "where are you going",
+      "words": [[["k", "o"], ["j", "â"]], [["m", "i"], ["r", "a"], ["v", "i"]]],
+      "colloquial": "kojâ miri — 4 syllables rather than 5"
+    },
+    {
+      "text": "بیا بازی کنیم",
+      "roman": "biyâ bâzi konim",
+      "gloss": "come play",
+      "words": [[["b", "i"], ["y", "â"]], [["b", "â"], ["z", "i"]], [["k", "o"], ["n", "i", "m"]]]
+    },
+    {
+      "text": "می‌خواهم بخوابم",
+      "roman": "mixâham bexâbam",
+      "gloss": "I want to sleep",
+      "words": [[["m", "i"], ["x", "â"], ["h", "a", "m"]], [["b", "e"], ["x", "â"], ["b", "a", "m"]]],
+      "colloquial": "mixâm bexâbam — 5 syllables rather than 6",
+      "note": "both خوا clusters are /xâ/: the و is silent in each, and the library rounds the lips for it twice"
+    }
+  ]
+}

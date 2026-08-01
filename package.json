@@ -38,7 +38,8 @@
     "test": "npm run build && node --test \"test/*.test.mjs\"",
     "sheet": "npm run build && node tools/sheet.mjs",
     "mutate": "node tools/mutate.mjs",
-    "baseline": "npm run build && node tools/baseline.mjs"
+    "baseline": "npm run build && node tools/baseline.mjs",
+    "speech-gap": "npm run build && node tools/speech-gap.mjs"
   },
   "keywords": [
     "characters",
