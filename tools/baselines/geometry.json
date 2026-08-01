@@ -1,0 +1,620 @@
+{
+  "gestureRouting": {
+    "roozi": {
+      "jump": "rig-body",
+      "spin": "rig-body",
+      "wave": "lyr-nearArm",
+      "nod": "lyr-head",
+      "shake": "lyr-head",
+      "shrug": "lyr-farArm+lyr-nearArm",
+      "clap": "lyr-farArm+lyr-nearArm",
+      "point": "lyr-nearArm",
+      "bounce": "rig-body"
+    },
+    "ava": {
+      "jump": "rig-body",
+      "spin": "rig-body",
+      "wave": "lyr-nearArm",
+      "nod": "lyr-head",
+      "shake": "lyr-head",
+      "shrug": "lyr-farArm+lyr-nearArm",
+      "clap": "lyr-farArm+lyr-nearArm",
+      "point": "lyr-nearArm",
+      "bounce": "rig-body"
+    },
+    "pashmak": {
+      "jump": "rig-body",
+      "spin": "rig-body",
+      "wave": "fallback:missing-layer",
+      "nod": "lyr-head",
+      "shake": "lyr-head",
+      "shrug": "fallback:missing-layer",
+      "clap": "fallback:missing-layer",
+      "point": "fallback:missing-layer",
+      "bounce": "rig-body"
+    },
+    "laki": {
+      "jump": "rig-body",
+      "spin": "rig-body",
+      "wave": "lyr-nearArm",
+      "nod": "fallback:character-opt-out",
+      "shake": "lyr-head",
+      "shrug": "lyr-farArm+lyr-nearArm",
+      "clap": "lyr-farArm+lyr-nearArm",
+      "point": "lyr-nearArm",
+      "bounce": "rig-body"
+    },
+    "tondpa": {
+      "jump": "rig-body",
+      "spin": "rig-body",
+      "wave": "fallback:missing-layer",
+      "nod": "lyr-head",
+      "shake": "lyr-head",
+      "shrug": "fallback:missing-layer",
+      "clap": "fallback:missing-layer",
+      "point": "fallback:missing-layer",
+      "bounce": "rig-body"
+    },
+    "boomi": {
+      "jump": "rig-body",
+      "spin": "rig-body",
+      "wave": "lyr-nearArm",
+      "nod": "fallback:missing-layer",
+      "shake": "fallback:missing-layer",
+      "shrug": "lyr-farArm+lyr-nearArm",
+      "clap": "lyr-farArm+lyr-nearArm",
+      "point": "lyr-nearArm",
+      "bounce": "rig-body"
+    },
+    "khersi": {
+      "jump": "rig-body",
+      "spin": "rig-body",
+      "wave": "fallback:missing-layer",
+      "nod": "lyr-head",
+      "shake": "lyr-head",
+      "shrug": "fallback:missing-layer",
+      "clap": "fallback:missing-layer",
+      "point": "fallback:missing-layer",
+      "bounce": "rig-body"
+    },
+    "simorgh": {
+      "jump": "rig-body",
+      "spin": "rig-body",
+      "wave": "fallback:missing-layer",
+      "nod": "fallback:missing-layer",
+      "shake": "fallback:missing-layer",
+      "shrug": "fallback:missing-layer",
+      "clap": "fallback:missing-layer",
+      "point": "fallback:missing-layer",
+      "bounce": "rig-body"
+    }
+  },
+  "pivots": {
+    "roozi.tail": [
+      146,
+      146
+    ],
+    "roozi.farArm": [
+      62,
+      126
+    ],
+    "roozi.farLeg": [
+      84,
+      160
+    ],
+    "roozi.torso": [
+      100,
+      168
+    ],
+    "roozi.nearLeg": [
+      116,
+      160
+    ],
+    "roozi.nearArm": [
+      138,
+      126
+    ],
+    "roozi.earL": [
+      76,
+      50
+    ],
+    "roozi.earR": [
+      124,
+      50
+    ],
+    "roozi.head": [
+      100,
+      112
+    ],
+    "ava.farArm": [
+      88,
+      150
+    ],
+    "ava.torso": [
+      100,
+      176
+    ],
+    "ava.nearArm": [
+      112,
+      150
+    ],
+    "ava.head": [
+      100,
+      140
+    ],
+    "pashmak.tail": [
+      146,
+      154
+    ],
+    "pashmak.torso": [
+      98,
+      176
+    ],
+    "pashmak.earL": [
+      77,
+      45
+    ],
+    "pashmak.earR": [
+      119,
+      45
+    ],
+    "pashmak.head": [
+      98,
+      114
+    ],
+    "laki.farArm": [
+      60,
+      150
+    ],
+    "laki.nearArm": [
+      140,
+      150
+    ],
+    "laki.farLeg": [
+      82,
+      160
+    ],
+    "laki.nearLeg": [
+      118,
+      160
+    ],
+    "laki.torso": [
+      100,
+      142
+    ],
+    "laki.head": [
+      100,
+      78
+    ],
+    "laki.torsoFront": [
+      100,
+      142
+    ],
+    "tondpa.torso": [
+      100,
+      176
+    ],
+    "tondpa.earL": [
+      84,
+      58
+    ],
+    "tondpa.earR": [
+      116,
+      58
+    ],
+    "tondpa.head": [
+      100,
+      121
+    ],
+    "boomi.farArm": [
+      56,
+      108
+    ],
+    "boomi.farLeg": [
+      84,
+      176
+    ],
+    "boomi.torso": [
+      100,
+      172
+    ],
+    "boomi.nearLeg": [
+      116,
+      176
+    ],
+    "boomi.nearArm": [
+      144,
+      108
+    ],
+    "boomi.earL": [
+      66,
+      58
+    ],
+    "boomi.earR": [
+      134,
+      58
+    ],
+    "khersi.torso": [
+      100,
+      176
+    ],
+    "khersi.earL": [
+      72,
+      57
+    ],
+    "khersi.earR": [
+      128,
+      57
+    ],
+    "khersi.head": [
+      100,
+      121
+    ]
+  },
+  "laki": {
+    "rim": {
+      "38": 142,
+      "60": 90.485,
+      "80": 79.187,
+      "100": 76,
+      "120": 79.187,
+      "140": 90.485,
+      "162": 142
+    },
+    "worstPosture": {
+      "v": 1.838,
+      "emotion": "shy",
+      "intensity": 1
+    },
+    "gestures": {
+      "shake": {
+        "margin": 3.046,
+        "channel": "mouth",
+        "t": 0.121
+      }
+    },
+    "optOut": [
+      "nod"
+    ]
+  },
+  "tondpa": {
+    "seamY": 121.135,
+    "pivot": [
+      100,
+      121
+    ],
+    "detachAt": -10.6,
+    "worstPosture": {
+      "v": 163.04,
+      "emotion": "surprised",
+      "intensity": 1
+    },
+    "worstGesture": {
+      "nod": {
+        "overlap": 181.12,
+        "t": 0.233
+      },
+      "shake": {
+        "overlap": 257.28,
+        "t": 0.896
+      }
+    }
+  },
+  "khersi": {
+    "seamY": 120.648,
+    "pivot": [
+      100,
+      121
+    ],
+    "detachAt": -14.6,
+    "worstPosture": {
+      "v": 248.25,
+      "emotion": "proud",
+      "intensity": 1
+    },
+    "worstGesture": {
+      "nod": {
+        "overlap": 356,
+        "t": 0.233
+      },
+      "shake": {
+        "overlap": 451.25,
+        "t": 0.896
+      }
+    },
+    "earPivots": {
+      "earL": [
+        72,
+        57
+      ],
+      "earR": [
+        128,
+        57
+      ]
+    },
+    "earChord": {
+      "earL": [
+        72.427,
+        56.805
+      ],
+      "earR": [
+        127.573,
+        56.805
+      ]
+    },
+    "worstEar": {
+      "v": 11.469,
+      "emotion": "proud",
+      "intensity": 0.25
+    }
+  },
+  "actionShape": {
+    "jump": {
+      "dur": 0.9,
+      "layers": [
+        "rig-body"
+      ],
+      "at": {
+        "0.1": [
+          0,
+          2.875,
+          0,
+          1.048,
+          0.938
+        ],
+        "0.5": [
+          0,
+          -17.436,
+          0,
+          0.983,
+          1.025
+        ],
+        "0.9": [
+          0,
+          -0.403,
+          0,
+          0.999,
+          1.001
+        ]
+      }
+    },
+    "spin": {
+      "dur": 0.95,
+      "layers": [
+        "rig-body"
+      ],
+      "at": {
+        "0.1": [
+          0,
+          1.142,
+          0,
+          1.048,
+          0.938
+        ],
+        "0.5": [
+          0,
+          0,
+          0,
+          1,
+          1
+        ],
+        "0.9": [
+          0,
+          -1.115,
+          0,
+          0.954,
+          1.059
+        ]
+      }
+    },
+    "wave": {
+      "dur": 0.95,
+      "layers": [
+        "lyr-nearArm"
+      ],
+      "at": {
+        "0.1": [
+          0,
+          1.096,
+          4.567,
+          1.046,
+          0.941
+        ],
+        "0.5": [
+          0,
+          0,
+          -61.597,
+          1,
+          1
+        ],
+        "0.9": [
+          0,
+          -0.455,
+          0,
+          0.98,
+          1.025
+        ]
+      }
+    },
+    "nod": {
+      "dur": 0.8,
+      "layers": [
+        "lyr-head"
+      ],
+      "at": {
+        "0.1": [
+          0,
+          0.566,
+          0,
+          1.024,
+          0.969
+        ],
+        "0.5": [
+          0,
+          -0.179,
+          0,
+          1,
+          1
+        ],
+        "0.9": [
+          0,
+          -0.554,
+          0,
+          0.976,
+          1.031
+        ]
+      }
+    },
+    "shake": {
+      "dur": 0.75,
+      "layers": [
+        "lyr-head"
+      ],
+      "at": {
+        "0.1": [
+          0.181,
+          0.68,
+          0.127,
+          1.028,
+          0.963
+        ],
+        "0.5": [
+          -2.524,
+          0,
+          -1.48,
+          1,
+          1
+        ],
+        "0.9": [
+          0,
+          -0.475,
+          0,
+          0.979,
+          1.027
+        ]
+      }
+    },
+    "shrug": {
+      "dur": 0.9,
+      "layers": [
+        "lyr-farArm",
+        "lyr-nearArm"
+      ],
+      "at": {
+        "0.1": [
+          0,
+          0.764,
+          1.719,
+          1.032,
+          0.959
+        ],
+        "0.5": [
+          0,
+          0,
+          -29.056,
+          1,
+          1
+        ],
+        "0.9": [
+          0,
+          -0.309,
+          0,
+          0.993,
+          1.009
+        ]
+      }
+    },
+    "clap": {
+      "dur": 0.85,
+      "layers": [
+        "lyr-farArm",
+        "lyr-nearArm"
+      ],
+      "at": {
+        "0.1": [
+          0,
+          1.068,
+          -3.205,
+          1.045,
+          0.942
+        ],
+        "0.5": [
+          0,
+          0,
+          35.495,
+          1,
+          1
+        ],
+        "0.9": [
+          0,
+          -0.488,
+          0,
+          0.98,
+          1.026
+        ]
+      }
+    },
+    "point": {
+      "dur": 1.05,
+      "layers": [
+        "lyr-nearArm"
+      ],
+      "at": {
+        "0.1": [
+          0,
+          0.996,
+          4.151,
+          1.042,
+          0.946
+        ],
+        "0.5": [
+          0,
+          0,
+          -86.143,
+          1,
+          1
+        ],
+        "0.9": [
+          0,
+          -0.381,
+          0,
+          0.987,
+          1.017
+        ]
+      }
+    },
+    "bounce": {
+      "dur": 1,
+      "layers": [
+        "rig-body"
+      ],
+      "at": {
+        "0.1": [
+          0,
+          1.214,
+          0,
+          1.03,
+          0.961
+        ],
+        "0.5": [
+          0,
+          0,
+          0,
+          1,
+          0.97
+        ],
+        "0.9": [
+          0,
+          -0.303,
+          0,
+          0.999,
+          1.001
+        ]
+      }
+    }
+  },
+  "microWorst": {
+    "y": -0.9,
+    "rot": -1.3
+  }
+}

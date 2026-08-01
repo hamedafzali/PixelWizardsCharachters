@@ -238,3 +238,82 @@ for (const spec of LAYERED) {
     } finally { t.restore() }
   })
 }
+
+// ── blink lids ride the same transforms as the eyes ──────────────────────────
+//
+// The lids are injected by the rig rather than drawn by the character, so where
+// they are *parented* is a rig decision and nothing in the art constrains it.
+// That decision has been wrong twice. Appended to the `<svg>` root they landed
+// on the wrong eyes when facing left. Appended to `.rig-flip` they sat outside
+// all three transform carriers — `.rig-root` (locomotion), `.rig-body` (gesture
+// and squash), `.rig-mood` (emotion idle) — which was invisible on every
+// character with a head layer, because the head layer was used instead, and
+// broken on the two without one: a blink during a walk, a gesture or any
+// non-neutral posture shut the lid over empty art space while the eyes had
+// moved away.
+//
+// Both bugs are the same bug, and it is not a geometry question — it is
+// "do these two elements accumulate the same transforms". So that is what is
+// asserted, structurally, rather than by sampling positions.
+
+/** The chain of elements from the `<svg>` down to `el`, exclusive. */
+function ancestry(svg, el) {
+  const out = []
+  for (let n = el.parentNode; n && n !== svg; n = n.parentNode) out.unshift(n)
+  return out
+}
+
+test('every character parents its blink lids exactly where its eyes are drawn', () => {
+  for (const spec of Object.values(CHARACTERS)) {
+    const dom = setupDom()
+    try {
+      const rig = new ActorRig(spec, { blink: false, micro: { amount: 0 } })
+      rig.mount(dom.host)
+      rig.finish()
+      const svg = dom.host.querySelector('svg')
+
+      const eyes = Array.from(svg.querySelectorAll('.eyeG'))
+      const lids = Array.from(svg.querySelectorAll('.blinkLid'))
+      assert.ok(eyes.length > 0, `${spec.slug}: no .eyeG to anchor the lids to`)
+      assert.equal(lids.length, eyes.length,
+        `${spec.slug}: ${lids.length} lids for ${eyes.length} eyes`)
+
+      // The invariant: identical ancestry means identical accumulated
+      // transform, so anything that moves the eye moves the lid with it.
+      const eyeChain = ancestry(svg, eyes[0])
+      for (const lid of lids) {
+        assert.deepEqual(ancestry(svg, lid), eyeChain,
+          `${spec.slug}: a blink lid does not ride the same transforms as the eyes — ` +
+          `it is under [${ancestry(svg, lid).map((n) => n.getAttribute('class')).join(' > ')}] ` +
+          `while the eyes are under [${eyeChain.map((n) => n.getAttribute('class')).join(' > ')}]`)
+      }
+
+      // And specifically: no transform carrier may sit between them. This is
+      // the part that fails when the lids are hoisted to `.rig-flip`, and it
+      // names the failure rather than reporting a chain mismatch.
+      const carriers = ['rig-root', 'rig-body', 'rig-mood']
+      const inside = (el) => ancestry(svg, el).map((n) => n.getAttribute('class') ?? '')
+      for (const c of carriers) {
+        const onEye = inside(eyes[0]).some((cls) => cls.includes(c))
+        const onLid = inside(lids[0]).some((cls) => cls.includes(c))
+        assert.equal(onLid, onEye,
+          `${spec.slug}: .${c} applies to the ${onEye ? 'eyes but not the lids' : 'lids but not the eyes'}`)
+      }
+    } finally {
+      dom.restore()
+    }
+  }
+})
+
+test('the headless characters are actually in that sweep, and are the case that broke', () => {
+  // Guards the test above from passing vacuously if the roster ever loses its
+  // unlayered / headless members — they are the only characters for which the
+  // eye parent is not simply the head layer, and so the only ones the old
+  // `.rig-flip` fallback ever reached.
+  const headless = Object.values(CHARACTERS).filter((spec) => {
+    const out = spec.render({ emotion: { squint: 0, wide: 0, brow: 0 }, intensity: 0 })
+    return !out.layers?.head
+  })
+  assert.ok(headless.length >= 2,
+    `only ${headless.length} characters have no head layer — the lid-parenting sweep has lost its interesting cases`)
+})

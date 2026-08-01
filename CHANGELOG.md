@@ -1,5 +1,84 @@
 # Changelog
 
+## 0.5.0
+
+Tooling and a studio. The library gained the pieces needed to *look* at what it
+already did — and looking found real gaps, which are listed here with the rest.
+
+### Sampling an action outside the browser
+
+`sampleAction(action, t)` evaluates the same timeline `buildAction` serialises
+into `@keyframes`, including the derived anticipation and settle, so an action
+can be measured without a compositor. `sampleActionFrames` and `frameCount`
+walk it at a frame rate. `actionStops()` stays the single source of truth: one
+equivalence test asserts the sampler and the emitted CSS agree at every stop, so
+the two cannot drift into separately-correct answers.
+
+### Contact sheets, and one set of probes underneath them
+
+Three generators — `tools/sheets/gestures.mjs`, `emotions.mjs`, `seams.mjs` —
+render every cell off a **real mounted rig** rather than restating the rig's
+maths in the tool. That distinction is the whole point: the three per-character
+comparison sheets they replace stood up their own renderers and string-injected
+recomputed transforms, so they depicted what the author believed the rig wrote.
+`tools/lib/probes.mjs` is now the only home for pivot and seam geometry, is
+documented as test-load-bearing, and is mutated like `src/`.
+
+### Numeric baselines
+
+`tools/baselines/geometry.json` holds 200 measurements — pivots, seams, rim
+solutions, per-gesture worst clearances, gesture routing. `npm run baseline`
+names what moved and by how much; `test/baseline.test.mjs` runs the same
+comparison so the file cannot go stale. No image diffing: a pixel diff over 600
+frames always says "something changed" and never says what.
+
+### The studio: preview, picker, scrub
+
+- `characterRoster()` and `createCharacterPicker()` ship in the package, with a
+  React `<CharacterPicker>` twin. Two implementations, one roster, neither
+  containing a list of characters — a test enumerates both and asserts they
+  agree with `CHARACTER_SLUGS`.
+- `rig.scrubGesture(g, t)` holds a gesture at a fraction of its timeline by
+  pausing its real animation on a negative delay; `rig.pinGaitPhase(p)` holds a
+  gait by pinning the driver's phase (or, for an unlayered character, by pausing
+  the CSS cycle). Two mechanisms, because they are not interchangeable, and the
+  studio reports which one it used.
+- `rig.planFor(g)` is public: ask what would happen before asking for it.
+- The studio steps a clip a frame at a time and marks the *derived*
+  anticipation and settle windows under the slider — the beats that appear in no
+  `poses` array and had never actually been looked at.
+
+### Guards found by the new tooling
+
+Two gaps existed that no threshold test could see, because both stayed inside
+their margins while being wrong:
+
+- The seam probe ignored the squash channels. Dropping them moved لاکی's mouth
+  by less than half a unit against a one-unit floor.
+- Every لاکی measurement sat within 0.2 units of the shell apex, where the rim
+  genuinely is `y=76` — so a probe returning a flat 76 passed everything. The
+  rim is now solved from the shipped shell path and compared at 40 samples per
+  segment.
+
+Also corrected: a doc comment in the probes claiming a "3.00 → 2.05" clearance
+that does not reproduce. The real figures are 4.000 authored, 3.046 derived, and
+they now live in the baseline rather than in a comment where a stale number can
+hide.
+
+### Verification of the verification
+
+Three times, a check had *looked* clean when it had not run. `npm run mutate`
+now refuses to report `killed` unless the file bytes actually changed and a
+declared `expect`/`absent` post-condition holds; a crashed suite reports
+`crashed`, not a kill. 16 mutations are checked in. `test/studio.test.mjs` boots
+`examples/studio.html`'s own module script in jsdom, so a renamed export breaks
+the suite rather than only the page. See `CONTRIBUTING.md`.
+
+### Docs
+
+README restructured around using the library; the internals moved to
+`DESIGN.md`; `CONTRIBUTING.md` added.
+
 ## 0.4.1
 
 Packaging and docs only — no runtime change.

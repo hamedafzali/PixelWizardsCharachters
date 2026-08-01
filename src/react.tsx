@@ -2,6 +2,7 @@ import * as React from 'react'
 import type { ActorFrame, EmotionOverrides } from './types.js'
 import { ActorRig } from './rig.js'
 import { CHARACTERS } from './characters/index.js'
+import { characterRoster, type RosterOptions } from './picker.js'
 
 export interface CharacterActorProps {
   /** character slug from the built-in roster (roozi, ava, …) */
@@ -67,4 +68,58 @@ export function CharacterActor({
   }, [frame])
 
   return <div ref={hostRef} className={className} style={style} />
+}
+
+export interface CharacterPickerProps extends RosterOptions {
+  value?: string
+  onChange?: (slug: string) => void
+  className?: string
+}
+
+/**
+ * React picker. The DOM twin of `createCharacterPicker` in `picker.ts`.
+ *
+ * Two implementations, one roster: both read {@link characterRoster} and
+ * neither contains a list of characters. `test/picker.test.mjs` enumerates both
+ * and asserts they produce the same slugs in the same order, so a character
+ * added to the library cannot appear in one picker and not the other.
+ *
+ * `dangerouslySetInnerHTML` is doing something ordinary here: the thumbnails are
+ * SVG produced by this package's own renderer from its own character specs, not
+ * anything a caller supplies. The class names match the vanilla picker
+ * (`ca-picker`, `ca-picker-item`, `is-selected`) so one stylesheet dresses both.
+ */
+export function CharacterPicker({
+  value,
+  onChange,
+  className,
+  ...roster
+}: CharacterPickerProps): React.ReactElement {
+  const entries = React.useMemo(
+    () => characterRoster(roster),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [roster.size, roster.emotion, roster.intensity],
+  )
+  const selected = value ?? entries[0]?.slug
+
+  return (
+    <div className={className ? `ca-picker ${className}` : 'ca-picker'} role="radiogroup" aria-label="character">
+      {entries.map((e) => (
+        <button
+          key={e.slug}
+          type="button"
+          role="radio"
+          data-slug={e.slug}
+          aria-label={e.name}
+          aria-checked={e.slug === selected}
+          tabIndex={e.slug === selected ? 0 : -1}
+          className={e.slug === selected ? 'ca-picker-item is-selected' : 'ca-picker-item'}
+          onClick={() => onChange?.(e.slug)}
+        >
+          <span aria-hidden="true" dangerouslySetInnerHTML={{ __html: e.svg }} />
+          <span className="ca-picker-name">{e.name}</span>
+        </button>
+      ))}
+    </div>
+  )
 }

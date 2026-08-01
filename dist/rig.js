@@ -6,7 +6,7 @@ import { resolvePosture } from './posture.js';
 import { ensureAction, composePoses, poseToTransform } from './timing.js';
 import { IdleMicroMotion, blinkStyle } from './micro.js';
 import { FrameInterpolator } from './interpolate.js';
-import { LocomotionDriver, LOCO_TARGETS, drivesGait } from './locomotion.js';
+import { LocomotionDriver, LOCO_TARGETS, drivesGait, wrapPhase } from './locomotion.js';
 import { planGesture } from './gestures.js';
 import { VISEMES, textToVisemes } from './visemes.js';
 /**
@@ -150,6 +150,8 @@ export class ActorRig {
         this.raf = null;
         this.lastTick = 0;
         this.reduced = false;
+        /** a pinned gait phase, or null to let the cycle run; see {@link pinGaitPhase} */
+        this.pinnedPhase = null;
         this.spec = spec;
         this.opts = { blink: true, size: 160, ...opts };
         this.frame = defaultFrame(spec.slug);
@@ -289,14 +291,32 @@ export class ActorRig {
         this.lastArtKey = this.artKey(this.frame);
     }
     /**
-     * Blink lids over each eye, positioned from the spec's eye anchors. Parented
-     * to the head layer (or the flip group) so they mirror with the character —
-     * appended to the `<svg>` root they landed on the wrong eyes when facing left.
+     * Blink lids over each eye, positioned from the spec's eye anchors.
+     *
+     * **Parented to whatever the eyes themselves are drawn into**, so the lids
+     * inherit exactly the transforms the eyes do. Anything else desynchronises
+     * them the moment something moves:
+     *
+     *   - Appended to the `<svg>` root, they landed on the wrong eyes when facing
+     *     left, because the facing flip mirrors `.rig-flip` and not the root.
+     *   - Appended to `.rig-flip`, they sat *outside* all three transform
+     *     carriers — `.rig-root` (locomotion), `.rig-body` (gesture and squash)
+     *     and `.rig-mood` (emotion idle). For a character with a head layer that
+     *     was invisible, since the head layer was used instead. For the two
+     *     characters with no head layer (بومی, سیمرغ) it meant a blink during a
+     *     walk, a gesture or any non-neutral posture closed the lid over empty
+     *     art-space while the eyes had moved away.
+     *
+     * Reading the parent off `.eyeG` is correct by construction for both cases:
+     * a head layer if there is one, the torso or the mood group if there is not.
+     * Appending puts the lid after the eye art, which is the paint order an
+     * overlay needs.
      */
     injectLids() {
         if (!this.svg)
             return;
-        const parent = this.layers.head ?? this.svg.querySelector('.rig-flip') ?? this.svg;
+        const eyeParent = this.eyeGs[0]?.parentNode;
+        const parent = eyeParent ?? this.layers.head ?? this.svg.querySelector('.rig-flip') ?? this.svg;
         const ns = 'http://www.w3.org/2000/svg';
         const { x, y, r } = this.spec.eyes;
         this.lids = x.map((cx) => {
@@ -494,10 +514,66 @@ export class ActorRig {
         const has = (t) => t === 'root' || t === 'torso' || !!this.layers[t];
         return drivesGait(l, has, this.spec.gaits) ? l : null;
     }
+    /**
+     * Hold the gait cycle at one phase, or `null` to let it run again.
+     *
+     * This is a review tool: a walk cycle is eight frames of decision that go by
+     * in half a second, and "is the far leg passing through at the right moment"
+     * cannot be answered at speed. It exists on the rig rather than in the studio
+     * because there is exactly one correct way to freeze a gait and it depends on
+     * how the character is driven — a phase-driven character has its pose written
+     * inline every tick, while a fallback character is running a CSS animation on
+     * `.rig-root`, and pausing one does nothing for the other. Both are handled
+     * here so nothing downstream has to know which case it is looking at.
+     *
+     * Returns how the freeze was achieved, which the caller may want to show:
+     * `'phase'`, `'css'`, or `'none'` when the character is not moving at all.
+     */
+    pinGaitPhase(phase) {
+        this.pinnedPhase = phase === null ? null : wrapPhase(phase);
+        const driven = this.drivenGait();
+        if (this.root) {
+            // The CSS-fallback case. `animation-delay` is negative on purpose: it
+            // starts the animation that far into its own timeline, which — paused —
+            // is exactly "show me this frame".
+            if (driven === null && phase !== null && this.frame.locomotion !== 'idle') {
+                const dur = this.rootAnimationDuration();
+                this.root.style.animationDelay = `${-phase * dur}s`;
+                this.root.style.animationPlayState = 'paused';
+                return 'css';
+            }
+            this.root.style.animationDelay = '';
+            this.root.style.animationPlayState = '';
+        }
+        if (phase !== null && driven !== null) {
+            // Publish immediately: a paused rig may not tick again, and a scrub that
+            // only takes effect on the next frame reads as a broken control.
+            this.loco.phase = this.pinnedPhase;
+            for (const t of LOCO_TARGETS) {
+                if (t !== 'root' && t !== 'torso' && !this.layers[t])
+                    continue;
+                this.setContribution(t, 'loco', this.loco.pose(t));
+            }
+            this.flushTransforms();
+            return 'phase';
+        }
+        return driven === null && this.frame.locomotion === 'idle' ? 'none' : 'phase';
+    }
+    /** The duration the CSS body-gait rule runs for, read off the rule the rig set. */
+    rootAnimationDuration() {
+        const m = /\s([\d.]+)s/.exec(this.root?.style.animation ?? '');
+        return m?.[1] ? Number(m[1]) : 1;
+    }
     /** Advance the gait cycle and publish one pose per driven layer. */
     tickLocomotion(dt) {
         const gait = this.drivenGait();
         this.loco.advance(dt, gait, Math.max(0.3, this.frame.speed));
+        // A pinned phase overrides whatever the advance produced. Advancing first
+        // and then overwriting — rather than skipping the advance — keeps the
+        // driver's own state consistent, so releasing the pin resumes from where
+        // the scrub left off instead of snapping back.
+        if (this.pinnedPhase !== null && gait !== null)
+            this.loco.phase = this.pinnedPhase;
         // Written every tick including idle, where the driver returns identity:
         // that is what clears the last stride's pose when the character stops.
         for (const t of LOCO_TARGETS) {
@@ -521,7 +597,9 @@ export class ActorRig {
         if (!this.svg)
             return;
         const svg = this.svg;
-        const plan = planGesture(g, this.frame.locomotion, this.drivenGait(), (layer) => !!svg.querySelector(`.${layer}`), this.spec.gestureFallback);
+        const plan = this.planFor(g);
+        if (plan === null)
+            return;
         if (plan.mode === 'blocked') {
             // Refused, not deferred — but the channel must still clear, or the frame
             // holds a gesture that will never play and the next apply() of the same
@@ -555,6 +633,64 @@ export class ActorRig {
             }
             this.clearGesture(g);
         }, dur * 1000);
+    }
+    /**
+     * How this gesture would play right now — which layers, or why not.
+     *
+     * Shared by {@link playGesture} and {@link scrubGesture} so the two can never
+     * disagree about routing. A studio that resolved the plan itself would be a
+     * fourth copy of that decision, and the whole point of scrubbing is to watch
+     * the thing that actually ships.
+     */
+    planFor(g) {
+        const svg = this.svg;
+        if (!svg)
+            return null;
+        return planGesture(g, this.frame.locomotion, this.drivenGait(), (layer) => !!svg.querySelector(`.${layer}`), this.spec.gestureFallback);
+    }
+    /**
+     * Hold a gesture at a fraction of its timeline instead of playing it.
+     *
+     * `t` is 0..1 across the **whole** action, so `t = 0.1` lands inside the
+     * derived anticipation and `t = 0.9` inside the settle — the beats that
+     * appear in no `poses` array and that nobody had ever actually looked at
+     * before this existed. `null` releases the hold.
+     *
+     * The mechanism is deliberately the real animation, paused: the same
+     * `@keyframes` rule {@link playGesture} starts, with a negative
+     * `animation-delay` to seek and `animation-play-state: paused` to hold. It
+     * would have been easier to compute the pose with `sampleAction` and write it
+     * inline — and it would have been a different thing. `sampleAction` is an
+     * interpolator written in TypeScript; this is the browser's, which is the one
+     * the user sees. Where they disagree (a keyframe list whose transform
+     * functions do not match, so CSS falls back to matrix interpolation) the
+     * browser is right by definition. `test/sample.test.mjs` binds the two so the
+     * batch tooling can keep using the sampler with a known limit.
+     */
+    scrubGesture(g, t) {
+        const svg = this.svg;
+        if (!svg)
+            return null;
+        const plan = this.planFor(g);
+        if (plan === null || plan.mode === 'blocked')
+            return plan;
+        const suffix = plan.mode === 'fallback' ? '_fb' : '';
+        for (const part of plan.parts) {
+            const el = svg.querySelector(`.${part.layer}`);
+            if (!el)
+                continue;
+            if (t === null) {
+                el.style.animation = '';
+                el.style.animationDelay = '';
+                el.style.animationPlayState = '';
+                continue;
+            }
+            const name = `caG_${g}_${part.layer}${suffix}`;
+            el.style.animation = ensureAction(svg.ownerDocument, name, part.action);
+            el.style.animationDelay = `${-Math.max(0, Math.min(1, t)) * part.action.dur}s`;
+            el.style.animationPlayState = 'paused';
+        }
+        return plan;
     }
     /**
      * Release the gesture channel — through the interpolator, which owns it.

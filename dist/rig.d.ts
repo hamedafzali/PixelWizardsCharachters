@@ -1,6 +1,7 @@
 import type { ActorFrame, CharacterSpec, Gesture, EmotionOverrides } from './types.js';
 import { type MicroConfig } from './micro.js';
 import { type InterpolationProfile } from './interpolate.js';
+import { type GesturePlan } from './gestures.js';
 /**
  * CSS the rig needs.
  *
@@ -110,6 +111,8 @@ export declare class ActorRig {
     private raf;
     private lastTick;
     private reduced;
+    /** a pinned gait phase, or null to let the cycle run; see {@link pinGaitPhase} */
+    private pinnedPhase;
     constructor(spec: CharacterSpec, opts?: RigOptions);
     /** The frame as last requested, before easing. */
     get goal(): ActorFrame;
@@ -144,9 +147,26 @@ export declare class ActorRig {
     /** Full render — only when the drawn art changes. Re-caches rig hooks. */
     private render;
     /**
-     * Blink lids over each eye, positioned from the spec's eye anchors. Parented
-     * to the head layer (or the flip group) so they mirror with the character —
-     * appended to the `<svg>` root they landed on the wrong eyes when facing left.
+     * Blink lids over each eye, positioned from the spec's eye anchors.
+     *
+     * **Parented to whatever the eyes themselves are drawn into**, so the lids
+     * inherit exactly the transforms the eyes do. Anything else desynchronises
+     * them the moment something moves:
+     *
+     *   - Appended to the `<svg>` root, they landed on the wrong eyes when facing
+     *     left, because the facing flip mirrors `.rig-flip` and not the root.
+     *   - Appended to `.rig-flip`, they sat *outside* all three transform
+     *     carriers — `.rig-root` (locomotion), `.rig-body` (gesture and squash)
+     *     and `.rig-mood` (emotion idle). For a character with a head layer that
+     *     was invisible, since the head layer was used instead. For the two
+     *     characters with no head layer (بومی, سیمرغ) it meant a blink during a
+     *     walk, a gesture or any non-neutral posture closed the lid over empty
+     *     art-space while the eyes had moved away.
+     *
+     * Reading the parent off `.eyeG` is correct by construction for both cases:
+     * a head layer if there is one, the torso or the mood group if there is not.
+     * Appending puts the lid after the eye art, which is the paint order an
+     * overlay needs.
      */
     private injectLids;
     private artKey;
@@ -214,6 +234,24 @@ export declare class ActorRig {
      * disagree about it.
      */
     private drivenGait;
+    /**
+     * Hold the gait cycle at one phase, or `null` to let it run again.
+     *
+     * This is a review tool: a walk cycle is eight frames of decision that go by
+     * in half a second, and "is the far leg passing through at the right moment"
+     * cannot be answered at speed. It exists on the rig rather than in the studio
+     * because there is exactly one correct way to freeze a gait and it depends on
+     * how the character is driven — a phase-driven character has its pose written
+     * inline every tick, while a fallback character is running a CSS animation on
+     * `.rig-root`, and pausing one does nothing for the other. Both are handled
+     * here so nothing downstream has to know which case it is looking at.
+     *
+     * Returns how the freeze was achieved, which the caller may want to show:
+     * `'phase'`, `'css'`, or `'none'` when the character is not moving at all.
+     */
+    pinGaitPhase(phase: number | null): 'phase' | 'css' | 'none';
+    /** The duration the CSS body-gait rule runs for, read off the rule the rig set. */
+    private rootAnimationDuration;
     /** Advance the gait cycle and publish one pose per driven layer. */
     private tickLocomotion;
     /**
@@ -228,6 +266,35 @@ export declare class ActorRig {
      * one timeout, so they cannot drift apart by a frame.
      */
     playGesture(g: Gesture): void;
+    /**
+     * How this gesture would play right now — which layers, or why not.
+     *
+     * Shared by {@link playGesture} and {@link scrubGesture} so the two can never
+     * disagree about routing. A studio that resolved the plan itself would be a
+     * fourth copy of that decision, and the whole point of scrubbing is to watch
+     * the thing that actually ships.
+     */
+    planFor(g: Gesture): GesturePlan | null;
+    /**
+     * Hold a gesture at a fraction of its timeline instead of playing it.
+     *
+     * `t` is 0..1 across the **whole** action, so `t = 0.1` lands inside the
+     * derived anticipation and `t = 0.9` inside the settle — the beats that
+     * appear in no `poses` array and that nobody had ever actually looked at
+     * before this existed. `null` releases the hold.
+     *
+     * The mechanism is deliberately the real animation, paused: the same
+     * `@keyframes` rule {@link playGesture} starts, with a negative
+     * `animation-delay` to seek and `animation-play-state: paused` to hold. It
+     * would have been easier to compute the pose with `sampleAction` and write it
+     * inline — and it would have been a different thing. `sampleAction` is an
+     * interpolator written in TypeScript; this is the browser's, which is the one
+     * the user sees. Where they disagree (a keyframe list whose transform
+     * functions do not match, so CSS falls back to matrix interpolation) the
+     * browser is right by definition. `test/sample.test.mjs` binds the two so the
+     * batch tooling can keep using the sampler with a known limit.
+     */
+    scrubGesture(g: Gesture, t: number | null): GesturePlan | null;
     /**
      * Release the gesture channel — through the interpolator, which owns it.
      * Writing `this.frame` directly would be undone by the next tick.

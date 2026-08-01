@@ -55,6 +55,20 @@ export declare function poseToTransform(p: Pose): string;
  */
 export declare function composePoses(poses: Iterable<Pose>): Pose;
 /**
+ * The compiled keyframe table: `[t, pose]` pairs sorted by `t ∈ [0,1]`, where
+ * `t` is a fraction of the action's total `dur`.
+ *
+ * This is the *whole* action — the authored poses plus the derived anticipation
+ * and settle beats — and it is the single source of truth for what an action
+ * does. {@link buildAction} serialises it to CSS; `sampleAction` evaluates it
+ * at a moment. Neither re-derives it, so the two cannot disagree about what a
+ * gesture is, only about how they interpolate between stops.
+ *
+ * Exported because "what does this action look like at t?" is a question the
+ * preview tooling has to answer without a browser to run the animation.
+ */
+export declare function actionStops(a: TimedAction): Array<[number, Pose]>;
+/**
  * Compile a {@link TimedAction} into a `@keyframes` rule body plus the
  * `animation` shorthand that plays it once.
  */

@@ -10,7 +10,8 @@
 export { defaultFrame, LAYER_ORDER } from './types.js';
 export { EMOTIONS, EMOTION_LABELS, resolveEmotion } from './emotions.js';
 export { POSTURES, resolvePosture } from './posture.js';
-export { buildAction, ensureAction, poseToTransform, composePoses } from './timing.js';
+export { buildAction, actionStops, ensureAction, poseToTransform, composePoses } from './timing.js';
+export { sampleAction, sampleActionFrames, frameCount, parseEasing, easeBezier, EASING_KEYWORDS, } from './sample.js';
 export { FrameInterpolator, EASINGS, DEFAULT_PROFILE } from './interpolate.js';
 export { IdleMicroMotion, blinkStyle, BLINK_STYLES } from './micro.js';
 export { GESTURES, GESTURE_NAMES, GESTURE_DURING, planGesture, gestureLayers, gaitDrivenLayers, conflictsWithGait, locoTargetLayer, } from './gestures.js';
@@ -18,6 +19,7 @@ export { VISEMES, PMAP, textToVisemes } from './visemes.js';
 export { eyes, brows, eyeWidenScale, eyeWidenTransform, eyeLidRy } from './draw.js';
 export { CHARACTERS, CHARACTER_SLUGS } from './characters/index.js';
 export { renderActorSVG, drawMouth } from './render.js';
+export { characterRoster, createCharacterPicker } from './picker.js';
 export { ActorRig, RIG_CSS, artKeyOf } from './rig.js';
 export { LocomotionDriver, GAITS, LOCO_TARGETS, WALK_PHASES, FLY_PHASES, WING_FOLD_SX, samplePhase, wrapPhase, canDrive, drivesGait, } from './locomotion.js';
 //# sourceMappingURL=index.js.map

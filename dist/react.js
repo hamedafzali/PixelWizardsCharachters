@@ -1,7 +1,8 @@
-import { jsx as _jsx } from "react/jsx-runtime";
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import * as React from 'react';
 import { ActorRig } from './rig.js';
 import { CHARACTERS } from './characters/index.js';
+import { characterRoster } from './picker.js';
 /**
  * React binding for {@link ActorRig}. The rig owns the DOM and mutates it
  * imperatively; React only feeds it frames, so lip-sync and gaze never trigger
@@ -40,5 +41,25 @@ export function CharacterActor({ character, frame, emotions, size = 160, blink =
             rig.current.apply(frame);
     }, [frame]);
     return _jsx("div", { ref: hostRef, className: className, style: style });
+}
+/**
+ * React picker. The DOM twin of `createCharacterPicker` in `picker.ts`.
+ *
+ * Two implementations, one roster: both read {@link characterRoster} and
+ * neither contains a list of characters. `test/picker.test.mjs` enumerates both
+ * and asserts they produce the same slugs in the same order, so a character
+ * added to the library cannot appear in one picker and not the other.
+ *
+ * `dangerouslySetInnerHTML` is doing something ordinary here: the thumbnails are
+ * SVG produced by this package's own renderer from its own character specs, not
+ * anything a caller supplies. The class names match the vanilla picker
+ * (`ca-picker`, `ca-picker-item`, `is-selected`) so one stylesheet dresses both.
+ */
+export function CharacterPicker({ value, onChange, className, ...roster }) {
+    const entries = React.useMemo(() => characterRoster(roster), 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [roster.size, roster.emotion, roster.intensity]);
+    const selected = value ?? entries[0]?.slug;
+    return (_jsx("div", { className: className ? `ca-picker ${className}` : 'ca-picker', role: "radiogroup", "aria-label": "character", children: entries.map((e) => (_jsxs("button", { type: "button", role: "radio", "data-slug": e.slug, "aria-label": e.name, "aria-checked": e.slug === selected, tabIndex: e.slug === selected ? 0 : -1, className: e.slug === selected ? 'ca-picker-item is-selected' : 'ca-picker-item', onClick: () => onChange?.(e.slug), children: [_jsx("span", { "aria-hidden": "true", dangerouslySetInnerHTML: { __html: e.svg } }), _jsx("span", { className: "ca-picker-name", children: e.name })] }, e.slug))) }));
 }
 //# sourceMappingURL=react.js.map
