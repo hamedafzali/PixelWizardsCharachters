@@ -28,13 +28,27 @@
     "and the gap tool reports both."
   ],
   "$caveat": [
-    "These annotations are mine, not a native speaker's and not from a pronouncing",
-    "lexicon. They are standard enough that the aggregate measurements will hold,",
-    "but individual entries should be treated as reviewable rather than settled —",
-    "especially the four carrying `colloquial` notes, and ستاره / متشکرم, where",
-    "the unstressed vowels are the kind a fluent speaker reduces further than I",
-    "have marked. Review by a Persian speaker is the cheapest improvement available",
-    "to this file."
+    "These annotations were marked by hand and are NOT a native speaker's. Three",
+    "have since been checked against Wiktionary's Iranian Persian IPA and carry a",
+    "`source` field; the rest have not, and remain one person's reading.",
+    "",
+    "An earlier version of this note claimed 'the four entries carrying colloquial",
+    "notes'. There were two. That error is left recorded here rather than quietly",
+    "removed, because it is the argument for the check: a hand-marked file's own",
+    "description of its weak points was itself wrong, and nothing caught it until",
+    "somebody counted.",
+    "",
+    "What the lexicon check changed: ستاره and متشکرم were confirmed exactly as",
+    "marked, so the two entries flagged as least trustworthy were in fact fine.",
+    "What it found instead was the opposite defect — three entries whose formal",
+    "marking is correct but which reduce hard in Tehrani speech and carried no",
+    "`colloquial` note at all. Unverified ground truth was wrong in a different",
+    "place than the person who wrote it guessed.",
+    "",
+    "Still outstanding, and NOT resolvable by more lexicon lookups: whether the",
+    "written register is the right reference at all for a children's character,",
+    "and the stress placement, which no entry here marks. Review by a Persian",
+    "speaker remains the cheapest improvement available to this file."
   ],
   "items": [
     {
@@ -133,7 +147,8 @@
       "text": "ستاره",
       "roman": "setâre",
       "gloss": "star",
-      "words": [[["s", "e"], ["t", "â"], ["r", "e"]]]
+      "words": [[["s", "e"], ["t", "â"], ["r", "e"]]],
+      "source": "en.wiktionary.org: Iranian Persian [se.t̪ʰɒː.ɹé] — confirmed as marked"
     },
     {
       "text": "پروانه",
@@ -164,7 +179,9 @@
       "roman": "motešakkeram",
       "gloss": "thank you",
       "words": [[["m", "o"], ["t", "e"], ["š", "a", "k"], ["k", "e"], ["r", "a", "m"]]],
-      "note": "five syllables from six letters — the one item where letters undercount rather than overcount"
+      "note": "five syllables from six letters — the one item where letters undercount rather than overcount",
+      "colloquial": "motšakkeram — 4 syllables rather than 5, the /e/ of -te- drops",
+      "source": "en.wiktionary.org: Iranian Persian [mot̪ʰeʃæˈkʲːeɾæm], Tehrani [mot̪ʃæˈkʲeɾæm]"
     },
     {
       "text": "خیلی خوب",
@@ -189,7 +206,9 @@
       "roman": "man gorosneam",
       "gloss": "I am hungry",
       "words": [[["m", "a", "n"]], [["g", "o"], ["r", "o", "s"], ["n", "e"], ["a", "m"]]],
-      "note": "carries a ZWNJ (U+200C), which textToVisemes skips — correctly, by accident of being unmapped"
+      "note": "carries a ZWNJ (U+200C), which textToVisemes skips — correctly, by accident of being unmapped",
+      "colloquial": "man gošname — گرسنه collapses from 3 syllables to 2",
+      "source": "en.wiktionary.org: گرسنه Iranian Persian [ɡ̥o.ɹos.né], Tehrani [ɡ̥oʃ.né]"
     },
     {
       "text": "سلام بچه‌ها",
