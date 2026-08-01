@@ -1,6 +1,7 @@
 import type { ActorFrame, CharacterSpec, VisemeSpec, EmotionOverrides, RigLayer, RigLayers } from './types.js'
 import { resolveEmotion } from './emotions.js'
 import { VISEMES } from './visemes.js'
+import { sanitizeFrame } from './validate.js'
 
 /**
  * Build the mouth `<path>`/`<g>` markup for a viseme + explicit openness. The
@@ -123,6 +124,12 @@ export function renderActorSVG(
   size = 120,
   emotions?: EmotionOverrides,
 ): string {
+  // The static path has no previous frame to keep, so an unknown name lands on
+  // the documented default. There is no hook here either: this function is a
+  // pure string builder that a server may call thousands of times, and a
+  // callback parameter would be observability nobody asked for. Callers that
+  // want to know can validate first — `sanitizeFrame` is exported.
+  frame = sanitizeFrame(frame)
   const emotion = resolveEmotion(frame.emotion, emotions)
   const { grads, art, layers, mouth } = spec.render({ emotion, intensity: frame.intensity })
   const viseme = VISEMES[frame.viseme]

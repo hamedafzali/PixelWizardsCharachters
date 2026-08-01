@@ -2,6 +2,7 @@ import type { ActorFrame, CharacterSpec, Gesture, EmotionOverrides } from './typ
 import { type MicroConfig } from './micro.js';
 import { type InterpolationProfile } from './interpolate.js';
 import { type GesturePlan } from './gestures.js';
+import { type OnInvalidFrame } from './validate.js';
 /**
  * CSS the rig needs.
  *
@@ -68,6 +69,16 @@ export interface RigOptions {
      * jump mid-flight gets nothing, and this is how it finds out.
      */
     onGestureBlocked?: (gesture: Gesture, reason: 'semantic') => void;
+    /**
+     * A frame named an emotion, viseme or gesture that does not exist. The rig
+     * kept what it was already doing (see `src/validate.ts`) instead of throwing;
+     * this is how a driver finds out it is sending a name the library cannot use.
+     *
+     * Fires once per bad channel, per `apply()`. Throwing from inside restores
+     * the old fail-fast behaviour, which is a reasonable thing for a test suite
+     * to do.
+     */
+    onInvalidFrame?: OnInvalidFrame;
     /** idle micro-motion tuning; `{ amount: 0 }` disables it */
     micro?: MicroConfig;
     /** per-channel easing overrides; see {@link DEFAULT_PROFILE} */

@@ -22,6 +22,7 @@ const CROSS = ['test/rig-crosschar.test.mjs']
 // live guard on the picker and the transport, not just documentation.
 const PICKER = ['test/picker.test.mjs', 'test/studio.test.mjs']
 const SCRUB = ['test/scrub.test.mjs', 'test/studio.test.mjs']
+const VALIDATE = ['test/validate.test.mjs']
 
 export default [
   // ── blink lids are parented where the eyes are ─────────────────────────────
@@ -176,5 +177,112 @@ export default [
     tests: SCRUB,
     mutate: replace('if (this.pinnedPhase !== null && gait !== null) this.loco.phase = this.pinnedPhase', ''),
     absent: 'if (this.pinnedPhase !== null && gait !== null)',
+  },
+
+  // ── invalid frame values ──────────────────────────────────────────────────
+  // A guard against a crash is the easiest kind of guard to write vacuously:
+  // catch everything, do nothing, and the test that only asserts "did not
+  // throw" is happy. These six are all the ways this one could be hollow.
+  {
+    id: 'M17',
+    note: 'the frame is validated and then used unvalidated anyway — the original crash, restored',
+    file: 'src/validate.ts',
+    tests: VALIDATE,
+    mutate: replace('  return out ?? frame\n', '  return frame\n'),
+    absent: 'return out ?? frame',
+  },
+  {
+    id: 'M18',
+    note: 'a bad value is corrected silently — the driver is never told it is sending names the library cannot use',
+    file: 'src/validate.ts',
+    tests: VALIDATE,
+    mutate: replace('    onInvalid?.({ channel, value, kept })\n', ''),
+    absent: 'onInvalid?.(',
+  },
+  {
+    id: 'M19',
+    note: "policy (b): an unknown emotion resets the face to neutral instead of keeping what the character is wearing",
+    file: 'src/validate.ts',
+    tests: VALIDATE,
+    mutate: replace("fix('emotion', frame.emotion, current?.emotion ?? 'neutral')", "fix('emotion', frame.emotion, 'neutral')"),
+    expect: "fix('emotion', frame.emotion, 'neutral')",
+  },
+  {
+    id: 'M20',
+    note: 'an unknown gesture holds the previous one, replaying a movement nobody asked for',
+    file: 'src/validate.ts',
+    tests: VALIDATE,
+    mutate: replace("fix('gesture', frame.gesture, null)", "fix('gesture', frame.gesture, current?.gesture ?? null)"),
+    expect: "fix('gesture', frame.gesture, current?.gesture ?? null)",
+  },
+  {
+    id: 'M21',
+    note: "the membership test walks the prototype chain, so 'toString' is a valid emotion",
+    file: 'src/validate.ts',
+    tests: VALIDATE,
+    mutate: replace(
+      "return typeof name === 'string' && Object.prototype.hasOwnProperty.call(table, name)",
+      "return typeof name === 'string' && name in table",
+    ),
+    expect: 'name in table',
+  },
+  {
+    id: 'M22',
+    note: 'playGesture/scrubGesture skip the guard, so a direct call still reaches the bare lookup',
+    file: 'src/rig.ts',
+    tests: VALIDATE,
+    mutate: replace(`    if (!isKnownGesture(g)) {
+      this.opts.onInvalidFrame?.({ channel: 'gesture', value: g, kept: null })
+      return null
+    }
+`, ''),
+    absent: 'if (!isKnownGesture(g))',
+  },
+  {
+    id: 'M23',
+    note: 'locomotion goes back to being accepted and ignored — the frame claims a gait the DOM is not in',
+    file: 'src/validate.ts',
+    tests: VALIDATE,
+    mutate: replace(`  if (frame.locomotion !== undefined && !oneOf(LOCOMOTIONS, frame.locomotion)) {
+    fix('locomotion', frame.locomotion, current?.locomotion ?? 'idle')
+  }
+`, ''),
+    absent: "fix('locomotion'",
+  },
+  {
+    id: 'M24',
+    note: 'facing goes back to being accepted and ignored',
+    file: 'src/validate.ts',
+    tests: VALIDATE,
+    mutate: replace(`  if (frame.facing !== undefined && !oneOf(FACINGS, frame.facing)) {
+    fix('facing', frame.facing, current?.facing ?? 'right')
+  }
+`, ''),
+    absent: "fix('facing'",
+  },
+  {
+    id: 'M25',
+    note: 'the list check answers true for anything, so every locomotion and facing passes',
+    file: 'src/validate.ts',
+    tests: VALIDATE,
+    mutate: replace(
+      "return typeof name === 'string' && values.includes(name)",
+      "return typeof name === 'string'",
+    ),
+    expect: "function oneOf(values: readonly string[], name: unknown): boolean {\n  return typeof name === 'string'\n}",
+  },
+  {
+    // Only one direction of drift is testable, and that is the point. Removing
+    // a value ('fly') does not compile — LOCOMOTIONS *is* the union, so the
+    // rest of src/ stops building, which is a stronger guard than any test.
+    // Adding one compiles fine, silently widens the union, and would make
+    // `locomotion: 'run'` accepted again by a rig that cannot run. That is the
+    // half the type system cannot catch, so it is the half mutated here.
+    id: 'M26',
+    note: 'a value is added to LOCOMOTIONS that no gait implements — the silent no-op, reintroduced from the other end',
+    file: 'src/types.ts',
+    tests: VALIDATE,
+    mutate: replace("export const LOCOMOTIONS = ['idle', 'walk', 'fly'] as const", "export const LOCOMOTIONS = ['idle', 'walk', 'fly', 'run'] as const"),
+    expect: "'fly', 'run'] as const",
   },
 ]

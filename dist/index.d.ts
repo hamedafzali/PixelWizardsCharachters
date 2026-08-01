@@ -8,7 +8,7 @@
  * locomotion. See the README for the full contract.
  */
 export type { ActorFrame, EmotionName, VisemeName, Locomotion, Gesture, Facing, BrowKey, EmotionSpec, EmotionOverrides, VisemeSpec, CharacterSpec, LayerName, RigLayer, RigLayers, PostureSpec, PostureMap, } from './types.js';
-export { defaultFrame, LAYER_ORDER } from './types.js';
+export { defaultFrame, LAYER_ORDER, LOCOMOTIONS, FACINGS } from './types.js';
 export { EMOTIONS, EMOTION_LABELS, resolveEmotion } from './emotions.js';
 export { POSTURES, resolvePosture } from './posture.js';
 export { buildAction, actionStops, ensureAction, poseToTransform, composePoses } from './timing.js';
@@ -22,6 +22,8 @@ export type { MicroConfig, MicroOutput, BlinkStyle } from './micro.js';
 export { GESTURES, GESTURE_NAMES, GESTURE_DURING, planGesture, gestureLayers, gaitDrivenLayers, conflictsWithGait, locoTargetLayer, } from './gestures.js';
 export type { GestureDef, GesturePart, GesturePlan } from './gestures.js';
 export { VISEMES, PMAP, textToVisemes } from './visemes.js';
+export { sanitizeFrame } from './validate.js';
+export type { FrameIssue, OnInvalidFrame } from './validate.js';
 export { eyes, brows, eyeWidenScale, eyeWidenTransform, eyeLidRy } from './draw.js';
 export { CHARACTERS, CHARACTER_SLUGS } from './characters/index.js';
 export { renderActorSVG, drawMouth } from './render.js';

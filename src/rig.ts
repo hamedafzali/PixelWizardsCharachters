@@ -10,6 +10,7 @@ import { FrameInterpolator, type InterpolationProfile } from './interpolate.js'
 import { LocomotionDriver, LOCO_TARGETS, drivesGait, wrapPhase, type GaitName, type LocoTarget } from './locomotion.js'
 import { planGesture, type GesturePart, type GesturePlan } from './gestures.js'
 import { VISEMES, textToVisemes } from './visemes.js'
+import { sanitizeFrame, isKnownGesture, type OnInvalidFrame } from './validate.js'
 
 /**
  * CSS the rig needs.
@@ -152,6 +153,16 @@ export interface RigOptions {
    * jump mid-flight gets nothing, and this is how it finds out.
    */
   onGestureBlocked?: (gesture: Gesture, reason: 'semantic') => void
+  /**
+   * A frame named an emotion, viseme or gesture that does not exist. The rig
+   * kept what it was already doing (see `src/validate.ts`) instead of throwing;
+   * this is how a driver finds out it is sending a name the library cannot use.
+   *
+   * Fires once per bad channel, per `apply()`. Throwing from inside restores
+   * the old fail-fast behaviour, which is a reasonable thing for a test suite
+   * to do.
+   */
+  onInvalidFrame?: OnInvalidFrame
   /** idle micro-motion tuning; `{ amount: 0 }` disables it */
   micro?: MicroConfig
   /** per-channel easing overrides; see {@link DEFAULT_PROFILE} */
@@ -443,7 +454,10 @@ export class ActorRig {
    * silently never arriving.
    */
   apply(frame: Partial<ActorFrame>): void {
-    this.interp.target(frame)
+    // Before anything else: a name the library does not have would otherwise
+    // reach a lookup deep in render() and throw there, losing the whole
+    // performance to one bad word.
+    this.interp.target(sanitizeFrame(frame, this.frame, this.opts.onInvalidFrame))
     if (this.interp.settling) this.settledFired = false
     if (this.reduced || this.raf === null) this.interp.finish()
     this.frame = this.interp.current
@@ -706,6 +720,12 @@ export class ActorRig {
   planFor(g: Gesture): GesturePlan | null {
     const svg = this.svg
     if (!svg) return null
+    // `playGesture('dab')` reaches here without passing through `apply()`, so
+    // the same courtesy has to be extended here: no plan rather than a throw.
+    if (!isKnownGesture(g)) {
+      this.opts.onInvalidFrame?.({ channel: 'gesture', value: g, kept: null })
+      return null
+    }
     return planGesture(
       g,
       this.frame.locomotion,

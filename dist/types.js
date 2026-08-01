@@ -6,6 +6,18 @@
  * performs them. Every visible behaviour is one field on the frame — nothing
  * is hidden in call sites, so the whole performance is data.
  */
+/**
+ * The two channels with no lookup table behind them.
+ *
+ * Emotions, visemes and gestures each have a registry the runtime can ask "do
+ * you have this?". Locomotion and facing had only a type, which is gone by the
+ * time a driver's JSON arrives — so an unknown value used to sail through and
+ * quietly do nothing, which is worse than a crash: there is no signal at all.
+ * These arrays are what `sanitizeFrame` asks instead, and the types are derived
+ * *from* them so the list and the union cannot drift apart.
+ */
+export const LOCOMOTIONS = ['idle', 'walk', 'fly'];
+export const FACINGS = ['left', 'right'];
 export function defaultFrame(character) {
     return {
         character,

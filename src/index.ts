@@ -26,7 +26,7 @@ export type {
   PostureSpec,
   PostureMap,
 } from './types.js'
-export { defaultFrame, LAYER_ORDER } from './types.js'
+export { defaultFrame, LAYER_ORDER, LOCOMOTIONS, FACINGS } from './types.js'
 
 export { EMOTIONS, EMOTION_LABELS, resolveEmotion } from './emotions.js'
 export { POSTURES, resolvePosture } from './posture.js'
@@ -50,6 +50,8 @@ export {
 } from './gestures.js'
 export type { GestureDef, GesturePart, GesturePlan } from './gestures.js'
 export { VISEMES, PMAP, textToVisemes } from './visemes.js'
+export { sanitizeFrame } from './validate.js'
+export type { FrameIssue, OnInvalidFrame } from './validate.js'
 export { eyes, brows, eyeWidenScale, eyeWidenTransform, eyeLidRy } from './draw.js'
 export { CHARACTERS, CHARACTER_SLUGS } from './characters/index.js'
 

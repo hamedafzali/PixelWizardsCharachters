@@ -10,9 +10,21 @@ import type { GaitName } from './locomotion.js';
 export type EmotionName = 'neutral' | 'happy' | 'excited' | 'thinking' | 'encouraging' | 'sad' | 'surprised' | 'sleepy' | 'love' | 'confused' | 'proud' | 'shy';
 /** Persian viseme groups (phoneme families that share a mouth shape). */
 export type VisemeName = 'rest' | 'aa' | 'e' | 'i' | 'o' | 'u' | 'mbp' | 'f' | 'sh' | 's' | 'l';
-export type Locomotion = 'idle' | 'walk' | 'fly';
+/**
+ * The two channels with no lookup table behind them.
+ *
+ * Emotions, visemes and gestures each have a registry the runtime can ask "do
+ * you have this?". Locomotion and facing had only a type, which is gone by the
+ * time a driver's JSON arrives — so an unknown value used to sail through and
+ * quietly do nothing, which is worse than a crash: there is no signal at all.
+ * These arrays are what `sanitizeFrame` asks instead, and the types are derived
+ * *from* them so the list and the union cannot drift apart.
+ */
+export declare const LOCOMOTIONS: readonly ["idle", "walk", "fly"];
+export declare const FACINGS: readonly ["left", "right"];
+export type Locomotion = typeof LOCOMOTIONS[number];
 export type Gesture = 'wave' | 'jump' | 'spin' | 'nod' | 'shake' | 'shrug' | 'point' | 'clap' | 'bounce';
-export type Facing = 'left' | 'right';
+export type Facing = typeof FACINGS[number];
 /** One moment of performance. This is the AI ⇄ rig contract. */
 export interface ActorFrame {
     /** character slug, e.g. "roozi" */

@@ -1,5 +1,46 @@
 # Changelog
 
+## 0.5.1
+
+An invalid frame value no longer throws. `rig.apply({ emotion: 'joy' })` used to
+fail as `Cannot read properties of undefined (reading 'squint')` from inside a
+render — a whole performance lost to one bad word, in a stack trace that never
+named it. `viseme` and `gesture` had the same hole, on `apply()` and on
+`playGesture()`/`scrubGesture()`.
+
+The rig now **keeps what the character is already doing** and reports the
+rejection through a new `onInvalidFrame` option (`{ channel, value, kept }`);
+throwing from inside it restores fail-fast. Where there is nothing to keep — the
+first frame, or a static `renderActorSVG` — the documented default applies. An
+unknown *gesture* is the one exception and drops to `null`, since holding the
+previous one would replay a movement the caller never asked for. `sanitizeFrame`
+is exported for callers who would rather check before applying; a clean frame
+comes back by identity, so `speak()` still allocates nothing per viseme.
+
+`locomotion` and `facing` are covered too, for the opposite reason: they never
+threw. `locomotion: 'run'` was accepted, stored, and then matched by nothing —
+the character stood still, `rig.frame.locomotion` read back `'run'`, and no
+signal of any kind reached the caller. A silent no-op is the worse of the two
+failures; a crash at least names a line. Neither had a registry to interrogate,
+so `types.ts` now exports `LOCOMOTIONS` and `FACINGS` and derives the unions
+*from* those arrays, which makes the runtime list and the type one thing rather
+than two that agree today. `rig.frame` no longer reports a state the character
+is not in.
+
+This is a robustness fix rather than a feature: the intended caller is a model
+emitting frames as JSON, which is exactly the consumer whose `as ActorFrame` at
+the boundary is a promise it cannot keep. The numeric channels were measured for
+the same failure — `intensity: 'high'`, `mouthOpen: null`, `gaze: null` — and
+none of them put a `NaN` into the DOM, so none of them are guarded.
+
+Found by the 0.5.0 tarball smoke test, not by a unit test, and found by accident.
+Ten new mutations (M17–M26) cover the ways this guard could have been hollow —
+including one that corrects the value but tells nobody, and one that adds a
+locomotion no gait implements. An eleventh was written and could not be applied:
+deleting a value from `LOCOMOTIONS` does not compile, because the union is
+derived from it. That is a stronger guarantee than a passing test, and it is
+recorded in the catalogue rather than dropped.
+
 ## 0.5.0
 
 Tooling and a studio. The library gained the pieces needed to *look* at what it

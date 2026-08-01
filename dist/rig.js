@@ -9,6 +9,7 @@ import { FrameInterpolator } from './interpolate.js';
 import { LocomotionDriver, LOCO_TARGETS, drivesGait, wrapPhase } from './locomotion.js';
 import { planGesture } from './gestures.js';
 import { VISEMES, textToVisemes } from './visemes.js';
+import { sanitizeFrame, isKnownGesture } from './validate.js';
 /**
  * CSS the rig needs.
  *
@@ -379,7 +380,10 @@ export class ActorRig {
      * silently never arriving.
      */
     apply(frame) {
-        this.interp.target(frame);
+        // Before anything else: a name the library does not have would otherwise
+        // reach a lookup deep in render() and throw there, losing the whole
+        // performance to one bad word.
+        this.interp.target(sanitizeFrame(frame, this.frame, this.opts.onInvalidFrame));
         if (this.interp.settling)
             this.settledFired = false;
         if (this.reduced || this.raf === null)
@@ -646,6 +650,12 @@ export class ActorRig {
         const svg = this.svg;
         if (!svg)
             return null;
+        // `playGesture('dab')` reaches here without passing through `apply()`, so
+        // the same courtesy has to be extended here: no plan rather than a throw.
+        if (!isKnownGesture(g)) {
+            this.opts.onInvalidFrame?.({ channel: 'gesture', value: g, kept: null });
+            return null;
+        }
         return planGesture(g, this.frame.locomotion, this.drivenGait(), (layer) => !!svg.querySelector(`.${layer}`), this.spec.gestureFallback);
     }
     /**

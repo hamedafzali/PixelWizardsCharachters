@@ -179,8 +179,22 @@ new ActorRig(spec, {
   onFrame: (f) => (debugEl.textContent = f.emotion),
   onSettled: (f) => analytics.track('pose', f),
   onGestureBlocked: (g, reason) => console.log(g, reason),
+  onInvalidFrame: (i) => console.warn(i),  // named something that does not exist
 })
 ```
+
+**Bad values do not throw, and do not pass silently.** If a frame names an
+`emotion`, `viseme`, `gesture`, `locomotion` or `facing` the library does not
+have — `emotion: 'joy'` instead of `'happy'`, or `locomotion: 'run'` — the rig
+keeps what the character is already doing and reports it through
+`onInvalidFrame` (`{ channel, value, kept }`). An unknown *gesture* is dropped
+rather than held, since holding it would replay a movement you never asked for.
+`rig.frame` therefore never reports a state the character is not actually in.
+This is for the
+case the types cannot cover: a model producing frames as JSON, where `as
+ActorFrame` at the boundary is a promise the caller cannot keep. Throw from
+inside the callback if you would rather fail fast, or call the exported
+`sanitizeFrame(frame, current?)` yourself before applying.
 
 **`onFrame` fires every tick of a transition** — roughly 18 times for a 300ms
 change at 60fps. That is deliberate: the rendered frame really does change each

@@ -1,5 +1,6 @@
 import { resolveEmotion } from './emotions.js';
 import { VISEMES } from './visemes.js';
+import { sanitizeFrame } from './validate.js';
 /**
  * Build the mouth `<path>`/`<g>` markup for a viseme + explicit openness. The
  * rig calls this every frame and swaps it into `#mouthG`, so lip-sync is a
@@ -103,6 +104,12 @@ function buildLayers(l) {
  * override any channel of any emotion.
  */
 export function renderActorSVG(spec, frame, size = 120, emotions) {
+    // The static path has no previous frame to keep, so an unknown name lands on
+    // the documented default. There is no hook here either: this function is a
+    // pure string builder that a server may call thousands of times, and a
+    // callback parameter would be observability nobody asked for. Callers that
+    // want to know can validate first — `sanitizeFrame` is exported.
+    frame = sanitizeFrame(frame);
     const emotion = resolveEmotion(frame.emotion, emotions);
     const { grads, art, layers, mouth } = spec.render({ emotion, intensity: frame.intensity });
     const viseme = VISEMES[frame.viseme];
