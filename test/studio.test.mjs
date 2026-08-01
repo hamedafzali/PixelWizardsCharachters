@@ -137,8 +137,15 @@ test('a gesture that is refused mid-flight is shown as refused, not as an ordina
   // read the state being left.
   studio.advance(200)
   const titles = new Map([...$('actions').querySelectorAll('button')].map((b) => [b.dataset.g, b.title]))
+  const classes = new Map([...$('actions').querySelectorAll('button')].map((b) => [b.dataset.g, b.className]))
   for (const g of grounded) {
     assert.match(titles.get(g), /ممکن نیست/, `${g} is refused while flying but the studio shows it as playable`)
+    // Three routings, three looks. This started as three opacities — 1, 0.8,
+    // 0.45 — and in a browser the first two were indistinguishable, which is a
+    // thing no test in this file can see. What is checkable is that the studio
+    // still marks the distinction at all, so the styling has something to hang
+    // off; whether it reads is a question for a person with the page open.
+    assert.equal(classes.get(g), 'no', `${g} is refused but carries no marker class`)
   }
   const ok = GESTURE_NAMES.filter((g) => !grounded.includes(g))
   for (const g of ok) assert.doesNotMatch(titles.get(g), /ممکن نیست/, `${g} was marked refused but is not`)
@@ -236,4 +243,22 @@ test('changing character re-asks the rig how each gesture routes rather than reu
   }
   assert.ok(other, 'only one character in the picker')
   assert.ok(changed, 'no character in the roster routes its gestures differently — is buildActions running at all?')
+
+  // سیمرغ is the deliberately unlayered character, so every limb gesture falls
+  // back to its whole body. That is the case the marker class exists for.
+  studio.document.querySelector('[data-slug="simorgh"]')
+    .dispatchEvent(new studio.window.MouseEvent('click', { bubbles: true }))
+  const fb = [...$('actions').querySelectorAll('button.fb')].map((b) => b.dataset.g)
+  assert.ok(fb.length > 0, 'سیمرغ falls back on nothing — either the roster or the marker changed')
+})
+
+test('the studio never hides a gesture it cannot fit', () => {
+  // jsdom has no layout, so this cannot check overflow — and overflow is exactly
+  // what went wrong: nine buttons in one non-wrapping row pushed three of them
+  // off the panel, unreachable, while every test passed. Caught by opening the
+  // page. What is checkable is the invariant underneath: one button per gesture,
+  // all of them in the container, none removed to make room.
+  const buttons = $('actions').querySelectorAll('button')
+  assert.equal(buttons.length, $('clip').querySelectorAll('option[value^="g:"]').length,
+    'the button list and the clip list disagree about how many gestures there are')
 })
