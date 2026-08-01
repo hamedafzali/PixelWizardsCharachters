@@ -23,6 +23,7 @@ const CROSS = ['test/rig-crosschar.test.mjs']
 const PICKER = ['test/picker.test.mjs', 'test/studio.test.mjs']
 const SCRUB = ['test/scrub.test.mjs', 'test/studio.test.mjs']
 const VALIDATE = ['test/validate.test.mjs']
+const DISTINCT = ['test/viseme-distinct.test.mjs']
 
 export default [
   // ── blink lids are parented where the eyes are ─────────────────────────────
@@ -284,5 +285,52 @@ export default [
     tests: VALIDATE,
     mutate: replace("export const LOCOMOTIONS = ['idle', 'walk', 'fly'] as const", "export const LOCOMOTIONS = ['idle', 'walk', 'fly', 'run'] as const"),
     expect: "'fly', 'run'] as const",
+  },
+  {
+    // The original collision, restored exactly: `press` stops being consulted
+    // for the width and both closed mouths draw a 9*w half-width again. This
+    // is the mutation that would have caught the bug in the first place.
+    id: 'M27',
+    note: 'the lip press goes back to being the same width as the rest — rest and mbp collapse',
+    file: 'src/render.ts',
+    tests: DISTINCT,
+    mutate: replace('const half = (press ? 7 : 9) * w', 'const half = 9 * w'),
+    expect: 'const half = 9 * w',
+  },
+  {
+    id: 'M28',
+    note: 'the press stops being flatter than the rest, leaving only the width to tell them apart',
+    file: 'src/render.ts',
+    tests: DISTINCT,
+    mutate: replace('${cy + (press ? 0.5 : 5)}', '${cy + 5}'),
+    absent: 'press ? 0.5 : 5',
+  },
+  {
+    // A closed beak going back to "nearly closed". The mutant still produces a
+    // *different string* from rest — it differs by 0.45 art units — so this
+    // mutation only dies against a test that measures separation rather than
+    // inequality. That asymmetry is why MIN_SEP exists.
+    id: 'M29',
+    note: 'closed stops shutting the beak, restoring the 0.45-unit rest/mbp difference',
+    file: 'src/render.ts',
+    tests: DISTINCT,
+    mutate: replace('const open = viseme.closed ? 0 : 1.5 + o * 14', 'const open = 1.5 + o * 14'),
+    absent: 'viseme.closed ? 0 :',
+  },
+  {
+    id: 'M30',
+    note: 'the beak aperture range narrows back to 3-12, where rest/f and i/s collide',
+    file: 'src/render.ts',
+    tests: DISTINCT,
+    mutate: replace('viseme.closed ? 0 : 1.5 + o * 14', 'viseme.closed ? 0 : 3 + o * 9'),
+    expect: 'viseme.closed ? 0 : 3 + o * 9',
+  },
+  {
+    id: 'M31',
+    note: 'the beak drops the tongue again, so l and e separate only by a 0.88-unit width',
+    file: 'src/render.ts',
+    tests: DISTINCT,
+    mutate: replace('if (viseme.tongue && o > 0.3) {\n      parts.push(`<ellipse cx="${cx}" cy="${cy + 1 + open * 0.45}" rx="${4 * w}" ry="${open * 0.28}" fill="#ff7a95"/>`)\n    }\n', ''),
+    absent: 'open * 0.28',
   },
 ]

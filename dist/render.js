@@ -13,13 +13,40 @@ export function drawMouth(mouth, viseme, mouthOpen) {
     const o = Math.max(viseme.o, mouthOpen);
     const w = (viseme.w ?? 1) / (viseme.r ?? 1);
     if (beak) {
-        const open = 3 + o * 9;
-        return (`<path d="M${cx - 11 * w} ${cy} Q ${cx} ${cy - 6} ${cx + 11 * w} ${cy} Q ${cx} ${cy + 2} ${cx - 11 * w} ${cy} Z" fill="#f19100"/>` +
-            `<path d="M${cx - 9 * w} ${cy + 1} Q ${cx} ${cy + 2 + open} ${cx + 9 * w} ${cy + 1} Q ${cx} ${cy + open} ${cx - 9 * w} ${cy + 1} Z" fill="#d97a00"/>`);
+        // The beak used to map all eleven visemes onto one scalar, `3 + o * 9`,
+        // dropping `closed`, `tongue` and `tuck` on the floor. Eleven shapes into
+        // nine art units collides by arithmetic, and the pair sweep found three:
+        // rest/mbp at 0.45 units apart, rest/f at 0.99, e/l at 0.88. Distinct
+        // strings, one picture — an owl's mouth carried less information than a
+        // fox's while claiming the same table.
+        //
+        // Three changes, each measured against the full pair sweep rather than
+        // picked: `closed` shuts the beak outright, the open range widens from
+        // 3–12 to 1.5–15.5, and `tongue` draws, which is what separates `l` from
+        // `e` structurally instead of by a 0.88-unit width difference.
+        const open = viseme.closed ? 0 : 1.5 + o * 14;
+        const parts = [
+            `<path d="M${cx - 11 * w} ${cy} Q ${cx} ${cy - 6} ${cx + 11 * w} ${cy} Q ${cx} ${cy + 2} ${cx - 11 * w} ${cy} Z" fill="#f19100"/>`,
+            `<path d="M${cx - 9 * w} ${cy + 1} Q ${cx} ${cy + 2 + open} ${cx + 9 * w} ${cy + 1} Q ${cx} ${cy + open} ${cx - 9 * w} ${cy + 1} Z" fill="#d97a00"/>`,
+        ];
+        if (viseme.tongue && o > 0.3) {
+            parts.push(`<ellipse cx="${cx}" cy="${cy + 1 + open * 0.45}" rx="${4 * w}" ry="${open * 0.28}" fill="#ff7a95"/>`);
+        }
+        return parts.join('');
     }
     if (viseme.closed || o < 0.06) {
-        // A gentle closed smile.
-        return `<path d="M${cx - 9 * w} ${cy} Q ${cx} ${cy + 5} ${cx + 9 * w} ${cy}" stroke="${color}" stroke-width="3" stroke-linecap="round" fill="none"/>`;
+        // Two closed mouths reach this branch and they must not draw the same
+        // line. A rest is a relaxed smile; an /m/ is a lip *press* — flatter,
+        // narrower, and heavier where the lips compress.
+        //
+        // Before the split, `rest` (o 0.05, under the threshold) and `mbp`
+        // (closed, same w) produced byte-identical markup: a closure on م and
+        // silence were the same picture, and `speak()` pins mouthOpen to 0 so
+        // nothing rescued it at playback. A viseme table is a set of
+        // distinctions — two entries that render alike are one entry.
+        const press = viseme.closed === true;
+        const half = (press ? 7 : 9) * w;
+        return `<path d="M${cx - half} ${cy} Q ${cx} ${cy + (press ? 0.5 : 5)} ${cx + half} ${cy}" stroke="${color}" stroke-width="${press ? 3.6 : 3}" stroke-linecap="round" fill="none"/>`;
     }
     const rx = 9 * w;
     const ry = 2 + o * 7;

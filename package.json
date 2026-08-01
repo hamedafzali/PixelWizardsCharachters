@@ -39,7 +39,8 @@
     "sheet": "npm run build && node tools/sheet.mjs",
     "mutate": "node tools/mutate.mjs",
     "baseline": "npm run build && node tools/baseline.mjs",
-    "speech-gap": "npm run build && node tools/speech-gap.mjs"
+    "speech-gap": "npm run build && node tools/speech-gap.mjs",
+    "syllable-probe": "npm run build && node tools/syllable-probe.mjs"
   },
   "keywords": [
     "characters",
