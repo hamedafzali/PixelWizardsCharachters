@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.4.1
+
+Packaging and docs only — no runtime change.
+
+- Added `repository`, `homepage` and `bugs` to `package.json`. Without them the
+  npm page had no link back to the source at all, which is the root cause of the
+  broken links below.
+- Fixed two relative README links. npm resolves relative links against
+  `npmjs.com`, so `examples/studio.html` became a 404 at
+  `npmjs.com/package/examples/studio.html`. Now absolute GitHub URLs, and the
+  studio section says plainly that `examples/` is not part of the package.
+- The roster line listed seven characters; there are eight. `simorgh` was
+  missing, despite being referenced elsewhere in the README as the unlayered
+  fallback case.
+- `CHANGELOG.md` now ships in the tarball.
+
 ## 0.4.0
 
 ### Gesture registry

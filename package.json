@@ -1,7 +1,15 @@
 {
   "name": "pixel-wizards-charachters",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "A framework-agnostic library of animated, actable children's characters. An ActorFrame is one moment of performance — emotion, Persian-viseme lip-sync, gaze, brows, gestures and locomotion.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hamedafzali/PixelWizardsCharachters.git"
+  },
+  "homepage": "https://github.com/hamedafzali/PixelWizardsCharachters#readme",
+  "bugs": {
+    "url": "https://github.com/hamedafzali/PixelWizardsCharachters/issues"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -17,7 +25,8 @@
   },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "CHANGELOG.md"
   ],
   "sideEffects": false,
   "scripts": {

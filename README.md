@@ -8,7 +8,7 @@ story plays, and the rig performs them — emotion, Persian-viseme lip-sync,
 gaze, brows, gestures and locomotion. Every visible behaviour is one field on
 the frame, so the whole performance is data.
 
-Built for [KoodakBook](../KoodakBook) but standalone and reusable.
+Built for KoodakBook, but standalone and reusable.
 
 ## Install
 
@@ -36,7 +36,11 @@ npm run build && npm pack        # -> pixel-wizards-charachters-<version>.tgz
 
 ## The roster
 
-`roozi` · `ava` · `pashmak` · `laki` · `tondpa` · `boomi` · `khersi`
+`roozi` · `ava` · `pashmak` · `laki` · `tondpa` · `boomi` · `khersi` · `simorgh`
+
+Seven are built on the layered rig — independently articulated limbs driven by
+phase tables. `simorgh` is deliberately left unlayered as the CSS-fallback case,
+so the fallback path stays exercised rather than theoretical.
 
 ```ts
 import { CHARACTERS, CHARACTER_SLUGS } from 'pixel-wizards-charachters'
@@ -434,7 +438,7 @@ character overrides, and both were found by the seam tests rather than by eye.
 
 ## Notes & scope
 
-- **Walk / fly are phase-driven** for layered characters — see below. Characters
+- **Walk / fly are phase-driven** for layered characters — see above. Characters
   without limb layers keep the stylized CSS body-mechanics (bob, lean,
   wing-flap).
 - **Visemes are phoneme *groups***, not per-phoneme — see above.
@@ -442,7 +446,14 @@ character overrides, and both were found by the seam tests rather than by eye.
 
 ## Example
 
-Open [`examples/studio.html`](examples/studio.html) in a browser (after
-`npm run build`) for an interactive studio: every parameter as a live control,
-Persian-text lip-sync, gaze that follows the pointer, and a live JSON view of
-the actor contract.
+An interactive studio lives in the repository — every parameter as a live
+control, Persian-text lip-sync, gaze that follows the pointer, and a live JSON
+view of the actor contract. It is **not** part of the npm package; clone the
+repo to run it:
+
+```bash
+git clone https://github.com/hamedafzali/PixelWizardsCharachters.git
+cd PixelWizardsCharachters && npm install && npm run demo
+```
+
+Source: [`examples/studio.html`](https://github.com/hamedafzali/PixelWizardsCharachters/blob/main/examples/studio.html).
