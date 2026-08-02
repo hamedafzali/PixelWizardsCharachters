@@ -510,12 +510,14 @@ test('ava\'s hair crown paints after her face, not before it', () => {
   // the test above cannot see it: the crown used to be emitted before the
   // face-skin circle, which then painted over nearly the whole thing, leaving
   // only the two side locks visible. The face circle's fill is unique in the
-  // string, so its index is unambiguous; avHair's first occurrence is the
-  // crown (the side locks, unaffected either way, come later).
+  // string, so its index is unambiguous. The long back cascades (added later,
+  // for a longer/wavier hairstyle) are *meant* to paint before the face — they
+  // sit behind her, not on top of her — so this checks the crown's own path
+  // specifically rather than the first `avHair` fill in the document.
   const svg = renderActorSVG(CHARACTERS.ava, defaultFrame('ava'))
   const faceAt = svg.indexOf('r="45" fill="url(#avS)"')
-  const hairAt = svg.indexOf('fill="url(#avHair)"')
-  assert.ok(faceAt >= 0 && hairAt >= 0, 'both the face circle and the hair fill must be present')
+  const hairAt = svg.indexOf('M55 92c0-30 20-50 45-50')
+  assert.ok(faceAt >= 0 && hairAt >= 0, 'both the face circle and the hair crown must be present')
   assert.ok(faceAt < hairAt, 'the face-skin circle must paint before the hair crown, or the crown vanishes under it')
 })
 
