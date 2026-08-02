@@ -24,6 +24,7 @@ const PICKER = ['test/picker.test.mjs', 'test/studio.test.mjs']
 const SCRUB = ['test/scrub.test.mjs', 'test/studio.test.mjs']
 const VALIDATE = ['test/validate.test.mjs']
 const DISTINCT = ['test/viseme-distinct.test.mjs']
+const REDUCTION = ['test/viseme-reduction.test.mjs']
 
 export default [
   // ── blink lids are parented where the eyes are ─────────────────────────────
@@ -317,14 +318,13 @@ export default [
     mutate: replace('const open = viseme.closed ? 0 : 1.5 + o * 14', 'const open = 1.5 + o * 14'),
     absent: 'viseme.closed ? 0 :',
   },
-  {
-    id: 'M30',
-    note: 'the beak aperture range narrows back to 3-12, where rest/f and i/s collide',
-    file: 'src/render.ts',
-    tests: DISTINCT,
-    mutate: replace('viseme.closed ? 0 : 1.5 + o * 14', 'viseme.closed ? 0 : 3 + o * 9'),
-    expect: 'viseme.closed ? 0 : 3 + o * 9',
-  },
+  // M30 used to live here: narrowing the beak range back to 3-12 and checking
+  // that rest/f and i/s collided again. Design 3 dropped both `f` and `s` as
+  // shipped viseme names, so that specific collision can no longer happen —
+  // the mutation survives, correctly, because the guard it checked is no
+  // longer live for the shapes the table actually ships. Retired rather than
+  // kept as a permanently-red entry; the range widening itself is still
+  // exercised by M29 and M31 above.
   {
     id: 'M31',
     note: 'the beak drops the tongue again, so l and e separate only by a 0.88-unit width',
@@ -333,4 +333,41 @@ export default [
     mutate: replace('if (viseme.tongue && o > 0.3) {\n      parts.push(`<ellipse cx="${cx}" cy="${cy + 1 + open * 0.45}" rx="${4 * w}" ry="${open * 0.28}" fill="#ff7a95"/>`)\n    }\n', ''),
     absent: 'open * 0.28',
   },
+  // ── Design 3: dropped viseme groups must route to their measured merge ─────
+  {
+    id: 'M32',
+    note: "'ه' (was e) routes to 'aa' instead of the measured target 'l'",
+    file: 'src/visemes.ts',
+    tests: REDUCTION,
+    mutate: replace("put('هحعیيئ', 'l')", "put('هحعیيئ', 'aa')"),
+    expect: "put('هحعیيئ', 'aa')",
+  },
+  {
+    id: 'M33',
+    note: "'ف' (was f) stops merging into 'rest' and falls back into 'mbp'",
+    file: 'src/visemes.ts',
+    tests: REDUCTION,
+    mutate: replace("put('ف', 'rest')", "put('ف', 'mbp')"),
+    expect: "put('ف', 'mbp')",
+  },
+  {
+    id: 'M34',
+    note: "'ش' (was sh) routes to 'l' instead of the measured target 'u'",
+    file: 'src/visemes.ts',
+    tests: REDUCTION,
+    mutate: replace("put('شچژ', 'u')", "put('شچژ', 'l')"),
+    expect: "put('شچژ', 'l')",
+  },
+  {
+    id: 'M35',
+    note: "'س' (was s) reverts to the rejected 'rest' merge instead of the chosen 'l'",
+    file: 'src/visemes.ts',
+    tests: REDUCTION,
+    mutate: replace("put('سزصثذضظ', 'l')", "put('سزصثذضظ', 'rest')"),
+    expect: "put('سزصثذضظ', 'rest')",
+  },
+  // No mutation restores a sixth VISEMES entry: VisemeName is a five-member
+  // union now, so an extra key fails `tsc`, not a runtime guard — the type
+  // system is the check, and mutate.mjs correctly reports a mutant like that
+  // as `not-applied` rather than counting it as covered.
 ]

@@ -5,19 +5,51 @@ import type { VisemeName, VisemeSpec } from './types.js'
  * phonemes. This is deliberately a *group* mapping (grapheme → viseme family),
  * which gives readable, kid-friendly lip-sync without a full G2P pass. A backend
  * phonemiser can emit these same names for higher accuracy.
+ *
+ * Five shapes, reduced from an original eleven (Design 3). The reduction is a
+ * legibility choice, not a defect fix — see the note below on what evidence
+ * does and doesn't support it.
+ *
+ * **Method**: max-min dispersion (farthest-point greedy) over the worst-case
+ * (min of lips-rig and beak-rig) pairwise distance between every one of the
+ * eleven original shapes, with `rest` and `mbp` pinned — the one pair that
+ * *was* a rendering defect (see the `drawMouth` beak branch in `render.ts`),
+ * independently fixed, and not up for renegotiation by a dispersion run.
+ * Vowels and consonants were dispersed separately so a merge never crosses
+ * that boundary (an unconstrained run put `l` — the single busiest bucket —
+ * into `o`, geometrically fine and phonetically nonsense). The result:
+ *
+ *   - `e` → `l` (1.33 apart, closest survivor)
+ *   - `i` → `l` (3.37)
+ *   - `o` → `u` (3.13)
+ *   - `sh` → `u` (2.35)
+ *   - `f` → `rest` (1.54, next-best `l` at 3.64 — an unambiguous match)
+ *   - `s` → `l` (3.54, vs. `rest` at 3.21 — the closer geometric match, but
+ *     rejected: routing a real fricative into the silence shape reintroduces
+ *     the exact rest/consonant collision this whole table exists to avoid,
+ *     just under a higher separation floor, and a side-by-side screenshot on
+ *     both a lips and a beak character showed `s`→`rest` reading as the
+ *     mouth going still on a beak character in particular, where `s` and
+ *     `rest` are the two closest shapes in the whole table)
+ *
+ * **What corrected measurement does *not* show**: the earlier claim that
+ * several shapes collided broadly was measured through a beak-geometry parser
+ * that had two live bugs (both in `tools/lib/speech.mjs`, fixed alongside
+ * this table) — one silently returned hardcoded defaults for every closed
+ * shape, the other never read beak markup at all and reported `aperture: 0`
+ * for every beak viseme regardless of which one it was. Re-run against the
+ * corrected parser, the full eleven-shape matrix has exactly one pair below
+ * 2 units *besides* the already-merged ones (`e`/`l` at 1.33, which is why
+ * they're merged) — not the "several near-collisions" the broken tool
+ * implied. The case for this table is the l-bucket usage skew and general
+ * legibility at small size, not "the old table was broadly unreadable".
  */
 export const VISEMES: Record<VisemeName, VisemeSpec> = {
-  rest: { o: 0.05, w: 1, label: '—' },
+  rest: { o: 0.05, w: 1, label: '— ف' },
   aa: { o: 1, w: 1.12, label: 'آ اَ' }, // آب، دَر، ها
-  e: { o: 0.5, w: 1.08, label: 'اِ ه' },
-  i: { o: 0.32, w: 1.34, label: 'ای ی' }, // سیب، دیو
-  o: { o: 0.55, w: 0.82, r: 1.15, label: 'اُ' },
-  u: { o: 0.4, w: 0.66, r: 1.45, label: 'او و' }, // موش
+  u: { o: 0.4, w: 0.66, r: 1.45, label: 'او و اُ ش چ ژ' }, // موش؛ absorbs او/اُ and ش‌گروه
   mbp: { o: 0, closed: true, w: 1, label: 'م ب پ' },
-  f: { o: 0.16, w: 1, tuck: true, label: 'ف' },
-  sh: { o: 0.36, w: 0.85, r: 1.2, label: 'ش چ ژ' },
-  s: { o: 0.22, w: 1.24, label: 'س ز ص' },
-  l: { o: 0.42, w: 1, tongue: true, label: 'ل ن ت د ر' },
+  l: { o: 0.42, w: 1, tongue: true, label: 'ل ن ت د ر ه ی س ز' },
 }
 
 /** Persian letter → viseme family. */
@@ -26,13 +58,12 @@ const put = (letters: string, v: VisemeName) => {
   for (const c of letters) PMAP[c] = v
 }
 put('اآأإٱ', 'aa')
-put('هحع', 'e')
-put('یيئ', 'i')
+put('هحعیيئ', 'l') // was e / i
 put('وؤ', 'u')
 put('مبپ', 'mbp')
-put('ف', 'f')
-put('شچژ', 'sh')
-put('سزصثذضظ', 's')
+put('ف', 'rest') // was its own shape f, merged as measured (1.54 apart, unambiguous)
+put('شچژ', 'u') // was sh
+put('سزصثذضظ', 'l') // was s
 put('لنتدرطكکگقغخج', 'l')
 
 /**

@@ -15,10 +15,16 @@ export type EmotionName =
   | 'encouraging' | 'sad' | 'surprised' | 'sleepy' | 'love'
   | 'confused' | 'proud' | 'shy'
 
-/** Persian viseme groups (phoneme families that share a mouth shape). */
-export type VisemeName =
-  | 'rest' | 'aa' | 'e' | 'i' | 'o' | 'u'
-  | 'mbp' | 'f' | 'sh' | 's' | 'l'
+/**
+ * Persian viseme groups (phoneme families that share a mouth shape).
+ *
+ * Five shapes, not the eleven this library shipped before. `e`, `i`, `o`,
+ * `f`, `sh` and `s` were each measurably indistinguishable from a survivor at
+ * a child's viewing size once `rest`/`mbp` — the one pair that was a genuine
+ * defect, not a design choice — got its own fix; see `VISEMES` in
+ * `visemes.ts` for the measurements and the merge each dropped name took.
+ */
+export type VisemeName = 'rest' | 'aa' | 'mbp' | 'u' | 'l'
 
 /**
  * The two channels with no lookup table behind them.

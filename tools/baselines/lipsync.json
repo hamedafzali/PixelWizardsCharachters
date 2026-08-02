@@ -11,13 +11,13 @@
     "medianAbsDurationErrorPct": 15,
     "worstDurationErrorPct": 70,
     "vowelsExpected": 87,
-    "vowelsEmitted": 56,
-    "itemsWithVowelDeficit": 19,
-    "itemsWithVowelSurplus": 0,
-    "meanLShare": 0.344,
-    "worstLongestRun": 4,
-    "meanDistance": 0.186,
-    "meanDistinctShapes": 4.03
+    "vowelsEmitted": 40,
+    "itemsWithVowelDeficit": 22,
+    "itemsWithVowelSurplus": 1,
+    "meanLShare": 0.528,
+    "worstLongestRun": 5,
+    "meanDistance": 0.178,
+    "meanDistinctShapes": 3.03
   },
   "items": [
     {
@@ -70,12 +70,12 @@
       "durationErrorPct": -15,
       "emittedVowels": 0,
       "vowelDeficit": 1,
-      "lShare": 0.5,
-      "longestRun": 1,
-      "distinctShapes": 2,
+      "lShare": 1,
+      "longestRun": 2,
+      "distinctShapes": 1,
       "distance": 0.333,
-      "emitted": "s l",
-      "ideal": "s aa l"
+      "emitted": "l l",
+      "ideal": "l aa l"
     },
     {
       "text": "دست",
@@ -89,12 +89,12 @@
       "durationErrorPct": 27.5,
       "emittedVowels": 0,
       "vowelDeficit": 1,
-      "lShare": 0.667,
-      "longestRun": 1,
-      "distinctShapes": 2,
+      "lShare": 1,
+      "longestRun": 3,
+      "distinctShapes": 1,
       "distance": 0.25,
-      "emitted": "l s l",
-      "ideal": "l aa s l"
+      "emitted": "l l l",
+      "ideal": "l aa l l"
     },
     {
       "text": "چشم",
@@ -106,14 +106,14 @@
       "emittedMs": 255,
       "idealMs": 200,
       "durationErrorPct": 27.5,
-      "emittedVowels": 0,
-      "vowelDeficit": 1,
+      "emittedVowels": 2,
+      "vowelDeficit": -1,
       "lShare": 0,
       "longestRun": 2,
       "distinctShapes": 2,
       "distance": 0.25,
-      "emitted": "sh sh mbp",
-      "ideal": "sh e sh mbp"
+      "emitted": "u u mbp",
+      "ideal": "u l u mbp"
     },
     {
       "text": "دوست",
@@ -127,12 +127,12 @@
       "durationErrorPct": 70,
       "emittedVowels": 1,
       "vowelDeficit": 0,
-      "lShare": 0.5,
-      "longestRun": 1,
-      "distinctShapes": 3,
+      "lShare": 0.75,
+      "longestRun": 2,
+      "distinctShapes": 2,
       "distance": 0,
-      "emitted": "l u s l",
-      "ideal": "l u s l"
+      "emitted": "l u l l",
+      "ideal": "l u l l"
     },
     {
       "text": "سلام",
@@ -146,12 +146,12 @@
       "durationErrorPct": -15,
       "emittedVowels": 1,
       "vowelDeficit": 1,
-      "lShare": 0.25,
-      "longestRun": 1,
-      "distinctShapes": 4,
+      "lShare": 0.5,
+      "longestRun": 2,
+      "distinctShapes": 3,
       "distance": 0.2,
-      "emitted": "s l aa mbp",
-      "ideal": "s aa l aa mbp"
+      "emitted": "l l aa mbp",
+      "ideal": "l aa l aa mbp"
     },
     {
       "text": "بابا",
@@ -208,7 +208,7 @@
       "distinctShapes": 3,
       "distance": 0.2,
       "emitted": "l l aa mbp",
-      "ideal": "l e l aa mbp"
+      "ideal": "l l l aa mbp"
     },
     {
       "text": "گربه",
@@ -220,14 +220,14 @@
       "emittedMs": 340,
       "idealMs": 400,
       "durationErrorPct": -15,
-      "emittedVowels": 1,
-      "vowelDeficit": 1,
-      "lShare": 0.5,
+      "emittedVowels": 0,
+      "vowelDeficit": 2,
+      "lShare": 0.75,
       "longestRun": 2,
-      "distinctShapes": 3,
+      "distinctShapes": 2,
       "distance": 0.2,
-      "emitted": "l l mbp e",
-      "ideal": "l o l mbp e"
+      "emitted": "l l mbp l",
+      "ideal": "l u l mbp l"
     },
     {
       "text": "خوبی",
@@ -239,14 +239,14 @@
       "emittedMs": 340,
       "idealMs": 400,
       "durationErrorPct": -15,
-      "emittedVowels": 2,
-      "vowelDeficit": 0,
-      "lShare": 0.25,
+      "emittedVowels": 1,
+      "vowelDeficit": 1,
+      "lShare": 0.5,
       "longestRun": 1,
-      "distinctShapes": 4,
+      "distinctShapes": 3,
       "distance": 0,
-      "emitted": "l u mbp i",
-      "ideal": "l u mbp i"
+      "emitted": "l u mbp l",
+      "ideal": "l u mbp l"
     },
     {
       "text": "درخت",
@@ -265,7 +265,7 @@
       "distinctShapes": 1,
       "distance": 0.333,
       "emitted": "l l l l",
-      "ideal": "l e l aa l l"
+      "ideal": "l l l aa l l"
     },
     {
       "text": "خورشید",
@@ -279,12 +279,12 @@
       "durationErrorPct": 27.5,
       "emittedVowels": 2,
       "vowelDeficit": 0,
-      "lShare": 0.5,
-      "longestRun": 1,
-      "distinctShapes": 4,
-      "distance": 0.167,
-      "emitted": "l u l sh i l",
-      "ideal": "l o l sh i l"
+      "lShare": 0.667,
+      "longestRun": 2,
+      "distinctShapes": 2,
+      "distance": 0,
+      "emitted": "l u l u l l",
+      "ideal": "l u l u l l"
     },
     {
       "text": "آفتاب",
@@ -302,8 +302,8 @@
       "longestRun": 1,
       "distinctShapes": 4,
       "distance": 0,
-      "emitted": "aa f l aa mbp",
-      "ideal": "aa f l aa mbp"
+      "emitted": "aa rest l aa mbp",
+      "ideal": "aa rest l aa mbp"
     },
     {
       "text": "ستاره",
@@ -315,14 +315,14 @@
       "emittedMs": 425,
       "idealMs": 600,
       "durationErrorPct": -29.2,
-      "emittedVowels": 2,
-      "vowelDeficit": 1,
-      "lShare": 0.4,
-      "longestRun": 1,
-      "distinctShapes": 4,
+      "emittedVowels": 1,
+      "vowelDeficit": 2,
+      "lShare": 0.8,
+      "longestRun": 2,
+      "distinctShapes": 2,
       "distance": 0.167,
-      "emitted": "s l aa l e",
-      "ideal": "s e l aa l e"
+      "emitted": "l l aa l l",
+      "ideal": "l l l aa l l"
     },
     {
       "text": "پروانه",
@@ -334,14 +334,14 @@
       "emittedMs": 510,
       "idealMs": 600,
       "durationErrorPct": -15,
-      "emittedVowels": 3,
-      "vowelDeficit": 0,
-      "lShare": 0.333,
-      "longestRun": 1,
-      "distinctShapes": 5,
+      "emittedVowels": 2,
+      "vowelDeficit": 1,
+      "lShare": 0.5,
+      "longestRun": 2,
+      "distinctShapes": 4,
       "distance": 0.286,
-      "emitted": "mbp l u aa l e",
-      "ideal": "mbp aa l f aa l e"
+      "emitted": "mbp l u aa l l",
+      "ideal": "mbp aa l rest aa l l"
     },
     {
       "text": "مدرسه",
@@ -353,14 +353,14 @@
       "emittedMs": 425,
       "idealMs": 600,
       "durationErrorPct": -29.2,
-      "emittedVowels": 1,
-      "vowelDeficit": 2,
-      "lShare": 0.4,
-      "longestRun": 2,
-      "distinctShapes": 4,
+      "emittedVowels": 0,
+      "vowelDeficit": 3,
+      "lShare": 0.8,
+      "longestRun": 4,
+      "distinctShapes": 2,
       "distance": 0.286,
-      "emitted": "mbp l l s e",
-      "ideal": "mbp aa l l e s e"
+      "emitted": "mbp l l l l",
+      "ideal": "mbp aa l l l l l"
     },
     {
       "text": "بستنی",
@@ -372,14 +372,14 @@
       "emittedMs": 425,
       "idealMs": 600,
       "durationErrorPct": -29.2,
-      "emittedVowels": 1,
-      "vowelDeficit": 2,
-      "lShare": 0.4,
-      "longestRun": 2,
-      "distinctShapes": 4,
+      "emittedVowels": 0,
+      "vowelDeficit": 3,
+      "lShare": 0.8,
+      "longestRun": 4,
+      "distinctShapes": 2,
       "distance": 0.286,
-      "emitted": "mbp s l l i",
-      "ideal": "mbp aa s l aa l i"
+      "emitted": "mbp l l l l",
+      "ideal": "mbp aa l l aa l l"
     },
     {
       "text": "آفرین",
@@ -391,14 +391,14 @@
       "emittedMs": 425,
       "idealMs": 600,
       "durationErrorPct": -29.2,
-      "emittedVowels": 2,
-      "vowelDeficit": 1,
-      "lShare": 0.4,
-      "longestRun": 1,
-      "distinctShapes": 4,
+      "emittedVowels": 1,
+      "vowelDeficit": 2,
+      "lShare": 0.6,
+      "longestRun": 3,
+      "distinctShapes": 3,
       "distance": 0.167,
-      "emitted": "aa f l i l",
-      "ideal": "aa f aa l i l"
+      "emitted": "aa rest l l l",
+      "ideal": "aa rest aa l l l"
     },
     {
       "text": "متشکرم",
@@ -410,14 +410,14 @@
       "emittedMs": 510,
       "idealMs": 1000,
       "durationErrorPct": -49,
-      "emittedVowels": 0,
-      "vowelDeficit": 5,
+      "emittedVowels": 1,
+      "vowelDeficit": 4,
       "lShare": 0.5,
       "longestRun": 2,
       "distinctShapes": 3,
       "distance": 0.5,
-      "emitted": "mbp l sh l l mbp",
-      "ideal": "mbp o l e sh aa l l e l aa mbp"
+      "emitted": "mbp l u l l mbp",
+      "ideal": "mbp u l l u aa l l l l aa mbp"
     },
     {
       "text": "خیلی خوب",
@@ -429,14 +429,14 @@
       "emittedMs": 680,
       "idealMs": 600,
       "durationErrorPct": 13.3,
-      "emittedVowels": 3,
-      "vowelDeficit": 0,
-      "lShare": 0.375,
-      "longestRun": 1,
-      "distinctShapes": 5,
+      "emittedVowels": 1,
+      "vowelDeficit": 2,
+      "lShare": 0.625,
+      "longestRun": 4,
+      "distinctShapes": 4,
       "distance": 0.111,
-      "emitted": "l i l i rest l u mbp",
-      "ideal": "l e i l i rest l u mbp"
+      "emitted": "l l l l rest l u mbp",
+      "ideal": "l l l l l rest l u mbp"
     },
     {
       "text": "شب بخیر",
@@ -450,12 +450,12 @@
       "durationErrorPct": -0.8,
       "emittedVowels": 1,
       "vowelDeficit": 2,
-      "lShare": 0.286,
-      "longestRun": 1,
-      "distinctShapes": 5,
+      "lShare": 0.429,
+      "longestRun": 3,
+      "distinctShapes": 4,
       "distance": 0.3,
-      "emitted": "sh mbp rest mbp l i l",
-      "ideal": "sh aa mbp rest mbp e l e i l"
+      "emitted": "u mbp rest mbp l l l",
+      "ideal": "u aa mbp rest mbp l l l l l"
     },
     {
       "text": "دوستت دارم",
@@ -469,12 +469,12 @@
       "durationErrorPct": 6.3,
       "emittedVowels": 2,
       "vowelDeficit": 2,
-      "lShare": 0.5,
-      "longestRun": 2,
-      "distinctShapes": 6,
+      "lShare": 0.6,
+      "longestRun": 3,
+      "distinctShapes": 5,
       "distance": 0.167,
-      "emitted": "l u s l l rest l aa l mbp",
-      "ideal": "l u s l e l rest l aa l aa mbp"
+      "emitted": "l u l l l rest l aa l mbp",
+      "ideal": "l u l l l l rest l aa l aa mbp"
     },
     {
       "text": "من گرسنه‌ام",
@@ -486,14 +486,14 @@
       "emittedMs": 850,
       "idealMs": 1000,
       "durationErrorPct": -15,
-      "emittedVowels": 2,
-      "vowelDeficit": 3,
-      "lShare": 0.4,
-      "longestRun": 2,
-      "distinctShapes": 6,
+      "emittedVowels": 1,
+      "vowelDeficit": 4,
+      "lShare": 0.6,
+      "longestRun": 5,
+      "distinctShapes": 4,
       "distance": 0.231,
-      "emitted": "mbp l rest l l s l e aa mbp",
-      "ideal": "mbp aa l rest l o l o s l e aa mbp"
+      "emitted": "mbp l rest l l l l l aa mbp",
+      "ideal": "mbp aa l rest l u l u l l l aa mbp"
     },
     {
       "text": "سلام بچه‌ها",
@@ -505,14 +505,14 @@
       "emittedMs": 850,
       "idealMs": 1000,
       "durationErrorPct": -15,
-      "emittedVowels": 4,
-      "vowelDeficit": 1,
-      "lShare": 0.1,
+      "emittedVowels": 3,
+      "vowelDeficit": 2,
+      "lShare": 0.4,
       "longestRun": 2,
-      "distinctShapes": 7,
+      "distinctShapes": 5,
       "distance": 0.231,
-      "emitted": "s l aa mbp rest mbp sh e e aa",
-      "ideal": "s aa l aa mbp rest mbp aa sh sh e e aa"
+      "emitted": "l l aa mbp rest mbp u l l aa",
+      "ideal": "l aa l aa mbp rest mbp aa u u l l aa"
     },
     {
       "text": "اسم من روزی است",
@@ -524,14 +524,14 @@
       "emittedMs": 1275,
       "idealMs": 1200,
       "durationErrorPct": 6.3,
-      "emittedVowels": 4,
-      "vowelDeficit": 2,
-      "lShare": 0.2,
-      "longestRun": 1,
-      "distinctShapes": 7,
+      "emittedVowels": 3,
+      "vowelDeficit": 3,
+      "lShare": 0.467,
+      "longestRun": 2,
+      "distinctShapes": 5,
       "distance": 0.176,
-      "emitted": "aa s mbp rest mbp l rest l u s i rest aa s l",
-      "ideal": "e s mbp e rest mbp aa l rest l u s i rest aa s l"
+      "emitted": "aa l mbp rest mbp l rest l u l l rest aa l l",
+      "ideal": "l l mbp l rest mbp aa l rest l u l l rest aa l l"
     },
     {
       "text": "کجا می‌روی",
@@ -543,14 +543,14 @@
       "emittedMs": 765,
       "idealMs": 1000,
       "durationErrorPct": -23.5,
-      "emittedVowels": 4,
-      "vowelDeficit": 1,
-      "lShare": 0.333,
+      "emittedVowels": 2,
+      "vowelDeficit": 3,
+      "lShare": 0.556,
       "longestRun": 2,
-      "distinctShapes": 6,
+      "distinctShapes": 5,
       "distance": 0.273,
-      "emitted": "l l aa rest mbp i l u i",
-      "ideal": "l o l aa rest mbp i l aa f i"
+      "emitted": "l l aa rest mbp l l u l",
+      "ideal": "l u l aa rest mbp l l aa rest l"
     },
     {
       "text": "بیا بازی کنیم",
@@ -562,14 +562,14 @@
       "emittedMs": 1105,
       "idealMs": 1200,
       "durationErrorPct": -7.9,
-      "emittedVowels": 5,
-      "vowelDeficit": 1,
-      "lShare": 0.154,
-      "longestRun": 2,
-      "distinctShapes": 6,
+      "emittedVowels": 2,
+      "vowelDeficit": 4,
+      "lShare": 0.462,
+      "longestRun": 3,
+      "distinctShapes": 4,
       "distance": 0.133,
-      "emitted": "mbp i aa rest mbp aa s i rest l l i mbp",
-      "ideal": "mbp i i aa rest mbp aa s i rest l o l i mbp"
+      "emitted": "mbp l aa rest mbp aa l l rest l l l mbp",
+      "ideal": "mbp l l aa rest mbp aa l l rest l u l l mbp"
     },
     {
       "text": "می‌خواهم بخوابم",
@@ -581,14 +581,14 @@
       "emittedMs": 1190,
       "idealMs": 1200,
       "durationErrorPct": -0.8,
-      "emittedVowels": 6,
-      "vowelDeficit": 0,
-      "lShare": 0.143,
+      "emittedVowels": 4,
+      "vowelDeficit": 2,
+      "lShare": 0.286,
       "longestRun": 2,
-      "distinctShapes": 7,
-      "distance": 0.333,
-      "emitted": "mbp i l u aa e mbp rest mbp l u aa mbp mbp",
-      "ideal": "mbp i l aa e aa mbp rest mbp e l aa mbp aa mbp"
+      "distinctShapes": 5,
+      "distance": 0.267,
+      "emitted": "mbp l l u aa l mbp rest mbp l u aa mbp mbp",
+      "ideal": "mbp l l aa l aa mbp rest mbp l l aa mbp aa mbp"
     }
   ]
 }

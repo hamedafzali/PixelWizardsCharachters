@@ -137,6 +137,13 @@ deliberate *group* mapping (grapheme family → mouth shape) — readable,
 kid-friendly lip-sync without a full G2P pass. `PMAP` exposes the letter→viseme
 table; `VISEMES` the shape specs with Persian labels.
 
+**Five shapes** — `rest` `aa` `mbp` `u` `l` — not more. Cut down from an
+original eleven by measuring, on both a lips and a beak character, which
+shapes were actually distinguishable at a child's viewing size; the six
+dropped (`e` `i` `o` `f` `sh` `s`) each route to their nearest measured
+survivor. Full method and distances are in the `VISEMES` doc comment in
+`src/visemes.ts`.
+
 **Timing is one viseme per written letter, and that is a measured decision,
 not a placeholder.** Persian omits short vowels in writing, so a letter isn't
 a syllable — against a 30-item hand-marked corpus

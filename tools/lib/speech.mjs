@@ -33,23 +33,30 @@
 import { readFileSync } from 'node:fs'
 import { textToVisemes } from '../../dist/index.js'
 
-/** Phoneme → viseme. Consonants transposed from the shipped PMAP; see above. */
+/**
+ * Phoneme → viseme. Consonants transposed from the shipped PMAP; see above.
+ *
+ * Tracks the reduced five-shape table (Design 3), not the original eleven —
+ * `e`/`i`/`h`/`ʔ` → `l`, `o` → `u`, `š`/`č`/`ž` → `u`, `f`/`v` → `rest`,
+ * `s`/`z` → `l`, matching the merges `PMAP` in `visemes.ts` now makes.
+ */
 export const P2V = {
   â: 'aa', a: 'aa',
-  e: 'e', h: 'e',
-  i: 'i', y: 'i',
-  o: 'o',
+  e: 'l', h: 'l',
+  i: 'l', y: 'l',
+  o: 'u',
   u: 'u',
   m: 'mbp', b: 'mbp', p: 'mbp',
-  f: 'f', v: 'f',
-  š: 'sh', č: 'sh', ž: 'sh',
-  s: 's', z: 's',
+  f: 'rest', v: 'rest',
+  š: 'u', č: 'u', ž: 'u',
+  s: 'l', z: 'l',
   l: 'l', n: 'l', t: 'l', d: 'l', r: 'l',
   k: 'l', g: 'l', q: 'l', ɣ: 'l', x: 'l', j: 'l',
-  ʔ: 'e',
+  ʔ: 'l',
 }
 
-export const VOWEL_VISEMES = new Set(['aa', 'e', 'i', 'o', 'u'])
+/** Only two of the five surviving shapes are vowel-family; see `VISEMES`. */
+export const VOWEL_VISEMES = new Set(['aa', 'u'])
 
 /**
  * Reference speech rate, in ms per syllable.

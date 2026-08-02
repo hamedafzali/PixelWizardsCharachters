@@ -85,18 +85,19 @@ test('the rest of a frame carrying one bad channel still applies', () => {
 test('an unknown viseme keeps the current mouth shape', () => {
   const issues = []
   withRig({ onInvalidFrame: (i) => issues.push(i) }, ({ rig, dom }) => {
-    rig.apply({ viseme: 'o' })
+    rig.apply({ viseme: 'aa' })
     rig.finish()
     dom.advance(64)
 
-    // 'th' is not a viseme this library has — `s` covers it. A phoneme mapper
-    // written against a different table is the likeliest source of a bad
-    // viseme, which is why this is not a nonsense string.
+    // 'th' is not a viseme this library has, and 'o' no longer is either
+    // (folded into 'u' by the Design 3 table reduction) — either is a
+    // plausible name from a phoneme mapper built against a different table,
+    // which is why 'th' below is not a nonsense string.
     assert.doesNotThrow(() => rig.apply({ viseme: 'th' }))
     rig.finish()
     dom.advance(64)
-    assert.equal(rig.frame.viseme, 'o')
-    assert.deepEqual(issues, [{ channel: 'viseme', value: 'th', kept: 'o' }])
+    assert.equal(rig.frame.viseme, 'aa')
+    assert.deepEqual(issues, [{ channel: 'viseme', value: 'th', kept: 'aa' }])
   })
 })
 

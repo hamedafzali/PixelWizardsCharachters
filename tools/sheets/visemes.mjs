@@ -23,7 +23,7 @@ import {
 } from '../lib/speech.mjs'
 
 export const name = 'visemes'
-export const title = 'Lip-sync — the eleven shapes, and what a sentence does to them'
+export const title = 'Lip-sync — the shapes, and what a sentence does to them'
 
 const NAMES = Object.keys(VISEMES)
 
@@ -93,10 +93,10 @@ export function build() {
     sheet are identical.</p>`)
 
   // ── 1. can the shapes be told apart ────────────────────────────────────────
-  parts.push(`<h2>The eleven shapes</h2>`)
+  parts.push(`<h2>The ${NAMES.length} shapes</h2>`)
   parts.push(`<p class="note">Every viseme on every character, at rest otherwise. A viseme table is
     a set of distinctions, so the question this asks is not "is each one nice" but "is each one
-    <em>different from the other ten</em>".</p>`)
+    <em>different from the other ${NAMES.length - 1}</em>".</p>`)
 
   const head = `<tr><th></th>${NAMES.map((n) =>
     `<th>${esc(n)}<br><span style="opacity:.55">${esc(VISEMES[n].label)}</span></th>`).join('')}</tr>`
@@ -107,7 +107,8 @@ export function build() {
   parts.push(`<div class="wrap"><table>${head}${rows}</table></div>`)
   parts.push(`<p class="note">Each character gets two rows: the whole face, and the mouth alone at
     the same cell size. The second row is the one that answers the question — at 84px a mouth is
-    seven pixels wide, and eleven different seven-pixel mouths are one mouth.</p>`)
+    seven pixels wide, and ${NAMES.length} different seven-pixel mouths that look alike are one
+    mouth.</p>`)
 
   // measured, on the layered reference character
   const geo = shapes('roozi')
@@ -121,15 +122,17 @@ export function build() {
   }
   pairs.sort((x, y) => x.d - y.d)
 
+  const shown = Math.min(10, pairs.length)
   parts.push(`<h2>Measured separation</h2>`)
   parts.push(`<p class="note">Width and aperture in art units, parsed out of the markup the rig
-    wrote — not recomputed from <code>VISEMES</code>. The ten closest pairs; decoration (tongue,
+    wrote — not recomputed from <code>VISEMES</code>. The ${shown} closest pairs${
+      shown === pairs.length ? ' (every pair there is)' : ''}; decoration (tongue,
     teeth) is listed rather than scored, because a pair separated only by a 3-unit tongue dot is not
     a pair anyone tells apart at 40px.</p>`)
   const decor = (g) => [g.tongue && 'tongue', g.teeth && 'teeth', g.closed && 'closed'].filter(Boolean).join(' + ') || '—'
   parts.push(`<div class="wrap"><table>
     <tr><th>pair</th><th>distance</th><th>width</th><th>aperture</th><th>decoration</th><th></th></tr>
-    ${pairs.slice(0, 10).map(({ a, b, d, ga, gb }) => `<tr>
+    ${pairs.slice(0, shown).map(({ a, b, d, ga, gb }) => `<tr>
       <td class="n">${esc(a)} / ${esc(b)}</td>
       <td>${d.toFixed(2)}</td>
       <td>${ga.width.toFixed(1)} / ${gb.width.toFixed(1)}</td>

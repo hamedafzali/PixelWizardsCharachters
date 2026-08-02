@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.6.0
+
+**Breaking**: the Persian viseme table shrinks from eleven shapes to five —
+`rest`, `aa`, `mbp`, `u`, `l`. `e`, `i`, `o`, `f`, `sh` and `s` are gone;
+`textToVisemes`/`PMAP` now route every letter that used to hit one of them to
+its measured nearest survivor (`e`/`i` → `l`, `o`/`sh` → `u`, `f` → `rest`,
+`s` → `l`). `viseme: 'o'` (etc.) now falls through `onInvalidFrame` like any
+other unknown name instead of being accepted.
+
+This is a legibility choice (max-min dispersion over the full pairwise
+distance table, vowels and consonants dispersed separately so no merge
+crosses that boundary), not a defect fix — the one genuine defect, `rest` and
+`mbp` rendering identically on a beak character, was already fixed
+independently and is what stayed pinned through every candidate table this
+reduction considered. See the doc comment on `VISEMES` in `src/visemes.ts`
+for the full measurement, including the one deliberately non-greedy call
+(`س` merges into `l`, not the geometrically closer `rest`, because routing a
+real consonant into the silence shape is the exact problem being fixed).
+
+Also fixed: `tools/lib/speech.mjs`'s `mouthShape()` never parsed beak markup
+at all (it always fell into the closed-mouth branch and read the wrong
+`<path>`), so every prior A3 beak measurement reported `aperture: 0`
+regardless of viseme. The lips-side numbers were unaffected except for the
+`rest`/`mbp` pair itself, which a separate regex bug (a literal space in
+`Q ` never matched) had been silently reporting via a hardcoded fallback.
+
 ## 0.5.1
 
 An invalid frame value no longer throws. `rig.apply({ emotion: 'joy' })` used to
