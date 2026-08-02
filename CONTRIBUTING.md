@@ -117,6 +117,71 @@ running one. A new feature that adds CSS-driven motion needs to ask which of
 the two paths would actually suppress it, not assume the stylesheet rule
 covers everything JS starts.
 
+## The wing-hook convention: two ways to animate a wing, never both at once
+
+There are two entirely separate mechanisms for flapping a wing in this
+codebase, and a character must use exactly one of them.
+
+**Unlayered fliers** get a CSS-only `.wingL`/`.wingR` class, hardcoded in
+`RIG_CSS` (`src/rig.ts`) with a fixed `transform-origin` and a `@keyframes`
+animation that runs whenever `.loco-fly` is on the root: `.ca-svg.loco-fly
+.wingL{transform-origin:50px 110px;animation:caWingL .4s ease-in-out
+infinite}`. سیمرغ is the worked example — it never converted to the layered
+rig, so it still carries this pair of classes and nothing else drives its
+wings.
+
+**Converted characters** (a character with `farArm`/`nearArm` layers in
+`RigLayers`) are driven instead by the phase table in `locomotion.ts`,
+writing a per-frame inline `transform` to `.lyr-farArm`/`.lyr-nearArm`.
+بومی is the worked example, and its docstring in `characters/index.ts`
+records the bug that made this a rule rather than a preference: an earlier
+version of بومی nested the legacy `.wingL`/`.wingR` wrapper *inside* the
+`lyr-farArm` layer, so a flying بومی matched both `.loco-fly .wingL` (the
+CSS keyframe animation) and `.loco-fly .lyr-farArm` (the locomotion table's
+inline transform) at once — two different pivots animating the same
+element, fighting each other every frame. The fix was not a CSS
+specificity tweak; it was deleting the legacy wrapper outright once a
+character is converted. There is no valid state where a converted
+character keeps the old hook "just in case."
+
+The two conventions are kept apart by `canDrive()` deciding which gait a
+character's layer shape actually supports, and guarded by a test in
+`rig-cache.test.mjs` (`'no character carries both wing conventions at
+once'`) that would catch exactly the بومی regression above — a character
+that both has `farArm`/`nearArm` layers *and* still emits a
+`.wingL`/`.wingR` class is asserted to not exist.
+
+## The head/torso pivot rule: a layer exists only if the drawing has that joint
+
+Posture and the gait tables send identical numbers to every character —
+`headDrop: 5`, `ears: 34` — so whether a given character even has a `head`
+layer (and therefore something for those numbers to land on) is not a
+stylistic choice; it decides whether the same posture value reads as a nod
+on one character and nothing at all on another. The rule, documented on
+`RigLayers` in `types.ts`: a `head` layer exists only if there is a
+**determinate line where the head meets the body** that can be measured off
+the drawing. No such line, no `head` layer — the character's face is drawn
+straight onto `torso` instead, and `headTilt`/`headDrop` land on nothing,
+the same dead end as `tail` droop on a character with no tail.
+
+بومی is the worked example for the "no" case: an owl is one continuous
+barrel from talons to tufts, with no line anywhere that could be called
+where the head ends and the body begins. It has no `head` layer at all —
+the facial mass (discs, eyes, brows, beak) is drawn straight onto
+`lyr-torso`. The nod بومی *does* have is a whole-body lean, because that is
+genuinely what an owl does, not a substitute for a head nod it is missing.
+
+آوا is the worked example for the "yes, even without a neck" case: she has
+no drawn neck (it is hidden under her hair), which could look like another
+"one continuous form" character at a glance. But her head and dress are two
+distinct forms meeting on a definite collar line at y≈140 — a real edge in
+the art, not an invented one — so she keeps a `head` layer with its pivot
+measured off that line, per her docstring in `characters/index.ts`. The
+distinction the rule is drawing is specifically *this*: not "does the
+character have a visible neck," but "is there a line in the drawing itself
+the pivot can be read off," and a collar counts exactly as much as a neck
+does.
+
 ## Z-order bugs hide from `LAYER_ORDER` when they live inside one art string
 
 `LAYER_ORDER` (in `types.ts`) and the `LAYER_ORDER matches the order
