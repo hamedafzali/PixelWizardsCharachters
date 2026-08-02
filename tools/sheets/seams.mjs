@@ -22,6 +22,7 @@ import {
   LAKI, lakiRimY, lakiClearance, posturePose, worstOverAction,
   TP, tondpaSeamOverlap, KH, khersiSeamOverlap, khersiEarPenetration,
   earChordMidpoint, discBodySeamY, headPivot, MICRO_WORST,
+  AV, avaPigtailPenetration,
 } from '../lib/probes.mjs'
 import { page, esc } from '../lib/sheet.mjs'
 
@@ -209,6 +210,75 @@ function khersi() {
   return out.join('\n')
 }
 
+// ── آوا ──────────────────────────────────────────────────────────────────────
+
+function ava() {
+  const out = [`<h2>آوا — the pigtails</h2>`]
+  out.push(`<p class="note">The bunches reuse the earL/earR slots (آوا has no drawn ears), so they ride
+    the shared <code>posture.ears</code> channel — including the default, since آوا never overrides
+    <code>ears</code> for any emotion. The number is how deeply a bunch still overlaps the head disc;
+    positive is attached, and the guard wants more than 8.</p>`)
+  out.push(withRig('ava', {}, ({ svg, rig, dom }) => {
+    const rows = EMOS.map((emotion) => {
+      const cells = STEPS.map((intensity) => {
+        rig.apply({ emotion, intensity })
+        rig.finish()
+        dom.advance(32)
+        const p = resolvePosture(emotion, intensity, CHARACTERS.ava.posture)
+        const v = Math.min(...['earL', 'earR'].map((s) =>
+          avaPigtailPenetration(s, p.ears ?? 0, (p.headTilt ?? 0) + MICRO_WORST.rot, (p.headDrop ?? 0) + MICRO_WORST.y)))
+        return `<td>${snapshot(svg, SIZE)}<div class="ph ${band(v, 8)}">${v.toFixed(2)}</div></td>`
+      }).join('')
+      return `<tr><td class="n">${esc(emotion)}</td>${cells}</tr>`
+    }).join('')
+    return `<div class="wrap"><table><tr><th>pigtail grip</th>${
+      STEPS.map((s) => `<th>intensity ${s}</th>`).join('')}</tr>${rows}</table></div>`
+  }))
+
+  const [hx, hy] = headPivot('ava')
+  const { point } = earChordMidpoint(AV.pigtails.earL, AV.head)
+  out.push(`<h2 style="opacity:.8">آوا — shipped pivot vs the one that was rejected</h2>`)
+  out.push(`<p class="note">Unlike خرسی's ears, a bunch's own centre sits just <i>inside</i> the head
+    disc (d ≈ 42 &lt; head.r 45) — but the bunch is big enough that its circle still crosses the
+    boundary, so the two-circle intersection is still well defined: the chord midpoint at
+    (${point[0].toFixed(1)}, ${point[1].toFixed(1)}). The bunch's own centre is not a true no-op here
+    (it is not concentric with the head), but it is still not where the hair actually leaves the skull.
+    Both at 26° of pigtail rotation.</p>`)
+  out.push(withRig('ava', {}, ({ svg }) => {
+    const cell = (origin, label) => {
+      const html = snapshot(svg, 150, (s) => {
+        parkAt(s, 'lyr-earL', { rot: 26 }, origin)
+        parkAt(s, 'lyr-earR', { rot: -26 }, origin && [200 - origin[0], origin[1]])
+      })
+      return `<td>${html}<div class="ph">${esc(label)}</div></td>`
+    }
+    return `<div class="wrap"><table><tr>${
+      cell(null, 'shipped — the head/bunch chord midpoint')}${
+      cell([AV.pigtails.earL.cx, AV.pigtails.earL.cy], 'rejected — the bunch’s own centre')}</tr></table></div>`
+  }))
+
+  out.push(`<h2 style="opacity:.8">آوا — the pigtails through nod and shake</h2>`)
+  out.push(`<p class="note">آوا natively drives <code>lyr-head</code> for both gestures (no
+    <code>gestureFallback</code>, unlike لاکی), so the posture sweep above is not the whole story.</p>`)
+  for (const g of headGestures()) {
+    const action = headParts(g)[0].action
+    const worst = worstOverAction(action, (p) => ({
+      earL: avaPigtailPenetration('earL', 0, (p.rot ?? 0) + MICRO_WORST.rot, (p.y ?? 0) + MICRO_WORST.y),
+      earR: avaPigtailPenetration('earR', 0, (p.rot ?? 0) + MICRO_WORST.rot, (p.y ?? 0) + MICRO_WORST.y),
+    }))
+    out.push(`<p class="note"><b>${esc(g)}</b> — worst ${worst.margin.toFixed(2)} on
+      <code>${esc(worst.channel)}</code> at t=${worst.t.toFixed(3)}.</p>`)
+    out.push(`<div class="wrap"><table><tr>${
+      actionStrip('ava', action, (p) => Math.min(
+        avaPigtailPenetration('earL', 0, (p.rot ?? 0) + MICRO_WORST.rot, (p.y ?? 0) + MICRO_WORST.y),
+        avaPigtailPenetration('earR', 0, (p.rot ?? 0) + MICRO_WORST.rot, (p.y ?? 0) + MICRO_WORST.y),
+      ), 8, 2)}</tr></table></div>`)
+  }
+
+  out.push(`<p class="note">Head pivot for reference: (${hx}, ${hy}).</p>`)
+  return out.join('\n')
+}
+
 /** Two cells of the same character and pose, differing only in pivot. */
 function pivotCompare(slug, shippedOrigin, rejectedOrigin, pose, aLabel, bLabel) {
   return withRig(slug, {}, ({ svg }) => {
@@ -234,5 +304,6 @@ export function build() {
   parts.push(laki())
   parts.push(tondpa())
   parts.push(khersi())
+  parts.push(ava())
   return page(title, parts.join('\n'))
 }

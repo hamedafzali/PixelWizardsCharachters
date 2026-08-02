@@ -177,20 +177,35 @@ export const ava = {
                     art: `<path d="M112 150 q14 14 16 28" stroke="url(#avSh)" stroke-width="11" stroke-linecap="round" fill="none"/>` +
                         `<ellipse cx="128" cy="180" rx="6.5" ry="5.5" fill="url(#avS)"/>`,
                 },
+                // Pigtails, one per side. Each bunch circle overlaps the head disc
+                // (cx100 cy90 r45), so — same rule as خرسی's ears — the pivot is the
+                // chord midpoint of that overlap, not the bunch's own centre (which
+                // would be a no-op to rotate about) and not an eyeballed guess. These
+                // reuse the earL/earR slots: ava has no ears drawn, so the slot that
+                // nests "a thing attached to the side of the head, painted just
+                // before it" was free.
+                //   earChordMidpoint({cx:58,cy:89,r:13.5}, {cx:100,cy:90,r:45})
+                //     → [57.07, 88.98], rounded to [57, 89]
+                earL: {
+                    origin: [57, 89],
+                    art: `<circle cx="58" cy="89" r="13.5" fill="url(#avHair)"/>` +
+                        `<path d="M50 82 C 34 92, 32 112, 42 130 C 34 142, 36 158, 48 170 C 44 176, 48 182, 56 182 C 62 176, 58 168, 62 160 C 52 148, 52 132, 62 118 C 54 106, 56 92, 66 84 C 60 80, 54 80, 50 82 Z" fill="url(#avHair)"/>` +
+                        `<ellipse cx="55" cy="85" rx="5" ry="3.5" fill="#fff" opacity=".18"/>`,
+                },
+                //   earChordMidpoint({cx:142,cy:89,r:13.5}, {cx:100,cy:90,r:45})
+                //     → mirror of earL → [143, 89]
+                earR: {
+                    origin: [143, 89],
+                    art: `<circle cx="142" cy="89" r="13.5" fill="url(#avHair)"/>` +
+                        `<path d="M150 82 C 166 92, 168 112, 158 130 C 166 142, 164 158, 152 170 C 156 176, 152 182, 144 182 C 138 176, 142 168, 138 160 C 148 148, 148 132, 138 118 C 146 106, 144 92, 134 84 C 140 80, 146 80, 150 82 Z" fill="url(#avHair)"/>` +
+                        `<ellipse cx="145" cy="85" rx="5" ry="3.5" fill="#fff" opacity=".18"/>`,
+                },
                 head: {
                     // Where the head meets the dress. Hair hides the neck, but the join is
                     // a real line between two forms, so this pivot is measured.
                     origin: [100, 140],
-                    // Long wavy hair falls behind the shoulders, so its cascades are
-                    // painted first (behind the face, torso, and arms already drawn in
-                    // this layer) — the crown and short front locks stay on top of the
-                    // face for the same reason the ears-over-head fix relies on: paint
-                    // order inside one layer.art is plain source order, nothing more.
-                    art: `<path d="M70 44 C 66.67 47.00, 51.67 55.67, 50.00 62.00 C 48.33 68.33, 61.33 75.33, 60.00 82.00 C 58.67 88.67, 43.00 95.00, 42.00 102.00 C 41.00 109.00, 54.67 116.67, 54.00 124.00 C 53.33 131.33, 38.67 138.67, 38.00 146.00 C 37.33 153.33, 49.67 161.00, 50.00 168.00 C 50.33 175.00, 39.67 182.67, 40.00 188.00 C 40.33 193.33, 50.00 198.00, 52.00 200.00 L52 200 C 54.33 197.67, 64.33 192.33, 66.00 186.00 C 67.67 179.67, 61.00 169.67, 62.00 162.00 C 63.00 154.33, 71.33 147.33, 72.00 140.00 C 72.67 132.67, 65.33 125.33, 66.00 118.00 C 66.67 110.67, 75.33 103.67, 76.00 96.00 C 76.67 88.33, 70.00 79.00, 70.00 72.00 C 70.00 65.00, 76.00 58.67, 76.00 54.00 C 76.00 49.33, 71.00 45.67, 70.00 44.00 Z" fill="url(#avHair)"/>
-      <path d="M130.00 44 C 133.33 47.00, 148.33 55.67, 150.00 62.00 C 151.67 68.33, 138.67 75.33, 140.00 82.00 C 141.33 88.67, 157.00 95.00, 158.00 102.00 C 159.00 109.00, 145.33 116.67, 146.00 124.00 C 146.67 131.33, 161.33 138.67, 162.00 146.00 C 162.67 153.33, 150.33 161.00, 150.00 168.00 C 149.67 175.00, 160.33 182.67, 160.00 188.00 C 159.67 193.33, 150.00 198.00, 148.00 200.00 L148.00 200 C 145.67 197.67, 135.67 192.33, 134.00 186.00 C 132.33 179.67, 139.00 169.67, 138.00 162.00 C 137.00 154.33, 128.67 147.33, 128.00 140.00 C 127.33 132.67, 134.67 125.33, 134.00 118.00 C 133.33 110.67, 124.67 103.67, 124.00 96.00 C 123.33 88.33, 130.00 79.00, 130.00 72.00 C 130.00 65.00, 124.00 58.67, 124.00 54.00 C 124.00 49.33, 129.00 45.67, 130.00 44.00 Z" fill="url(#avHair)"/>
-      <circle cx="100" cy="90" r="45" fill="url(#avS)"/>
+                    art: `<circle cx="100" cy="90" r="45" fill="url(#avS)"/>
       <path d="M55 92c0-30 20-50 45-50s45 20 45 50c0-10-7-17-12-19 2 6 2 11 0 15-4-13-14-22-33-22s-29 9-33 22c-2-4-2-9 0-15-5 2-12 9-12 19z" fill="url(#avHair)"/>
-      <path d="M58 92c0 15 5 25 11 29-4-11-4-21-2-29z" fill="url(#avHair)"/><path d="M142 92c0 15-5 25-11 29 4-11 4-21 2-29z" fill="url(#avHair)"/>
       <circle cx="100" cy="94" r="45" fill="url(#avCo)"/>
       <circle cx="72" cy="64" r="8" fill="#ffcf4d"/><circle cx="72" cy="64" r="3.5" fill="#fff2c4"/>
       ${e}

@@ -267,3 +267,28 @@ export function earChordMidpoint(ear, head) {
   const a = (d * d + head.r ** 2 - ear.r ** 2) / (2 * d)
   return { d, point: [head.cx + (a / d) * dx, head.cy + (a / d) * dy] }
 }
+
+// ── آوا: pigtails ────────────────────────────────────────────────────────────
+//
+// The pigtails reuse the earL/earR slots (ava has no drawn ears), so they ride
+// the same `posture.ears` channel خرسی's ears do — including the shared
+// `POSTURES` default, since ava never overrides `ears` for any emotion. That
+// makes them exactly the same "own layer, own pivot, not rigid with the head"
+// case, for a reason ava never opted into on purpose: whatever swing the
+// shared preset assigns an "ears" channel lands on her hair whether she wrote
+// that channel or not.
+
+export const AV = {
+  head: { cx: 100, cy: 90, r: 45 },
+  pigtails: { earL: { cx: 58, cy: 89, r: 13.5 }, earR: { cx: 142, cy: 89, r: 13.5 } },
+}
+
+/** How deeply a pigtail bunch still overlaps the head disc, in art units. */
+export function avaPigtailPenetration(side, earDeg, tilt, drop) {
+  const headP = headPivot('ava')
+  const earP = headPivot('ava', side)
+  const sign = side === 'earL' ? 1 : -1
+  const e = spin(spin(AV.pigtails[side], earP, sign * earDeg), headP, tilt, drop)
+  const h = spin(AV.head, headP, tilt, drop)
+  return h.r - (Math.hypot(e.cx - h.cx, e.cy - h.cy) - e.r)
+}

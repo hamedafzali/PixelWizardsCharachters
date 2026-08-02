@@ -476,4 +476,15 @@ export default [
     ),
     expect: 'fill="url(#avHair)"/>\n      <circle cx="100" cy="90" r="45" fill="url(#avS)"/>',
   },
+  {
+    id: 'M46',
+    note: "ava's left pigtail pivots at the bunch's own centre (58,89) instead of the measured head/bunch chord midpoint (57,89) — the same 'looks like it would also work' trap as an ear rotated about its own centre",
+    file: 'src/characters/index.ts',
+    tests: CACHE,
+    mutate: replace(
+      'earL: {\n          origin: [57, 89],',
+      'earL: {\n          origin: [58, 89],',
+    ),
+    expect: 'earL: {\n          origin: [58, 89],',
+  },
 ]

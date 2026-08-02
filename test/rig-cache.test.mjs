@@ -13,6 +13,7 @@ import {
   LAKI, lakiRimY, lakiClearance, posturePose, worstOverAction, poseAt,
   TP, tondpaSeamOverlap, KH, khersiSeamOverlap, khersiEarPenetration,
   earChordMidpoint, discBodySeamY, headPivot, MICRO_WORST,
+  AV, avaPigtailPenetration,
 } from '../tools/lib/probes.mjs'
 import { poseToTransform, sampleAction } from '../dist/index.js'
 
@@ -510,15 +511,86 @@ test('ava\'s hair crown paints after her face, not before it', () => {
   // the test above cannot see it: the crown used to be emitted before the
   // face-skin circle, which then painted over nearly the whole thing, leaving
   // only the two side locks visible. The face circle's fill is unique in the
-  // string, so its index is unambiguous. The long back cascades (added later,
-  // for a longer/wavier hairstyle) are *meant* to paint before the face — they
-  // sit behind her, not on top of her — so this checks the crown's own path
-  // specifically rather than the first `avHair` fill in the document.
+  // string, so its index is unambiguous.
   const svg = renderActorSVG(CHARACTERS.ava, defaultFrame('ava'))
   const faceAt = svg.indexOf('r="45" fill="url(#avS)"')
   const hairAt = svg.indexOf('M55 92c0-30 20-50 45-50')
   assert.ok(faceAt >= 0 && hairAt >= 0, 'both the face circle and the hair crown must be present')
   assert.ok(faceAt < hairAt, 'the face-skin circle must paint before the hair crown, or the crown vanishes under it')
+})
+
+// ── آوا: pigtails ────────────────────────────────────────────────────────────
+//
+// The pigtails reuse the earL/earR slots — see the note in probes.mjs. That
+// makes them structurally identical to خرسی's ears: their own layer, their
+// own pivot, riding inside `.lyr-head` so a head tilt/drop carries them, but
+// also independently rotated by the shared `posture.ears` channel, which ava
+// never opted into (she overrides spine/sink/headDrop/headTilt/arms per
+// emotion, never ears) but inherits from `POSTURES` regardless.
+
+test('ava: each pigtail pivots at the head/bunch chord midpoint, not at its own centre', () => {
+  // Unlike خرسی's ears, the bunch centre sits just *inside* the head disc
+  // (d ≈ 42 < head.r 45) — but the bunch is still big enough (r 13.5) that its
+  // circle crosses the boundary, so the two-circle intersection is still well
+  // defined and the bunch centre would still be wrong: rotating about it is
+  // not a true no-op here (the bunch isn't concentric with the head), but it
+  // is not the point where the hair actually leaves the skull either, which is
+  // what a gesture/posture sweep alone would never catch.
+  for (const [side, bunch] of Object.entries(AV.pigtails)) {
+    const { d, point: want } = earChordMidpoint(bunch, AV.head)
+    assert.ok(d > Math.abs(AV.head.r - bunch.r) && d < AV.head.r + bunch.r,
+      `${side}: precondition — the bunch circle should actually cross the head boundary`)
+    const got = headPivot('ava', side)
+    // Tighter than خرسی's <= 1: here the bunch centre sits only ~0.9 units
+    // from the true chord midpoint (unlike an ear centred well outside the
+    // skull), so a loose tolerance would let that exact wrong-but-plausible
+    // pivot pass undetected.
+    assert.ok(Math.hypot(got[0] - want[0], got[1] - want[1]) <= 0.5,
+      `${side} pivot ${JSON.stringify(got)} is not the chord midpoint [${want.map((n) => n.toFixed(2))}]`)
+  }
+})
+
+test('ava: neither pigtail comes loose at any emotion x intensity', () => {
+  let worst = { p: Infinity }
+  for (const emotion of Object.keys(EMOTIONS)) {
+    for (const intensity of [0, 0.25, 0.5, 0.75, 1]) {
+      const p = resolvePosture(emotion, intensity, CHARACTERS.ava.posture)
+      const tilt = (p.headTilt ?? 0) + MICRO_WORST.rot, drop = (p.headDrop ?? 0) + MICRO_WORST.y
+      for (const side of ['earL', 'earR']) {
+        const pen = avaPigtailPenetration(side, p.ears ?? 0, tilt, drop)
+        if (pen < worst.p) worst = { p: pen, emotion, intensity, side }
+      }
+    }
+  }
+  assert.ok(worst.p > 8,
+    `ava's ${worst.side} leaves the head at ${worst.emotion}/${worst.intensity} (penetration ${worst.p.toFixed(2)})`)
+})
+
+test('ava: both pigtails stay on through nod and shake, not just her postures', () => {
+  // Same gap as خرسی's head-gesture test: a posture sweep says nothing about
+  // what a gesture reaches, and ava natively drives lyr-head for both nod and
+  // shake (no gestureFallback, unlike لاکی).
+  for (const g of headGesturesOf('ava')) {
+    const action = headAction('ava', g)[0].action
+    for (const side of ['earL', 'earR']) {
+      const worst = worstOverAction(action, (p) => ({
+        pigtail: avaPigtailPenetration(side, 0, (p.rot ?? 0) + MICRO_WORST.rot, (p.y ?? 0) + MICRO_WORST.y),
+      }))
+      assert.ok(worst.margin > 8,
+        `ava's ${side} leaves the head during ${g} (penetration ${worst.margin.toFixed(2)})`)
+    }
+  }
+})
+
+test('ava: the pigtails paint behind the face, not on top of it', () => {
+  // earL/earR are nested *inside* lyr-head (they ride its transform too), so
+  // "behind" means painted before the face-skin circle within that group, not
+  // outside the group entirely.
+  const svg = renderActorSVG(CHARACTERS.ava, defaultFrame('ava'))
+  const earAt = svg.indexOf('lyr-earL')
+  const faceAt = svg.indexOf('r="45" fill="url(#avS)"')
+  assert.ok(earAt >= 0 && faceAt >= 0, 'both a pigtail base and the face circle must be present')
+  assert.ok(earAt < faceAt, 'the pigtail bases must paint before the face circle, or they cover it')
 })
 
 // ── تندپا: the invisible seam ────────────────────────────────────────────────

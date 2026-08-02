@@ -117,6 +117,49 @@ running one. A new feature that adds CSS-driven motion needs to ask which of
 the two paths would actually suppress it, not assume the stylesheet rule
 covers everything JS starts.
 
+## Z-order bugs hide from `LAYER_ORDER` when they live inside one art string
+
+`LAYER_ORDER` (in `types.ts`) and the `LAYER_ORDER matches the order
+buildLayers actually paints` test guard *layer*-level paint order — `earL`
+before `head` before `torso`, and so on. They cannot see anything that
+happens inside a single layer's `art` string, because to `buildLayers` that
+string is one opaque blob of SVG, painted as a unit whichever layer it
+belongs to.
+
+آوا's face/crown collision (fixed in `e2d956d`) is the worked example. Her
+`head.art` hand-concatenates several `<path>`/`<circle>` elements — the crown
+dome, the face-skin circle, an eye-socket shadow overlay — as one string, in
+source order. At one point the crown was written *before* the face circle, so
+the face circle's opaque fill painted over almost the entire crown, leaving
+only two thin slivers visible at the sides. `LAYER_ORDER` had nothing to say
+about this: `head` painted exactly where it was supposed to, relative to every
+other layer. The bug was entirely inside `head`'s own art string, in the order
+its pieces were concatenated in `characters/index.ts`.
+
+This is a distinct class from a `LAYER_ORDER` mismatch and from a pivot
+measured off the wrong point (see "Measure, don't invent" above) — it needs
+its own guard because neither of those checks exercises it:
+
+- A `LAYER_ORDER` test would pass unchanged; the layer itself is in the right
+  place.
+- A pivot/geometry probe would also pass; nothing about rotation or overlap
+  changed, only which of two *already-correct-position* shapes paints on top.
+
+The guard that catches it has to read the rendered SVG string directly and
+assert the relative order of two specific, identifiable substrings from
+*inside* the same layer's art — see `ava's hair crown paints after her face,
+not before it` in `test/rig-cache.test.mjs`, which locates the face circle's
+fill and the crown path's `d` prefix by content (not by index into
+`LAYER_ORDER`, which doesn't reach this far) and asserts one precedes the
+other in the emitted markup.
+
+If a character's `art` string grows more than two or three hand-ordered
+pieces that visually stack (skin under hair under an overlay shadow, say),
+each new stacking relationship that matters needs its own such assertion —
+`LAYER_ORDER` will not warn you, and at rest the whole thing can still look
+right for one emotion/intensity and wrong for another if any of the pieces
+move independently.
+
 ## Characters
 
 سیمرغ is deliberately unlayered — it is the CSS-fallback case, and several
