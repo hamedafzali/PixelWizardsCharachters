@@ -25,6 +25,7 @@ const SCRUB = ['test/scrub.test.mjs', 'test/studio.test.mjs']
 const VALIDATE = ['test/validate.test.mjs']
 const DISTINCT = ['test/viseme-distinct.test.mjs']
 const REDUCTION = ['test/viseme-reduction.test.mjs']
+const REDUCED = ['test/rig-integration.test.mjs', 'test/scrub.test.mjs']
 
 export default [
   // ── blink lids are parented where the eyes are ─────────────────────────────
@@ -370,4 +371,96 @@ export default [
   // union now, so an extra key fails `tsc`, not a runtime guard — the type
   // system is the check, and mutate.mjs correctly reports a mutant like that
   // as `not-applied` rather than counting it as covered.
+
+  // ── reduced motion: CSS-only holds cannot be silently defeated ─────────────
+  {
+    id: 'M36',
+    note: 'pinGaitPhase stops taking the direct-sample path under reduced motion, reverting to the pause that RIG_CSS silently defeats',
+    file: 'src/rig.ts',
+    tests: REDUCED,
+    mutate: replace(
+      "if (this.reduced && (loco === 'walk' || loco === 'fly')) {",
+      "if (!this.reduced && (loco === 'walk' || loco === 'fly')) {",
+    ),
+    expect: "if (!this.reduced && (loco === 'walk' || loco === 'fly')) {",
+  },
+  {
+    id: 'M37',
+    note: 'LOCO_FALLBACK_POSES loses a distinct keyframe (25% collapses onto 0%), so a reduced-motion scrub stops moving between phases',
+    file: 'src/rig.ts',
+    tests: REDUCED,
+    mutate: replace(
+      "{ at: 0.25, pose: { y: -4, rot: 0 } },",
+      "{ at: 0.25, pose: { y: 0, rot: -2 } },",
+    ),
+    expect: '{ at: 0.25, pose: { y: 0, rot: -2 } },',
+  },
+  {
+    id: 'M38',
+    note: 'scrubGesture stops taking the direct-sample path under reduced motion, falling through to a paused animation RIG_CSS hides',
+    file: 'src/rig.ts',
+    tests: REDUCED,
+    mutate: replace(
+      "      const clamped = Math.max(0, Math.min(1, t))\n      if (this.reduced) {",
+      "      const clamped = Math.max(0, Math.min(1, t))\n      if (!this.reduced) {",
+    ),
+    expect: 'const clamped = Math.max(0, Math.min(1, t))\n      if (!this.reduced) {',
+  },
+  {
+    id: 'M39',
+    note: 'releasing a reduced-motion scrub stops clearing the direct transform write, leaving the last sampled pose stuck',
+    file: 'src/rig.ts',
+    tests: REDUCED,
+    mutate: replace(
+      "        el.style.animationPlayState = ''\n        el.style.transform = ''\n        continue\n      }\n      const clamped",
+      "        el.style.animationPlayState = ''\n        continue\n      }\n      const clamped",
+    ),
+    absent: "el.style.animationPlayState = ''\n        el.style.transform = ''\n        continue",
+  },
+  {
+    id: 'M40',
+    note: 'playGesture stops resolving the gesture channel at once under reduced motion, holding it invisibly for the nominal duration again',
+    file: 'src/rig.ts',
+    tests: REDUCED,
+    mutate: replace(
+      "    if (this.reduced) {\n      this.clearGesture(g)\n      return\n    }\n\n    const suffix = plan.mode === 'fallback' ? '_fb' : ''",
+      "    const suffix = plan.mode === 'fallback' ? '_fb' : ''",
+    ),
+    absent: 'if (this.reduced) {\n      this.clearGesture(g)\n      return\n    }',
+  },
+  {
+    id: 'M41',
+    note: 'mount() stops reading RigOptions.reducedMotion, so the override is silently ignored and only the OS query is ever consulted',
+    file: 'src/rig.ts',
+    tests: REDUCED,
+    mutate: replace(
+      "    const rm = this.opts.reducedMotion ?? 'auto'\n    this.reduced = rm === 'auto' ? prefersReducedMotion() : rm",
+      "    this.reduced = prefersReducedMotion()",
+    ),
+    absent: 'this.opts.reducedMotion',
+  },
+  {
+    id: 'M42',
+    note: "render() stops toggling .ca-reduced, so a forced override no longer disables CSS-only animations/transitions the way the OS query does",
+    file: 'src/rig.ts',
+    tests: REDUCED,
+    mutate: replace("this.svg.classList.toggle('ca-reduced', this.reduced)", ''),
+    absent: "this.svg.classList.toggle('ca-reduced'",
+  },
+  {
+    id: 'M43',
+    note: 'mount() schedules a blink even under reduced motion',
+    file: 'src/rig.ts',
+    tests: REDUCED,
+    mutate: replace('if (this.opts.blink && !this.reduced) this.scheduleBlink()', 'if (this.opts.blink) this.scheduleBlink()'),
+    expect: 'if (this.opts.blink) this.scheduleBlink()',
+  },
+  {
+    id: 'M44',
+    note: 'mount() starts the rAF loop even under reduced motion',
+    file: 'src/rig.ts',
+    tests: REDUCED,
+    mutate: replace('if (!this.reduced) this.startLoop()', 'this.startLoop()'),
+    absent: 'if (!this.reduced) this.startLoop()',
+  },
 ]

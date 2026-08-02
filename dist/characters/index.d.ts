@@ -142,5 +142,6 @@ export declare const khersi: CharacterSpec;
 export declare const simorgh: CharacterSpec;
 /** The built-in roster, keyed by slug. */
 export declare const CHARACTERS: Record<string, CharacterSpec>;
+/** `CHARACTERS`' own keys, so the roster list can never drift from the registry it lists. */
 export declare const CHARACTER_SLUGS: string[];
 //# sourceMappingURL=index.d.ts.map

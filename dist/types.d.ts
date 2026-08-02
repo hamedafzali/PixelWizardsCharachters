@@ -29,6 +29,7 @@ export type VisemeName = 'rest' | 'aa' | 'mbp' | 'u' | 'l';
  * *from* them so the list and the union cannot drift apart.
  */
 export declare const LOCOMOTIONS: readonly ["idle", "walk", "fly"];
+/** The valid values for `ActorFrame.facing`. */
 export declare const FACINGS: readonly ["left", "right"];
 export type Locomotion = typeof LOCOMOTIONS[number];
 export type Gesture = 'wave' | 'jump' | 'spin' | 'nod' | 'shake' | 'shrug' | 'point' | 'clap' | 'bounce';
@@ -58,6 +59,7 @@ export interface ActorFrame {
     /** one-shot action; null when none is playing */
     gesture: Gesture | null;
 }
+/** A sensible resting frame for `character`: neutral, idle, facing right, saying nothing. */
 export declare function defaultFrame(character: string): ActorFrame;
 /** Brow shape key — a small vocabulary of eyebrow poses. */
 export type BrowKey = 'idle' | 'happy' | 'excited' | 'thinking' | 'encouraging' | 'sad' | 'surprised' | 'sleepy' | 'confused' | 'proud' | 'shy';

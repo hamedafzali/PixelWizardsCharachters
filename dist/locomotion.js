@@ -1,3 +1,4 @@
+/** `LocoTarget`'s own members, as a value — for iterating every possible target rather than hand-listing them again. */
 export const LOCO_TARGETS = ['root', 'torso', 'farArm', 'nearArm', 'farLeg', 'nearLeg'];
 const IDENTITY = { x: 0, y: 0, rot: 0, sx: 1, sy: 1 };
 /**
@@ -28,6 +29,7 @@ export const FLY_PHASES = {
 };
 /** How far the wing folds in on the recovery stroke. */
 export const WING_FOLD_SX = 0.82;
+/** The built-in gaits, one `Gait` per `GaitName`. */
 export const GAITS = {
     /**
      * Bipedal walk, contralateral: the near arm swings opposite the near leg.

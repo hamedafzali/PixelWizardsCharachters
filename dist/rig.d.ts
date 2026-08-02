@@ -19,7 +19,7 @@ import { type OnInvalidFrame } from './validate.js';
  *
  * Injected once per document. Respects `prefers-reduced-motion`.
  */
-export declare const RIG_CSS = "\n.ca-svg{display:block}\n.ca-svg .rig-root{transform-origin:100px 190px;will-change:transform}\n.ca-svg .rig-body{transform-origin:100px 188px;will-change:transform}\n.ca-svg .rig-mood{transform-origin:100px 150px;will-change:transform}\n.ca-svg .iris{transition:transform .18s cubic-bezier(.3,.7,.3,1)}\n.ca-svg .browsG{transition:transform .16s ease}\n.ca-svg .blinkLid{transition:transform .09s ease;transform:scaleY(0)}\n.ca-svg .blinkLid.shut{transform:scaleY(1)}\n/* torso + head are rewritten every frame by the micro-motion loop, so a\n   transition on them would smear rather than ease. The remaining posture-only\n   layers still ease here. */\n.ca-svg .lyr-earL,.ca-svg .lyr-earR,.ca-svg .lyr-tail{transition:transform .35s cubic-bezier(.3,.7,.3,1)}\n/* The arm layers are NOT in that transition list: phase-driven locomotion\n   rewrites them every frame, and a 0.35s transition would smear the swing into\n   mush \u2014 the same reason torso and head are excluded above. */\n/* Only unlayered fliers (simorgh) animate wings in CSS. Converted characters\n   (boomi) are driven by the phase table in locomotion.ts, get no limb rules\n   here, and must never carry .wingL/.wingR \u2014 nested under a driven layer, the\n   CSS animation would outrank the inline transform and win outright. The two\n   conventions are kept apart by canDrive(), and by a test in rig-cache. */\n.ca-svg.loco-fly .wingL{transform-origin:50px 110px;animation:caWingL .4s ease-in-out infinite}\n.ca-svg.loco-fly .wingR{transform-origin:150px 110px;animation:caWingR .4s ease-in-out infinite}\n@keyframes caBreathe{0%,100%{transform:scale(1)}50%{transform:scale(1.02)}}\n@keyframes caFloaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}\n@keyframes caWiggle{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}\n@keyframes caSway{0%,100%{transform:rotate(-2deg) translateY(0)}50%{transform:rotate(2deg) translateY(-2px)}}\n@keyframes caNod{0%,100%{transform:translateY(0)}40%{transform:translateY(-4px)}70%{transform:translateY(1px)}}\n@keyframes caDroop{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(3px) rotate(-1deg)}}\n@keyframes caPop{0%{transform:scale(1)}30%{transform:scale(1.12)}60%{transform:scale(.97)}100%{transform:scale(1)}}\n@keyframes caWalk{0%,100%{transform:translateY(0) rotate(-2deg)}25%{transform:translateY(-4px)}50%{transform:translateY(0) rotate(2deg)}75%{transform:translateY(-4px)}}\n@keyframes caFly{0%,100%{transform:translateY(-3px)}50%{transform:translateY(3px)}}\n@keyframes caWingL{0%,100%{transform:rotate(0)}50%{transform:rotate(-24deg)}}\n@keyframes caWingR{0%,100%{transform:rotate(0)}50%{transform:rotate(24deg)}}\n@media (prefers-reduced-motion:reduce){.ca-svg,.ca-svg *{animation:none!important;transition:none!important}}\n";
+export declare const RIG_CSS = "\n.ca-svg{display:block}\n.ca-svg .rig-root{transform-origin:100px 190px;will-change:transform}\n.ca-svg .rig-body{transform-origin:100px 188px;will-change:transform}\n.ca-svg .rig-mood{transform-origin:100px 150px;will-change:transform}\n.ca-svg .iris{transition:transform .18s cubic-bezier(.3,.7,.3,1)}\n.ca-svg .browsG{transition:transform .16s ease}\n.ca-svg .blinkLid{transition:transform .09s ease;transform:scaleY(0)}\n.ca-svg .blinkLid.shut{transform:scaleY(1)}\n/* torso + head are rewritten every frame by the micro-motion loop, so a\n   transition on them would smear rather than ease. The remaining posture-only\n   layers still ease here. */\n.ca-svg .lyr-earL,.ca-svg .lyr-earR,.ca-svg .lyr-tail{transition:transform .35s cubic-bezier(.3,.7,.3,1)}\n/* The arm layers are NOT in that transition list: phase-driven locomotion\n   rewrites them every frame, and a 0.35s transition would smear the swing into\n   mush \u2014 the same reason torso and head are excluded above. */\n/* Only unlayered fliers (simorgh) animate wings in CSS. Converted characters\n   (boomi) are driven by the phase table in locomotion.ts, get no limb rules\n   here, and must never carry .wingL/.wingR \u2014 nested under a driven layer, the\n   CSS animation would outrank the inline transform and win outright. The two\n   conventions are kept apart by canDrive(), and by a test in rig-cache. */\n.ca-svg.loco-fly .wingL{transform-origin:50px 110px;animation:caWingL .4s ease-in-out infinite}\n.ca-svg.loco-fly .wingR{transform-origin:150px 110px;animation:caWingR .4s ease-in-out infinite}\n@keyframes caBreathe{0%,100%{transform:scale(1)}50%{transform:scale(1.02)}}\n@keyframes caFloaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}\n@keyframes caWiggle{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}\n@keyframes caSway{0%,100%{transform:rotate(-2deg) translateY(0)}50%{transform:rotate(2deg) translateY(-2px)}}\n@keyframes caNod{0%,100%{transform:translateY(0)}40%{transform:translateY(-4px)}70%{transform:translateY(1px)}}\n@keyframes caDroop{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(3px) rotate(-1deg)}}\n@keyframes caPop{0%{transform:scale(1)}30%{transform:scale(1.12)}60%{transform:scale(.97)}100%{transform:scale(1)}}\n@keyframes caWalk{0%,100%{transform:translateY(0) rotate(-2deg)}25%{transform:translateY(-4px)}50%{transform:translateY(0) rotate(2deg)}75%{transform:translateY(-4px)}}\n@keyframes caFly{0%,100%{transform:translateY(-3px)}50%{transform:translateY(3px)}}\n@keyframes caWingL{0%,100%{transform:rotate(0)}50%{transform:rotate(-24deg)}}\n@keyframes caWingR{0%,100%{transform:rotate(0)}50%{transform:rotate(24deg)}}\n/* .ca-reduced is the manual twin of the media query below: render() sets it\n   whenever this.reduced is true, whether that came from the OS or from\n   RigOptions.reducedMotion. Same rule body as the media query on purpose \u2014\n   one policy, two triggers, so a forced override behaves exactly like the OS\n   setting for every CSS-driven animation and transition, not just the ones a\n   JS check happens to gate. */\n.ca-svg.ca-reduced,.ca-svg.ca-reduced *{animation:none!important;transition:none!important}\n@media (prefers-reduced-motion:reduce){.ca-svg,.ca-svg *{animation:none!important;transition:none!important}}\n";
 /**
  * The art cache key. A full re-render happens only when this changes.
  *
@@ -83,6 +83,19 @@ export interface RigOptions {
     micro?: MicroConfig;
     /** per-channel easing overrides; see {@link DEFAULT_PROFILE} */
     interpolation?: InterpolationProfile;
+    /**
+     * Override `prefers-reduced-motion` instead of reading it from the OS.
+     *
+     * `'auto'` (the default) is the OS media query, exactly as before. `true`/
+     * `false` force the rig into or out of reduced motion regardless of it — for
+     * a consuming app's own accessibility setting, or for a test/demo that wants
+     * to show reduced motion without depending on the environment's OS state.
+     *
+     * Read once, in {@link ActorRig.mount}, the same as the OS query always was:
+     * changing this option on an already-mounted rig has no effect. See the
+     * README's accessibility section for what "reduced" means per feature.
+     */
+    reducedMotion?: boolean | 'auto';
 }
 /**
  * A live character puppet bound to a DOM element. Render once, then feed it
@@ -259,6 +272,15 @@ export declare class ActorRig {
      *
      * Returns how the freeze was achieved, which the caller may want to show:
      * `'phase'`, `'css'`, or `'none'` when the character is not moving at all.
+     *
+     * The CSS-fallback branch has two implementations. Normally `animation-delay`
+     * seeks into the timeline and `animation-play-state:paused` holds it there.
+     * Under reduced motion that hold is invisible: `RIG_CSS`'s
+     * `animation:none!important` cannot tell a paused animation from a running
+     * one, so it kills both, and a reviewer scrubbing a reduced-motion browser
+     * would see nothing rather than the requested frame. There, `LOCO_FALLBACK_POSES`
+     * is sampled instead and the pose is written straight to `.rig-root`'s
+     * `transform` — the one path `!important` cannot veto.
      */
     pinGaitPhase(phase: number | null): 'phase' | 'css' | 'none';
     /** The duration the CSS body-gait rule runs for, read off the rule the rig set. */
@@ -275,6 +297,12 @@ export declare class ActorRig {
      *
      * Multi-part gestures (a clap is two arms) start in the same tick and share
      * one timeout, so they cannot drift apart by a frame.
+     *
+     * Under reduced motion the channel resolves at once instead of holding for
+     * the action's nominal duration. `RIG_CSS` already prevents the CSS
+     * animation this method starts from ever being seen, so waiting out `dur`
+     * would only be an invisible hold — the same reason `apply()` snaps every
+     * other channel there rather than leaving it to travel unseen.
      */
     playGesture(g: Gesture): void;
     /**
@@ -304,6 +332,14 @@ export declare class ActorRig {
      * functions do not match, so CSS falls back to matrix interpolation) the
      * browser is right by definition. `test/sample.test.mjs` binds the two so the
      * batch tooling can keep using the sampler with a known limit.
+     *
+     * Under reduced motion, the browser is not an option: `RIG_CSS`'s
+     * `animation:none!important` cannot distinguish this paused hold from a
+     * running animation and kills both, so a reviewer on a reduced-motion
+     * browser would see nothing at all. There — and only there — this falls
+     * back to `sampleAction`, writing the pose straight to the element's
+     * `transform`, accepting the small fidelity gap documented on
+     * {@link sampleAction} in exchange for the hold actually being visible.
      */
     scrubGesture(g: Gesture, t: number | null): GesturePlan | null;
     /**

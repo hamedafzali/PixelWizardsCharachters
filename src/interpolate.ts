@@ -25,6 +25,7 @@ export type EasingName =
   | 'linear' | 'easeIn' | 'easeOut' | 'easeInOut'
   | 'easeOutQuint' | 'easeOutBack' | 'snap'
 
+/** The named curves a `ChannelSpec.ease` may reference, keyed by `EasingName`. */
 export const EASINGS: Record<EasingName, Easing> = {
   linear: (t) => t,
   easeIn: (t) => t * t,

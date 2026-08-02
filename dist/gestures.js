@@ -25,6 +25,7 @@ const armShrug = {
     poses: [{ rot: -26 }, { rot: -30 }, { rot: -29 }, { rot: 0 }],
     anticipation: 0.45, settle: 0.4, antTime: 0.16, settleTime: 0.24,
 };
+/** The gesture library, one `GestureDef` per `Gesture` name. See the module doc comment for `parts`, `fallback` and `during`. */
 export const GESTURES = {
     jump: {
         parts: [{
@@ -163,6 +164,7 @@ export const GESTURES = {
         during: GROUNDED,
     },
 };
+/** `GESTURES`' own keys, so a consumer never keeps a hand-written second list that can drift from the registry. */
 export const GESTURE_NAMES = Object.keys(GESTURES);
 /** Which DOM layer a locomotion target writes to. The rig's three transform
  *  carriers are why `root` and `torso` are not `lyr-` groups. */

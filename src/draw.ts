@@ -59,9 +59,11 @@ export function eyes(
  */
 export const eyeWidenScale = (wide: number): number => 1 + wide * 0.12
 
+/** Scale-about-centre transform string for widening the eye by `s` (from `eyeWidenScale`) around `(cx, cy)`. */
 export const eyeWidenTransform = (cx: number, cy: number, s: number): string =>
   `translate(${cx} ${cy}) scale(${s.toFixed(4)}) translate(${-cx} ${-cy})`
 
+/** The lower lid's ry: shrinks with squint, grows with wide, never below 0. */
 export const eyeLidRy = (r: number, squint: number, wide: number): number =>
   Math.max(0, r * (0.5 + squint - wide * 0.35))
 

@@ -8,6 +8,7 @@ export interface BlinkStyle {
     /** chance of an immediate second blink */
     doubleChance: number;
 }
+/** The blink timing/weight for `emotion`, from the total `BLINK_STYLES` table. */
 export declare function blinkStyle(emotion: EmotionName): BlinkStyle;
 /** Exposed so the totality of the record can be asserted rather than assumed. */
 export declare const BLINK_STYLES: Readonly<Record<EmotionName, BlinkStyle>>;
@@ -42,6 +43,7 @@ export interface MicroOutput {
         y: number;
     };
 }
+/** Ticks the procedural idle layer — breathing and eye saccade — that runs underneath whatever `ActorFrame` asks for. See the module doc comment for why it lives outside `apply()`'s channels. */
 export declare class IdleMicroMotion {
     private t;
     private amount;

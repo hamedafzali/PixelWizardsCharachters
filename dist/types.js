@@ -17,7 +17,9 @@
  * *from* them so the list and the union cannot drift apart.
  */
 export const LOCOMOTIONS = ['idle', 'walk', 'fly'];
+/** The valid values for `ActorFrame.facing`. */
 export const FACINGS = ['left', 'right'];
+/** A sensible resting frame for `character`: neutral, idle, facing right, saying nothing. */
 export function defaultFrame(character) {
     return {
         character,

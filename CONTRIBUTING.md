@@ -93,6 +93,29 @@ the test.
   read `actionStops()`. If you change the derivation, change it there;
   `test/sample.test.mjs` asserts the two agree by parsing the stops back out of
   the emitted `@keyframes`.
+- **Reduced motion: use `RigOptions.reducedMotion`, not `window.matchMedia`
+  stubbing**, except in the one test (`test/rig-integration.test.mjs`,
+  `'prefers-reduced-motion snaps instead of easing (real OS query)'`) that
+  exists specifically to prove the `'auto'` default still reads the OS query
+  for real. Every other reduced-motion test mounts with
+  `{ reducedMotion: true }` (or `false`, to prove the override beats a
+  reduced-motion OS stub). jsdom does not evaluate CSS `@media` queries or
+  `!important` cascading against inline styles, so a reduced-motion assertion
+  can only check the *mechanism* — an inline `style.transform`/`style.animation`
+  value, a class, a field like `rig.blinkTimer` — never the rendered picture.
+
+## Reduced motion has two independent enforcement paths — cover both
+
+`RIG_CSS`'s stylesheet rule (plus its manual twin, the `.ca-reduced` class)
+kills every CSS `animation`/`transition`; `this.reduced` in `rig.ts` separately
+gates blink scheduling, the tick loop, and `apply()`'s synchronous finish.
+Anything that used to rely on the stylesheet rule *alone* — a paused scrub
+hold using `animation-play-state`, a playing gesture waiting out a
+`setTimeout` — turned out to be silently defeated under real reduced motion,
+because `animation:none!important` cannot tell a paused animation from a
+running one. A new feature that adds CSS-driven motion needs to ask which of
+the two paths would actually suppress it, not assume the stylesheet rule
+covers everything JS starts.
 
 ## Characters
 

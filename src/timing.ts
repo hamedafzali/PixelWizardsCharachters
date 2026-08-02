@@ -205,6 +205,8 @@ export function buildAction(name: string, a: TimedAction): { css: string; animat
  * `style.animation` assignment.
  */
 const injected = new Map<string, string>()
+
+/** `buildAction(name, a)`, injected as a `<style>` once per `name` and cached; returns the `animation` shorthand to assign. */
 export function ensureAction(doc: Document, name: string, a: TimedAction): string {
   const cached = injected.get(name)
   if (cached !== undefined) return cached

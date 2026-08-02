@@ -199,6 +199,7 @@ new ActorRig(spec, {
   size: 200,
   blink: true,
   micro: { amount: 1, saccade: 1 },      // idle breathing and eye movement; 0 disables
+  reducedMotion: 'auto',                 // 'auto' | boolean — see Accessibility below
   emotions: { happy: { squint: 0.5 } },  // retune the presets per character
   interpolation: { gazeX: { duration: 200 } },
   onFrame: (f) => (debugEl.textContent = f.emotion),
@@ -227,9 +228,40 @@ tick. Use it for cheap mirroring (a debug readout, a store write), and use
 **`onSettled`** for anything expensive — network calls, analytics, persistence,
 React `setState`. It fires once, when every channel has arrived.
 
+## Accessibility: reduced motion
+
+`ActorRig` reads `prefers-reduced-motion` once, in `mount()`. `RigOptions.reducedMotion`
+(`'auto'` | `boolean`, default `'auto'`) overrides it — `true`/`false` force the
+rig into or out of reduced motion regardless of the OS, for a consumer app's
+own accessibility setting or for a test that wants reduced motion without
+depending on the environment. Changing the option on an already-mounted rig
+has no effect, the same as the OS query always had none.
+
+| under reduced motion | behaviour |
+| --- | --- |
+| `apply()` transitions | land immediately; `rig.settling` is always `false` |
+| blink | never scheduled |
+| idle micro-motion (breathing, saccade) | never runs — the tick loop that drives it never starts |
+| locomotion (walk/fly) | never animates — phase-driven characters get no per-tick pose, CSS-fallback characters have their body-mechanic animation suppressed by stylesheet. `loco-walk`/`loco-fly` marker classes still toggle, for consumers styling against them |
+| mood idle animation, ear/tail/iris/brow CSS transitions | suppressed by stylesheet |
+| `playGesture()` | the gesture channel resolves at once, the same as every other channel snapping — no animation plays |
+| `scrubGesture()` / `pinGaitPhase()` | still work: rather than pausing a CSS animation stylesheet rules would otherwise hide, both sample the pose directly and write it to `transform`, so a scrubbed frame stays visible |
+
+Two independent things enforce this, on purpose: `RIG_CSS`'s own
+`@media (prefers-reduced-motion: reduce)` rule (plus its manual twin, the
+`.ca-reduced` class `render()` toggles whenever `RigOptions.reducedMotion`
+forces the rig, so a forced override disables CSS-only motion exactly like the
+OS setting does) kills every `animation`/`transition` under `.ca-svg`, and a
+JS-side check (`this.reduced`) gates blink scheduling, the tick loop, and
+`apply()`'s synchronous finish. Anything driven only by the CSS rule needed no
+JS check to begin with; anything driven by the tick loop or a `setTimeout`
+needed one, or the stylesheet rule would silently hide it while the JS side
+kept believing it was still running — which is exactly what used to happen to
+a paused scrub hold and a playing gesture, before both were fixed to check
+`this.reduced` directly instead of leaning on the stylesheet alone.
+
 ## Notes
 
-- Motion respects `prefers-reduced-motion`.
 - The rig owns its DOM and mutates it imperatively, so lip-sync, gaze and
   gestures never re-render React. A full redraw happens only when the drawn art
   changes (character, emotion or facing).

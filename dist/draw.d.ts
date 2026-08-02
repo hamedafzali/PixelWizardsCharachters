@@ -21,7 +21,9 @@ export declare function eyes(x1: number, x2: number, y: number, r: number, irisI
  * renderer and the live rig hook so the two can never disagree.
  */
 export declare const eyeWidenScale: (wide: number) => number;
+/** Scale-about-centre transform string for widening the eye by `s` (from `eyeWidenScale`) around `(cx, cy)`. */
 export declare const eyeWidenTransform: (cx: number, cy: number, s: number) => string;
+/** The lower lid's ry: shrinks with squint, grows with wide, never below 0. */
 export declare const eyeLidRy: (r: number, squint: number, wide: number) => number;
 /**
  * Eyebrow pair, wrapped in a single `<g class="browsG">` the rig can translate

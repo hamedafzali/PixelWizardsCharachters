@@ -12,12 +12,15 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { setupDom } from './helpers/dom.mjs'
-import { ActorRig, CHARACTERS, CHARACTER_SLUGS, GESTURES, GESTURE_NAMES, drivesGait } from '../dist/index.js'
+import {
+  ActorRig, CHARACTERS, CHARACTER_SLUGS, GESTURES, GESTURE_NAMES, drivesGait,
+  sampleAction, poseToTransform,
+} from '../dist/index.js'
 
-function withRig(slug, frame, fn) {
+function withRig(slug, frame, fn, opts) {
   const dom = setupDom()
   try {
-    const rig = new ActorRig(CHARACTERS[slug], { blink: false, micro: { amount: 0 } })
+    const rig = new ActorRig(CHARACTERS[slug], { blink: false, micro: { amount: 0 }, ...opts })
     rig.mount(dom.host)
     if (frame) rig.apply(frame)
     rig.finish()
@@ -177,4 +180,52 @@ test('a CSS-fallback walker is frozen through the animation, since it has no pha
       assert.equal(root.style.animationPlayState, '')
     })
   }
+})
+
+// ── reduced motion ───────────────────────────────────────────────────────────
+//
+// The CSS-fallback hold above pauses a real `animation`. Under
+// `prefers-reduced-motion`, `RIG_CSS`'s `animation:none!important` cannot tell
+// that paused hold apart from a running animation and kills both — so a scrub
+// that only checked `animationPlayState`/`animationDelay`, as the tests above
+// do, would keep passing while a reduced-motion viewer saw nothing at all.
+// These assert the actual fallback: a transform sampled and written directly,
+// bypassing `animation` entirely.
+
+test('scrubbing a CSS-fallback walker (سیمرغ) under reduced motion writes a visible, moving pose', () => {
+  withRig('simorgh', { locomotion: 'walk' }, ({ rig, svg }) => {
+    const root = svg.querySelector('.rig-root')
+    const at = (p) => {
+      assert.equal(rig.pinGaitPhase(p), 'css')
+      // Reduced motion must not lean on the animation mechanism at all — that
+      // is exactly the path the OS/stylesheet rule silently defeats.
+      assert.equal(root.style.animationPlayState, '',
+        'still holding via animation-play-state, which reduced motion cannot show')
+      assert.equal(root.style.animationDelay, '')
+      return root.style.transform
+    }
+    const [p0, p25, p50, p75] = [0, 0.25, 0.5, 0.75].map(at)
+    assert.ok([p0, p25, p50, p75].every((p) => p !== ''), 'a sampled phase must not be blank')
+    assert.notEqual(p0, p25, '0% and 25% of the cycle must not sample the same pose')
+    assert.notEqual(p25, p50, '25% and 50% of the cycle must not sample the same pose')
+    assert.notEqual(p0, p50, '0% and 50% of the cycle must not sample the same pose')
+    rig.pinGaitPhase(null)
+    assert.equal(root.style.transform, '', 'releasing the pin must clear the direct write too')
+  }, { reducedMotion: true })
+})
+
+test('scrubbing a gesture under reduced motion writes the sampled pose, not a paused animation', () => {
+  withRig('roozi', null, ({ rig, svg }) => {
+    const plan = rig.scrubGesture('wave', 0.35)
+    assert.equal(plan.mode, 'parts')
+    const part = plan.parts[0]
+    const el = svg.querySelector(`.${part.layer}`)
+    assert.equal(el.style.animation, '', 'reduced motion must not rely on the CSS animation')
+    assert.equal(el.style.animationPlayState, '')
+    const expected = poseToTransform(sampleAction(part.action, 0.35))
+    assert.equal(el.style.transform, expected,
+      'the scrubbed transform must match sampleAction at the same t')
+    rig.scrubGesture('wave', null)
+    assert.equal(el.style.transform, '', 'releasing the scrub must clear the direct write')
+  }, { reducedMotion: true })
 })

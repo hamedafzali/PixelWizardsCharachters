@@ -79,6 +79,7 @@ const armShrug: TimedAction = {
   anticipation: 0.45, settle: 0.4, antTime: 0.16, settleTime: 0.24,
 }
 
+/** The gesture library, one `GestureDef` per `Gesture` name. See the module doc comment for `parts`, `fallback` and `during`. */
 export const GESTURES: Record<Gesture, GestureDef> = {
   jump: {
     parts: [{
@@ -226,6 +227,7 @@ export const GESTURES: Record<Gesture, GestureDef> = {
   },
 }
 
+/** `GESTURES`' own keys, so a consumer never keeps a hand-written second list that can drift from the registry. */
 export const GESTURE_NAMES = Object.keys(GESTURES) as Gesture[]
 
 /** Which DOM layer a locomotion target writes to. The rig's three transform

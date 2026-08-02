@@ -315,7 +315,12 @@ test('with no loop running, apply() lands everything immediately', () => {
   dom.restore()
 })
 
-test('prefers-reduced-motion snaps instead of easing', () => {
+// This is the one test left on the real OS query (`window.matchMedia`) rather
+// than `RigOptions.reducedMotion` — per the design decision recorded on
+// `RigOptions.reducedMotion`, `'auto'` must still mean the OS, so at least one
+// test has to exercise that path for real rather than through the override
+// that now stands in for it everywhere else.
+test('prefers-reduced-motion snaps instead of easing (real OS query)', () => {
   const dom = setupDom()
   dom.window.matchMedia = (q) => ({
     media: q, matches: true, onchange: null,
@@ -329,6 +334,127 @@ test('prefers-reduced-motion snaps instead of easing', () => {
   assert.equal(readDom(dom.host).browY, -5, 'the goal pose must be reached at once')
   rig.destroy()
   dom.restore()
+})
+
+test('reducedMotion: true forces reduced motion regardless of the OS query', () => {
+  // The default dom.mjs matchMedia reports matches: false — the OS is not
+  // asking for reduced motion here. The option must still win.
+  const dom = setupDom()
+  const rig = new ActorRig(CHARACTERS.roozi, { blink: false, reducedMotion: true })
+  try {
+    rig.mount(dom.host)
+    rig.apply({ emotion: 'surprised', intensity: 1, browRaise: 1 })
+    assert.equal(rig.settling, false, 'the override must snap exactly like the OS query does')
+    assert.equal(readDom(dom.host).browY, -5, 'the goal pose must be reached at once')
+  } finally {
+    rig.destroy()
+    dom.restore()
+  }
+})
+
+test('reducedMotion: false overrides an OS query that asks for reduced motion', () => {
+  const dom = setupDom()
+  dom.window.matchMedia = (q) => ({
+    media: q, matches: true, onchange: null,
+    addEventListener() {}, removeEventListener() {},
+    addListener() {}, removeListener() {}, dispatchEvent: () => false,
+  })
+  const rig = new ActorRig(CHARACTERS.roozi, { blink: false, reducedMotion: false })
+  try {
+    rig.mount(dom.host)
+    rig.apply({ emotion: 'surprised', intensity: 1, browRaise: 1 })
+    assert.equal(rig.settling, true, 'the override must keep easing even though the OS asked to reduce it')
+  } finally {
+    rig.destroy()
+    dom.restore()
+  }
+})
+
+test('reducedMotion toggles the .ca-reduced class, the manual twin of the media query', () => {
+  const dom = setupDom()
+  const rig = new ActorRig(CHARACTERS.roozi, { blink: false, reducedMotion: true })
+  try {
+    rig.mount(dom.host)
+    const svg = dom.host.querySelector('svg')
+    assert.ok(svg.classList.contains('ca-reduced'),
+      'a reduced-motion mount must carry the class the RIG_CSS override targets')
+  } finally {
+    rig.destroy()
+    dom.restore()
+  }
+
+  const dom2 = setupDom()
+  const rig2 = new ActorRig(CHARACTERS.roozi, { blink: false, reducedMotion: false })
+  try {
+    rig2.mount(dom2.host)
+    assert.ok(!dom2.host.querySelector('svg').classList.contains('ca-reduced'),
+      'a non-reduced mount must not carry the class')
+  } finally {
+    rig2.destroy()
+    dom2.restore()
+  }
+})
+
+test('reduced motion never schedules a blink', () => {
+  // scheduleBlink is gated at the call site in mount(), not inside itself, so
+  // this has to prove the call never happens rather than that a scheduled
+  // blink is a no-op — a stray call would leave a live setTimeout no test
+  // here could distinguish from "correctly not scheduled" any other way.
+  const dom = setupDom()
+  const rig = new ActorRig(CHARACTERS.roozi, { blink: true, reducedMotion: true })
+  try {
+    rig.mount(dom.host)
+    assert.equal(rig.blinkTimer, null, 'blink must never be scheduled under reduced motion')
+  } finally {
+    rig.destroy()
+    dom.restore()
+  }
+})
+
+test('reduced motion never starts the rAF loop', () => {
+  // Idle micro-motion and phase-driven locomotion both live entirely inside
+  // the loop startLoop() drives — if the loop never starts, they are fully
+  // absent, not merely reduced. Asserting requestAnimationFrame was never
+  // called is the direct claim; the setupDom mock is what makes it checkable.
+  const dom = setupDom()
+  let rafCalls = 0
+  const realRaf = dom.window.requestAnimationFrame
+  dom.window.requestAnimationFrame = (cb) => { rafCalls++; return realRaf(cb) }
+  globalThis.requestAnimationFrame = dom.window.requestAnimationFrame
+  const rig = new ActorRig(CHARACTERS.roozi, { blink: false, reducedMotion: true, micro: { amount: 1 } })
+  try {
+    rig.mount(dom.host)
+    rig.apply({ locomotion: 'walk' })
+    dom.advance(500)
+    assert.equal(rafCalls, 0, 'requestAnimationFrame must never be called under reduced motion')
+    assert.equal(rig.raf, null)
+  } finally {
+    rig.destroy()
+    dom.restore()
+  }
+})
+
+test('a playing gesture resolves at once under reduced motion instead of holding invisibly', () => {
+  // RIG_CSS already hides the CSS animation playGesture starts, so the old
+  // behaviour — holding the gesture channel for the full nominal duration via
+  // setTimeout — was an invisible wait with nothing to show for it. It should
+  // resolve immediately, the same way apply() snaps every other channel.
+  const dom = setupDom()
+  const rig = new ActorRig(CHARACTERS.roozi, { blink: false, reducedMotion: true })
+  try {
+    rig.mount(dom.host)
+    rig.apply({ gesture: 'wave' })
+    assert.equal(rig.frame.gesture, null,
+      'the gesture channel must already be clear, not held for its nominal duration')
+    const svg = dom.host.querySelector('svg')
+    for (const el of svg.querySelectorAll('[class^="lyr-"]')) {
+      assert.ok(!el.style.animation.startsWith('caG_wave'),
+        'no gesture animation should be left running under reduced motion')
+    }
+  } finally {
+    rig.destroy()
+    dom.restore()
+  }
 })
 
 test('the rendered frame is what the DOM shows, and goal is what was asked for', () => {

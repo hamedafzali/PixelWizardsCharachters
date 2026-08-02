@@ -159,6 +159,7 @@ export function buildAction(name, a) {
  * `style.animation` assignment.
  */
 const injected = new Map();
+/** `buildAction(name, a)`, injected as a `<style>` once per `name` and cached; returns the `animation` shorthand to assign. */
 export function ensureAction(doc, name, a) {
     const cached = injected.get(name);
     if (cached !== undefined)

@@ -721,5 +721,6 @@ export const simorgh = {
 export const CHARACTERS = {
     roozi, ava, pashmak, laki, tondpa, boomi, khersi, simorgh,
 };
+/** `CHARACTERS`' own keys, so the roster list can never drift from the registry it lists. */
 export const CHARACTER_SLUGS = Object.keys(CHARACTERS);
 //# sourceMappingURL=index.js.map

@@ -4,9 +4,10 @@ import { resolveEmotion } from './emotions.js';
 import { eyeWidenScale, eyeWidenTransform, eyeLidRy } from './draw.js';
 import { resolvePosture } from './posture.js';
 import { ensureAction, composePoses, poseToTransform } from './timing.js';
+import { sampleAction } from './sample.js';
 import { IdleMicroMotion, blinkStyle } from './micro.js';
 import { FrameInterpolator } from './interpolate.js';
-import { LocomotionDriver, LOCO_TARGETS, drivesGait, wrapPhase } from './locomotion.js';
+import { LocomotionDriver, LOCO_TARGETS, drivesGait, wrapPhase, samplePhase, } from './locomotion.js';
 import { planGesture } from './gestures.js';
 import { VISEMES, textToVisemes } from './visemes.js';
 import { sanitizeFrame, isKnownGesture } from './validate.js';
@@ -60,6 +61,13 @@ export const RIG_CSS = `
 @keyframes caFly{0%,100%{transform:translateY(-3px)}50%{transform:translateY(3px)}}
 @keyframes caWingL{0%,100%{transform:rotate(0)}50%{transform:rotate(-24deg)}}
 @keyframes caWingR{0%,100%{transform:rotate(0)}50%{transform:rotate(24deg)}}
+/* .ca-reduced is the manual twin of the media query below: render() sets it
+   whenever this.reduced is true, whether that came from the OS or from
+   RigOptions.reducedMotion. Same rule body as the media query on purpose —
+   one policy, two triggers, so a forced override behaves exactly like the OS
+   setting for every CSS-driven animation and transition, not just the ones a
+   JS check happens to gate. */
+.ca-svg.ca-reduced,.ca-svg.ca-reduced *{animation:none!important;transition:none!important}
 @media (prefers-reduced-motion:reduce){.ca-svg,.ca-svg *{animation:none!important;transition:none!important}}
 `;
 const MOOD_ANIM = {
@@ -85,6 +93,36 @@ const LOCO_ANIM = {
     idle: null,
     walk: { name: 'caWalk', dur: 0.5 },
     fly: { name: 'caFly', dur: 1.6 },
+};
+/**
+ * `caWalk`/`caFly` above, as data instead of CSS text.
+ *
+ * Only exists for {@link ActorRig.pinGaitPhase}'s reduced-motion branch: the
+ * usual hold pauses the real animation, but under reduced motion the
+ * stylesheet's `animation:none!important` cannot tell a paused animation from
+ * a running one and kills the hold along with it (see `RIG_CSS`'s `.ca-reduced`
+ * rule). Sampling this table with `samplePhase` and writing the pose directly
+ * is the one path that rule cannot veto.
+ *
+ * Read off the `@keyframes` percentages directly: `caWalk`'s `rotate` is only
+ * ever authored at 0%/50%/100%, so its value at 25%/75% here is what CSS's
+ * missing-property interpolation would already produce there. `samplePhase`
+ * eases each segment with a smoothstep rather than `caWalk`'s own `linear`
+ * timing function, so this is the intent of the fallback body-mechanic, not a
+ * pixel-identical replay of it — the same honest limitation `sampleAction`
+ * already documents for gestures.
+ */
+const LOCO_FALLBACK_POSES = {
+    walk: [
+        { at: 0, pose: { y: 0, rot: -2 } },
+        { at: 0.25, pose: { y: -4, rot: 0 } },
+        { at: 0.5, pose: { y: 0, rot: 2 } },
+        { at: 0.75, pose: { y: -4, rot: 0 } },
+    ],
+    fly: [
+        { at: 0, pose: { y: -3 } },
+        { at: 0.5, pose: { y: 3 } },
+    ],
 };
 /**
  * The art cache key. A full re-render happens only when this changes.
@@ -177,7 +215,8 @@ export class ActorRig {
     mount(host) {
         ensureCSS(host.ownerDocument);
         this.host = host;
-        this.reduced = prefersReducedMotion();
+        const rm = this.opts.reducedMotion ?? 'auto';
+        this.reduced = rm === 'auto' ? prefersReducedMotion() : rm;
         this.render();
         if (this.opts.blink && !this.reduced)
             this.scheduleBlink();
@@ -274,6 +313,7 @@ export class ActorRig {
         if (!this.svg)
             return;
         this.svg.classList.add('ca-svg');
+        this.svg.classList.toggle('ca-reduced', this.reduced);
         this.mouthG = this.svg.querySelector('#mouthG');
         this.irises = Array.from(this.svg.querySelectorAll('.iris'));
         this.lidsLo = Array.from(this.svg.querySelectorAll('.lidLo'));
@@ -532,22 +572,40 @@ export class ActorRig {
      *
      * Returns how the freeze was achieved, which the caller may want to show:
      * `'phase'`, `'css'`, or `'none'` when the character is not moving at all.
+     *
+     * The CSS-fallback branch has two implementations. Normally `animation-delay`
+     * seeks into the timeline and `animation-play-state:paused` holds it there.
+     * Under reduced motion that hold is invisible: `RIG_CSS`'s
+     * `animation:none!important` cannot tell a paused animation from a running
+     * one, so it kills both, and a reviewer scrubbing a reduced-motion browser
+     * would see nothing rather than the requested frame. There, `LOCO_FALLBACK_POSES`
+     * is sampled instead and the pose is written straight to `.rig-root`'s
+     * `transform` — the one path `!important` cannot veto.
      */
     pinGaitPhase(phase) {
         this.pinnedPhase = phase === null ? null : wrapPhase(phase);
         const driven = this.drivenGait();
         if (this.root) {
-            // The CSS-fallback case. `animation-delay` is negative on purpose: it
-            // starts the animation that far into its own timeline, which — paused —
-            // is exactly "show me this frame".
             if (driven === null && phase !== null && this.frame.locomotion !== 'idle') {
+                const loco = this.frame.locomotion;
+                if (this.reduced && (loco === 'walk' || loco === 'fly')) {
+                    this.root.style.animationDelay = '';
+                    this.root.style.animationPlayState = '';
+                    this.root.style.transform = poseToTransform(samplePhase(LOCO_FALLBACK_POSES[loco], this.pinnedPhase));
+                    return 'css';
+                }
+                // The CSS-fallback case. `animation-delay` is negative on purpose: it
+                // starts the animation that far into its own timeline, which — paused —
+                // is exactly "show me this frame".
                 const dur = this.rootAnimationDuration();
+                this.root.style.transform = '';
                 this.root.style.animationDelay = `${-phase * dur}s`;
                 this.root.style.animationPlayState = 'paused';
                 return 'css';
             }
             this.root.style.animationDelay = '';
             this.root.style.animationPlayState = '';
+            this.root.style.transform = '';
         }
         if (phase !== null && driven !== null) {
             // Publish immediately: a paused rig may not tick again, and a scrub that
@@ -596,6 +654,12 @@ export class ActorRig {
      *
      * Multi-part gestures (a clap is two arms) start in the same tick and share
      * one timeout, so they cannot drift apart by a frame.
+     *
+     * Under reduced motion the channel resolves at once instead of holding for
+     * the action's nominal duration. `RIG_CSS` already prevents the CSS
+     * animation this method starts from ever being seen, so waiting out `dur`
+     * would only be an invisible hold — the same reason `apply()` snaps every
+     * other channel there rather than leaving it to travel unseen.
      */
     playGesture(g) {
         if (!this.svg)
@@ -610,6 +674,10 @@ export class ActorRig {
             // gesture would be a no-op change.
             this.clearGesture(g);
             this.opts.onGestureBlocked?.(g, plan.reason);
+            return;
+        }
+        if (this.reduced) {
+            this.clearGesture(g);
             return;
         }
         const suffix = plan.mode === 'fallback' ? '_fb' : '';
@@ -676,6 +744,14 @@ export class ActorRig {
      * functions do not match, so CSS falls back to matrix interpolation) the
      * browser is right by definition. `test/sample.test.mjs` binds the two so the
      * batch tooling can keep using the sampler with a known limit.
+     *
+     * Under reduced motion, the browser is not an option: `RIG_CSS`'s
+     * `animation:none!important` cannot distinguish this paused hold from a
+     * running animation and kills both, so a reviewer on a reduced-motion
+     * browser would see nothing at all. There — and only there — this falls
+     * back to `sampleAction`, writing the pose straight to the element's
+     * `transform`, accepting the small fidelity gap documented on
+     * {@link sampleAction} in exchange for the hold actually being visible.
      */
     scrubGesture(g, t) {
         const svg = this.svg;
@@ -693,11 +769,21 @@ export class ActorRig {
                 el.style.animation = '';
                 el.style.animationDelay = '';
                 el.style.animationPlayState = '';
+                el.style.transform = '';
+                continue;
+            }
+            const clamped = Math.max(0, Math.min(1, t));
+            if (this.reduced) {
+                el.style.animation = '';
+                el.style.animationDelay = '';
+                el.style.animationPlayState = '';
+                el.style.transform = poseToTransform(sampleAction(part.action, clamped));
                 continue;
             }
             const name = `caG_${g}_${part.layer}${suffix}`;
+            el.style.transform = '';
             el.style.animation = ensureAction(svg.ownerDocument, name, part.action);
-            el.style.animationDelay = `${-Math.max(0, Math.min(1, t)) * part.action.dur}s`;
+            el.style.animationDelay = `${-clamped * part.action.dur}s`;
             el.style.animationPlayState = 'paused';
         }
         return plan;

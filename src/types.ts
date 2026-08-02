@@ -37,6 +37,7 @@ export type VisemeName = 'rest' | 'aa' | 'mbp' | 'u' | 'l'
  * *from* them so the list and the union cannot drift apart.
  */
 export const LOCOMOTIONS = ['idle', 'walk', 'fly'] as const
+/** The valid values for `ActorFrame.facing`. */
 export const FACINGS = ['left', 'right'] as const
 
 export type Locomotion = typeof LOCOMOTIONS[number]
@@ -68,6 +69,7 @@ export interface ActorFrame {
   gesture: Gesture | null
 }
 
+/** A sensible resting frame for `character`: neutral, idle, facing right, saying nothing. */
 export function defaultFrame(character: string): ActorFrame {
   return {
     character,

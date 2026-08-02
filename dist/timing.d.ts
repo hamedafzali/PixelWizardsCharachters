@@ -76,5 +76,6 @@ export declare function buildAction(name: string, a: TimedAction): {
     css: string;
     animation: string;
 };
+/** `buildAction(name, a)`, injected as a `<style>` once per `name` and cached; returns the `animation` shorthand to assign. */
 export declare function ensureAction(doc: Document, name: string, a: TimedAction): string;
 //# sourceMappingURL=timing.d.ts.map

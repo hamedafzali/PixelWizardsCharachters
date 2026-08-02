@@ -19,6 +19,7 @@ import type { ActorFrame } from './types.js';
  */
 export type Easing = (t: number) => number;
 export type EasingName = 'linear' | 'easeIn' | 'easeOut' | 'easeInOut' | 'easeOutQuint' | 'easeOutBack' | 'snap';
+/** The named curves a `ChannelSpec.ease` may reference, keyed by `EasingName`. */
 export declare const EASINGS: Record<EasingName, Easing>;
 /** Continuous channels — blended. */
 export type NumericChannel = 'intensity' | 'mouthOpen' | 'gazeX' | 'gazeY' | 'browRaise' | 'speed';

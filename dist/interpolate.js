@@ -1,3 +1,4 @@
+/** The named curves a `ChannelSpec.ease` may reference, keyed by `EasingName`. */
 export const EASINGS = {
     linear: (t) => t,
     easeIn: (t) => t * t,

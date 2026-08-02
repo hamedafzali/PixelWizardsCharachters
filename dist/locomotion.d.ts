@@ -21,12 +21,14 @@ import type { Pose } from './timing.js';
 export type GaitName = 'walk' | 'fly';
 /** Layers a gait may drive. A subset of the rig's transform targets. */
 export type LocoTarget = 'root' | 'torso' | 'farArm' | 'nearArm' | 'farLeg' | 'nearLeg';
+/** `LocoTarget`'s own members, as a value — for iterating every possible target rather than hand-listing them again. */
 export declare const LOCO_TARGETS: readonly LocoTarget[];
 /** One keyed pose in a cycle. `at` is a phase in [0, 1). */
 export interface PhaseKey {
     at: number;
     pose: Pose;
 }
+/** One gait's phase tables: which layers it needs, and the keyed pose per layer it drives. */
 export interface Gait {
     /** cycles per second at `speed: 1` */
     rate: number;
@@ -66,6 +68,7 @@ export declare const FLY_PHASES: {
 };
 /** How far the wing folds in on the recovery stroke. */
 export declare const WING_FOLD_SX = 0.82;
+/** The built-in gaits, one `Gait` per `GaitName`. */
 export declare const GAITS: Record<GaitName, Gait>;
 /**
  * Sample a track at `phase`, wrapping from the last key back to the first.

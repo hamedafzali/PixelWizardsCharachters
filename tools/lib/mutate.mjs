@@ -92,7 +92,12 @@ export function runTests(files) {
     // (`# pass 12`) rather than pretty output that changes between Node
     // versions. A counts regex that silently stops matching is exactly the
     // class of defect this module exists to prevent.
-    const p = spawn(process.execPath, ['--test', '--test-reporter=tap', ...files], { encoding: 'utf8' })
+    // A mutant that leaves a real timer or rAF loop running past a test whose
+    // assertion threw (cleanup skipped, since node:test does not run a
+    // finally block the test itself didn't write) would otherwise hang this
+    // process forever — node:test never force-exits on its own. The timeout
+    // turns that into a `crashed` result instead of a stuck run.
+    const p = spawn(process.execPath, ['--test', '--test-timeout=10000', '--test-reporter=tap', ...files], { encoding: 'utf8' })
     let out = ''
     p.stdout.on('data', (d) => { out += d })
     p.stderr.on('data', (d) => { out += d })

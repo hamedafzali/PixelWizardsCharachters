@@ -1,5 +1,54 @@
 # Changelog
 
+## 0.7.0
+
+Reduced motion, made actually reduced. Two features that scrub or hold a frame
+via a paused CSS animation — `scrubGesture()`, and `pinGaitPhase()`'s
+CSS-fallback branch for unlayered characters like سیمرغ — were silently
+defeated under `prefers-reduced-motion`: `RIG_CSS`'s
+`animation:none!important` cannot distinguish a deliberately paused hold from
+a running animation, so it killed both, and a reviewer on a reduced-motion
+browser saw nothing rather than the requested frame. Both now sample the pose
+directly (`sampleAction`/`samplePhase`) and write it straight to `transform`,
+bypassing `animation` entirely — the one path the stylesheet rule cannot veto.
+
+`playGesture()` had the mirror problem: the gesture channel used to hold for
+the full nominal duration via `setTimeout` even though the animation it was
+waiting on was already invisible. It now resolves the channel at once under
+reduced motion, the same way `apply()` snaps every other channel.
+
+**New**: `RigOptions.reducedMotion?: boolean | 'auto'`, default `'auto'`.
+`'auto'` reads `prefers-reduced-motion` from the OS exactly as before; `true`/
+`false` force the rig into or out of reduced motion regardless of it, for a
+consumer app's own accessibility setting or for a test that wants reduced
+motion without depending on the environment. `render()` toggles a new
+`.ca-reduced` class that is `RIG_CSS`'s manual twin of the `@media` rule, so a
+forced override disables CSS-only motion identically to the OS setting.
+
+Test coverage closed three gaps the same audit found: blink was never
+independently confirmed to stay unscheduled under reduced motion, the rAF
+loop that drives idle micro-motion and phase-driven locomotion was never
+confirmed to not start, and the CSS-fallback hold above had no test at all —
+the previous scrub tests only checked `animation-play-state`/`animation-delay`,
+which would keep passing while a reduced-motion viewer saw nothing. See the
+new "Accessibility: reduced motion" section in the README for the full
+per-feature policy, and `CONTRIBUTING.md` for why reduced-motion tests use
+`RigOptions.reducedMotion` rather than stubbing `window.matchMedia` (one test
+is deliberately kept on the real OS query, to prove `'auto'` still works).
+
+Also hardened `tools/lib/mutate.mjs`'s `runTests`: two of the new integration
+tests initially skipped their `try/finally` cleanup on assertion failure
+(unlike every other test in that file), so a killing mutant left a live timer
+or rAF loop running after the test threw, hanging the mutation runner
+indefinitely with the mutated file never restored. The tests now match the
+file's established cleanup convention, and `runTests` now passes
+`--test-timeout=10000` to `node --test` so any future stray handle fails the
+run instead of hanging it — checked against the slowest legitimately-passing
+test in the whole suite (1.74s), which leaves better than 5x headroom.
+
+44 mutations now cover this reduction (M36–M44); 42 killed, 0 survived (one
+pre-existing, unrelated invalid mutation not touched this round).
+
 ## 0.6.0
 
 **Breaking**: the Persian viseme table shrinks from eleven shapes to five —

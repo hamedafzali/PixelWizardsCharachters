@@ -44,7 +44,9 @@ export interface GestureDef {
     /** Locomotion states this gesture is *semantically* allowed in. */
     during: readonly Locomotion[];
 }
+/** The gesture library, one `GestureDef` per `Gesture` name. See the module doc comment for `parts`, `fallback` and `during`. */
 export declare const GESTURES: Record<Gesture, GestureDef>;
+/** `GESTURES`' own keys, so a consumer never keeps a hand-written second list that can drift from the registry. */
 export declare const GESTURE_NAMES: Gesture[];
 /** Which DOM layer a locomotion target writes to. The rig's three transform
  *  carriers are why `root` and `torso` are not `lyr-` groups. */

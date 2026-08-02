@@ -67,6 +67,7 @@ const BLINK: Record<EmotionName, BlinkStyle> = {
   shy: { minGap: 1.6, maxGap: 3.6, dur: 0.16, doubleChance: 0.45 },
 }
 
+/** The blink timing/weight for `emotion`, from the total `BLINK_STYLES` table. */
 export function blinkStyle(emotion: EmotionName): BlinkStyle {
   return BLINK[emotion]
 }
@@ -111,6 +112,7 @@ const hump = (t: number): number => {
   return s
 }
 
+/** Ticks the procedural idle layer — breathing and eye saccade — that runs underneath whatever `ActorFrame` asks for. See the module doc comment for why it lives outside `apply()`'s channels. */
 export class IdleMicroMotion {
   private t = 0
   private amount: number

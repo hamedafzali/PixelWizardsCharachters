@@ -45,7 +45,9 @@ export function eyes(x1, x2, y, r, irisId, squint = 0, wide = 0) {
  * renderer and the live rig hook so the two can never disagree.
  */
 export const eyeWidenScale = (wide) => 1 + wide * 0.12;
+/** Scale-about-centre transform string for widening the eye by `s` (from `eyeWidenScale`) around `(cx, cy)`. */
 export const eyeWidenTransform = (cx, cy, s) => `translate(${cx} ${cy}) scale(${s.toFixed(4)}) translate(${-cx} ${-cy})`;
+/** The lower lid's ry: shrinks with squint, grows with wide, never below 0. */
 export const eyeLidRy = (r, squint, wide) => Math.max(0, r * (0.5 + squint - wide * 0.35));
 /**
  * Eyebrow pair, wrapped in a single `<g class="browsG">` the rig can translate
