@@ -179,11 +179,38 @@ export function mouthShape(svg) {
     teeth: /<rect/.test(html),
     closed: el === null,
   }
+  // A beak always draws two `<path>`s — a static upper wedge (`#f19100`,
+  // invariant to the viseme) and a lower one (`#d97a00`) whose Q-command y
+  // carries `open`. Neither is an ellipse, so without this branch every beak
+  // shape fell into the lips' closed-mouth parser below, which grabbed the
+  // *first* path — the wedge that never changes — and reported aperture 0
+  // and a constant width for all eleven visemes. Found while building the
+  // reduced-table measurements for Design 3, by the same rule as everything
+  // else here: trust the tool's output only after checking the tool.
+  const lowerBeak = /<path d="([^"]+)"[^>]*fill="#d97a00"/.exec(html)
+  if (lowerBeak) {
+    const nums = lowerBeak[1].match(/-?[\d.]+/g).map(Number)
+    // M x1 y1 Q qx qy1 x2 y2 Q qx2 qy2 x3 y3 Z
+    const [x1, y1, , qy1] = nums
+    const cx = x1 + (nums[2] - x1) / 2
+    const open = qy1 - 2 - (y1 - 1)
+    return { cx, cy: y1 - 1, width: Math.abs(nums[2] - x1), aperture: Math.max(open, 0), ...flags, closed: open <= 0 }
+  }
   if (el === null) {
-    const m = /M([\d.-]+) ([\d.-]+) Q([\d.-]+)/.exec(html)
-    const cx = m ? Number(m[1]) + (Number(m[3]) - Number(m[1])) : 100
-    const cy = m ? Number(m[2]) : 104
-    return { cx, cy, width: Math.abs(cx - Number(m?.[1] ?? 91)) * 2, aperture: 0, ...flags }
+    // `drawMouth` writes "Q " with a space before the coordinate — this
+    // regex required "Q" immediately followed by a digit and so never
+    // matched, silently falling through to the hardcoded fallback for every
+    // closed-mouth shape. That made every closed pair report the same
+    // fallback width regardless of their real geometry: harmless by
+    // coincidence while rest and mbp genuinely were identical, but a false
+    // zero waiting to happen for the next closed shape that wasn't. Found
+    // while re-measuring the fixed rest/mbp pair for this exact reason —
+    // trust the tool before trusting what it reports.
+    const m = /M([\d.-]+) ([\d.-]+) Q\s*([\d.-]+)/.exec(html)
+    if (!m) throw new Error(`mouthShape: could not parse closed-mouth path: ${html}`)
+    const cx = Number(m[1]) + (Number(m[3]) - Number(m[1]))
+    const cy = Number(m[2])
+    return { cx, cy, width: Math.abs(cx - Number(m[1])) * 2, aperture: 0, ...flags }
   }
   return {
     cx: Number(el.getAttribute('cx')),
