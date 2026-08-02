@@ -503,6 +503,22 @@ test('LAYER_ORDER matches the order buildLayers actually paints', () => {
     'LAYER_ORDER no longer describes what buildLayers emits')
 })
 
+// ------------------------------------------------------------- آوا: hair over face ---
+
+test('ava\'s hair crown paints after her face, not before it', () => {
+  // The crown is hand-authored inline in head.art, not a LAYER_ORDER entry, so
+  // the test above cannot see it: the crown used to be emitted before the
+  // face-skin circle, which then painted over nearly the whole thing, leaving
+  // only the two side locks visible. The face circle's fill is unique in the
+  // string, so its index is unambiguous; avHair's first occurrence is the
+  // crown (the side locks, unaffected either way, come later).
+  const svg = renderActorSVG(CHARACTERS.ava, defaultFrame('ava'))
+  const faceAt = svg.indexOf('r="45" fill="url(#avS)"')
+  const hairAt = svg.indexOf('fill="url(#avHair)"')
+  assert.ok(faceAt >= 0 && hairAt >= 0, 'both the face circle and the hair fill must be present')
+  assert.ok(faceAt < hairAt, 'the face-skin circle must paint before the hair crown, or the crown vanishes under it')
+})
+
 // ── تندپا: the invisible seam ────────────────────────────────────────────────
 //
 // The head disc and the body ellipse carry the same `tpB` fill, so the seam at

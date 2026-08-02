@@ -194,8 +194,8 @@ export const ava: CharacterSpec = {
           // Where the head meets the dress. Hair hides the neck, but the join is
           // a real line between two forms, so this pivot is measured.
           origin: [100, 140],
-          art: `<path d="M55 92c0-30 20-50 45-50s45 20 45 50c0-10-7-17-12-19 2 6 2 11 0 15-4-13-14-22-33-22s-29 9-33 22c-2-4-2-9 0-15-5 2-12 9-12 19z" fill="url(#avHair)"/>
-      <circle cx="100" cy="90" r="45" fill="url(#avS)"/>
+          art: `<circle cx="100" cy="90" r="45" fill="url(#avS)"/>
+      <path d="M55 92c0-30 20-50 45-50s45 20 45 50c0-10-7-17-12-19 2 6 2 11 0 15-4-13-14-22-33-22s-29 9-33 22c-2-4-2-9 0-15-5 2-12 9-12 19z" fill="url(#avHair)"/>
       <path d="M58 92c0 15 5 25 11 29-4-11-4-21-2-29z" fill="url(#avHair)"/><path d="M142 92c0 15-5 25-11 29 4-11 4-21 2-29z" fill="url(#avHair)"/>
       <circle cx="100" cy="94" r="45" fill="url(#avCo)"/>
       <circle cx="72" cy="64" r="8" fill="#ffcf4d"/><circle cx="72" cy="64" r="3.5" fill="#fff2c4"/>

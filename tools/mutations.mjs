@@ -463,4 +463,17 @@ export default [
     mutate: replace('if (!this.reduced) this.startLoop()', 'this.startLoop()'),
     absent: 'if (!this.reduced) this.startLoop()',
   },
+  {
+    id: 'M45',
+    note: "ava's hair crown goes back to painting before her face, vanishing under the face-skin circle",
+    file: 'src/characters/index.ts',
+    tests: CACHE,
+    mutate: replace(
+      '<circle cx="100" cy="90" r="45" fill="url(#avS)"/>\n' +
+      '      <path d="M55 92c0-30 20-50 45-50s45 20 45 50c0-10-7-17-12-19 2 6 2 11 0 15-4-13-14-22-33-22s-29 9-33 22c-2-4-2-9 0-15-5 2-12 9-12 19z" fill="url(#avHair)"/>',
+      '<path d="M55 92c0-30 20-50 45-50s45 20 45 50c0-10-7-17-12-19 2 6 2 11 0 15-4-13-14-22-33-22s-29 9-33 22c-2-4-2-9 0-15-5 2-12 9-12 19z" fill="url(#avHair)"/>\n' +
+      '      <circle cx="100" cy="90" r="45" fill="url(#avS)"/>',
+    ),
+    expect: 'fill="url(#avHair)"/>\n      <circle cx="100" cy="90" r="45" fill="url(#avS)"/>',
+  },
 ]
