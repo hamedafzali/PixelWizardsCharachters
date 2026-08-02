@@ -134,9 +134,27 @@ rig.speak('سلام', 70)              // ms per shape
 
 `textToVisemes(text)` maps a Persian string to a viseme sequence. It is a
 deliberate *group* mapping (grapheme family → mouth shape) — readable,
-kid-friendly lip-sync without a full G2P pass. A backend phonemiser can emit the
-same viseme names for higher accuracy. `PMAP` exposes the letter→viseme table;
-`VISEMES` the shape specs with Persian labels.
+kid-friendly lip-sync without a full G2P pass. `PMAP` exposes the letter→viseme
+table; `VISEMES` the shape specs with Persian labels.
+
+**Timing is one viseme per written letter, and that is a measured decision,
+not a placeholder.** Persian omits short vowels in writing, so a letter isn't
+a syllable — against a 30-item hand-marked corpus
+(`tools/baselines/speech.json`, `npm run speech-gap`) this carries an 18.4%
+mean per-word timing error. Before building syllable-based timing to fix that,
+six lexicon-free syllable estimators were tried against the same corpus
+(`npm run syllable-probe`), including proper CV-chunking with Persian's real
+phonotactics. None beat letter count where it counts — the best only won on
+the mean by clipping outliers, and letter count stayed closer on 19 of 30
+words. That isn't bad luck: دوست (1 syllable) and دارم (2) share the identical
+consonant/vowel skeleton, as do آفتاب/آفرین and اسم/است, so no rule reading
+only the written string can tell them apart. That needs a lexicon, which is a
+different feature, not a tuning knob here.
+
+**If you need real accuracy** — matching recorded or synthesized audio rather
+than approximating from text — drive `rig.apply({ viseme, mouthOpen })`
+directly from a timed track (TTS phoneme marks, forced alignment) instead of
+`speak()`. That input path is a documented future option and is not built.
 
 ## Frames are eased, not snapped
 

@@ -313,7 +313,15 @@ export declare class ActorRig {
     private clearGesture;
     /**
      * Speak a Persian string: drive the mouth through its viseme sequence, then
-     * return to rest. `perViseme` is the ms each shape holds.
+     * return to rest. `perViseme` is the ms each shape holds — one letter, one
+     * hold, at a fixed duration. See the docstring on `textToVisemes` for why
+     * that model is kept rather than replaced with syllable timing: it is
+     * measurably near the ceiling for a text-only, lexicon-free approach.
+     *
+     * For real timing accuracy — matching recorded or synthesized audio rather
+     * than approximating from text — drive `apply({ viseme, mouthOpen })`
+     * directly from a timed track (TTS phoneme marks, forced alignment) instead
+     * of calling `speak()`. That input path is not built; see README.md.
      */
     speak(text: string, perViseme?: number): void;
     /**
