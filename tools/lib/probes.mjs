@@ -292,3 +292,101 @@ export function avaPigtailPenetration(side, earDeg, tilt, drop) {
   const h = spin(AV.head, headP, tilt, drop)
   return h.r - (Math.hypot(e.cx - h.cx, e.cy - h.cy) - e.r)
 }
+
+// ── چرخی: antennas rooted on the roofline ────────────────────────────────────
+//
+// آوا's and خرسی's ear/pigtail pivots are chord-midpoints because the drawn
+// bunch's own centre sits *outside* the head disc, with no drawn base to read
+// a pivot from. چرخی's antennas are the opposite case — بومی's case: the root
+// is drawn exactly on the parent silhouette (the roofline's own on-curve
+// vertex), so the pivot is read straight off the path, and the antenna cannot
+// pull free of the body by rotating about a point that IS the body's own
+// edge. What it *can* do instead is swing back down far enough that the
+// stalk's own curve dips under the roofline it grows from — clipping in,
+// never pulling out. That is a new failure direction, so it needs its own
+// probe rather than reusing `avaPigtailPenetration`'s.
+
+/**
+ * چرخی's body silhouette, the three cubics that matter for the roofline,
+ * transcribed verbatim from the `torso.art` path in `characters/index.ts` so
+ * this measures the shape actually painted, not an approximation of it.
+ */
+const ROOF_L = { x: [30, 33, 42, 58], y: [128, 108, 92, 80] }
+const ROOF_APEX = { x: [58, 72, 128, 142], y: [80, 68, 68, 80] }
+const ROOF_R = { x: [142, 158, 167, 170], y: [80, 92, 108, 128] }
+
+/** The roofline height at a given x, picking whichever of the three cubics spans it. */
+export function charkhiRoofY(x) {
+  const seg = x <= 58 ? ROOF_L : x >= 142 ? ROOF_R : ROOF_APEX
+  let lo = 0
+  let hi = 1
+  for (let i = 0; i < 60; i++) {
+    const m = (lo + hi) / 2
+    if (cubic(seg.x, m) < x) lo = m
+    else hi = m
+  }
+  return cubic(seg.y, (lo + hi) / 2)
+}
+
+/** چرخی's antenna geometry: base (= pivot), quadratic control point, tip. */
+export const CH = {
+  earL: { base: [58, 80], ctrl: [50, 55], tip: [44, 40] },
+  earR: { base: [142, 80], ctrl: [150, 55], tip: [156, 40] },
+}
+
+const quad = (p0, p1, p2, t) => {
+  const u = 1 - t
+  return [
+    u * u * p0[0] + 2 * u * t * p1[0] + t * t * p2[0],
+    u * u * p0[1] + 2 * u * t * p1[1] + t * t * p2[1],
+  ]
+}
+
+/**
+ * How clear an antenna's stalk stays of the roofline it grows from, in art
+ * units, at one `ears` rotation — **positive is safe**, **negative means it
+ * has dipped under the roofline**, i.e. clipped into the painted body.
+ *
+ * Samples along the stalk's quadratic curve from `tMin` to the tip, not just
+ * the tip: the control point can swing closer to the roof than the endpoint
+ * does at some rotations, and a tip-only check would miss that the same way
+ * sweeping only `action.poses` misses the derived anticipation beat.
+ *
+ * `tMin` excludes only the immediate neighbourhood of the base itself. The
+ * base *is* the pivot, so margin there is exactly 0 by construction for
+ * every rotation — the wall itself, in لاکی's phrase — and sampling closer
+ * to it just measures how fine `steps` is, not the art. `tMin = 0.025` is
+ * about the first art-unit of the stalk's own length past its root.
+ */
+export function charkhiAntennaClip(side, earDeg, steps = 200, tMin = 0.025) {
+  const pivot = headPivot('charkhi', side)
+  const sign = side === 'earL' ? 1 : -1
+  const { base, ctrl, tip } = CH[side]
+  let worst = Infinity
+  for (let i = 0; i <= steps; i++) {
+    const t = tMin + (1 - tMin) * (i / steps)
+    const [x0, y0] = quad(base, ctrl, tip, t)
+    const [x, y] = rotateAbout([x0, y0], pivot, sign * earDeg)
+    if (x < 30 || x > 170) continue
+    const margin = charkhiRoofY(x) - y
+    if (margin < worst) worst = margin
+  }
+  return worst
+}
+
+/**
+ * The `ears` rotation (droop direction, degrees) at which
+ * {@link charkhiAntennaClip} first crosses zero — found by bisection, not
+ * assumed. Exists so the guard can also state *how much* headroom the
+ * character's declared posture has, not just that it currently clears.
+ */
+export function charkhiAntennaClipOnset(side, steps = 400, tMin = 0.025) {
+  let lo = 0
+  let hi = 180
+  for (let i = 0; i < 50; i++) {
+    const m = (lo + hi) / 2
+    if (charkhiAntennaClip(side, m, steps, tMin) > 0) lo = m
+    else hi = m
+  }
+  return (lo + hi) / 2
+}

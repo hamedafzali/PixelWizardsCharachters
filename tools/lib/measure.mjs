@@ -24,6 +24,7 @@ import {
   LAKI, lakiRimY, lakiClearance, posturePose, worstOverAction,
   TP, tondpaSeamOverlap, KH, khersiSeamOverlap, khersiEarPenetration,
   earChordMidpoint, discBodySeamY, headPivot, MICRO_WORST,
+  charkhiRoofY, charkhiAntennaClip, charkhiAntennaClipOnset,
 } from './probes.mjs'
 import { gesturePlanFor } from './harness.mjs'
 
@@ -143,6 +144,21 @@ export function measureAll() {
     }
     return [g, { dur: r(a.dur), layers: GESTURES[g].parts.map((p) => p.layer), at: { 0.1: at(0.1), 0.5: at(0.5), 0.9: at(0.9) } }]
   }))
+
+  // ── چرخی: the antennas, clip-in rather than pull-out ─────────────────────
+  out.charkhi = {
+    antennaPivots: Object.fromEntries(['earL', 'earR'].map((s) => [s, rr(headPivot('charkhi', s))])),
+    roof: Object.fromEntries([30, 58, 100, 142, 170].map((x) => [x, r(charkhiRoofY(x))])),
+    // Worst clip margin across this character's own declared posture map —
+    // positive means the antenna clears the roofline at every emotion and
+    // intensity it can actually be driven to.
+    worstAntennaClip: worstPosture('charkhi', (p) =>
+      Math.min(...['earL', 'earR'].map((s) => charkhiAntennaClip(s, p.ears ?? 0)))),
+    // The rotation at which clipping would *begin* — derived by bisection,
+    // not assumed — so the diff also shows how much headroom a future
+    // posture edit is spending, not just whether it is still positive.
+    clipOnsetDeg: Object.fromEntries(['earL', 'earR'].map((s) => [s, r(charkhiAntennaClipOnset(s))])),
+  }
 
   out.microWorst = MICRO_WORST
   return out

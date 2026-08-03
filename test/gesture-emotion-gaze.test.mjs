@@ -192,10 +192,10 @@ test('the structural mismatches are exactly the ones the roster predicts', () =>
   // پشمک arms — or taking بومی\'s away — has to update this list on purpose.
   const armless = LAYERED.filter((s) => !layersOf(s).has('lyr-nearArm'))
   const headless = LAYERED.filter((s) => !layersOf(s).has('lyr-head'))
-  assert.deepEqual(armless.sort(), ['khersi', 'pashmak', 'tondpa'],
-    'the three characters with no arm layer take the fallback for wave/point/clap/shrug')
-  assert.deepEqual(headless.sort(), ['boomi'],
-    'بومی is one continuous form, so nod/shake fall back to the body')
+  assert.deepEqual(armless.sort(), ['charkhi', 'khersi', 'pashmak', 'tondpa'],
+    'the four characters with no arm layer take the fallback for wave/point/clap/shrug')
+  assert.deepEqual(headless.sort(), ['boomi', 'charkhi'],
+    'بومی and چرخی are each one continuous form, so nod/shake fall back to the body')
 })
 
 test('the unlayered character takes the body path for every gesture it is allowed', () => {

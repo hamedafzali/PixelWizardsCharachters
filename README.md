@@ -65,7 +65,13 @@ const svg = renderActorSVG(CHARACTERS.laki, defaultFrame('laki'), 200)
 import { CHARACTERS, CHARACTER_SLUGS } from 'pixel-wizards-charachters'
 ```
 
-`roozi` · `ava` · `pashmak` · `laki` · `tondpa` · `boomi` · `khersi` · `simorgh`
+`roozi` · `ava` · `pashmak` · `laki` · `tondpa` · `boomi` · `khersi` · `simorgh` ·
+`charkhi`
+
+Four categories: animals (`roozi`, `pashmak`, `laki`, `tondpa`, `boomi`,
+`khersi`), a fantasy creature (`simorgh`), a human kid (`ava`), and vehicles
+with faces (`charkhi`). See "Roster categories" in `CONTRIBUTING.md` for what
+each category needs from the rig, and what — so far — it hasn't.
 
 ## The contract: `ActorFrame`
 

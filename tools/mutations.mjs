@@ -487,4 +487,15 @@ export default [
     ),
     expect: 'earL: {\n          origin: [58, 89],',
   },
+  {
+    id: 'M47',
+    note: "charkhiAntennaClip samples back down to the antenna's own pivot (tMin 0 instead of 0.025) — the exact degenerate-sampling trap caught during development, where t=0 is trivially a 0 margin against any wall and swamps the real signal",
+    file: 'tools/lib/probes.mjs',
+    tests: ['test/charkhi.test.mjs'],
+    mutate: replace(
+      'export function charkhiAntennaClip(side, earDeg, steps = 200, tMin = 0.025) {',
+      'export function charkhiAntennaClip(side, earDeg, steps = 200, tMin = 0) {',
+    ),
+    expect: 'export function charkhiAntennaClip(side, earDeg, steps = 200, tMin = 0) {',
+  },
 ]

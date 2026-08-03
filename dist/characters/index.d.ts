@@ -140,6 +140,50 @@ export declare const boomi: CharacterSpec;
  */
 export declare const khersi: CharacterSpec;
 export declare const simorgh: CharacterSpec;
+/**
+ * چرخی — the roster's first vehicle, and its first character with no `head`,
+ * no `farLeg`/`nearLeg`, and no `farArm`/`nearArm` at all.
+ *
+ * - **No head layer, for a mechanical reason instead of a biological one.**
+ *   The body is one continuous moulded form, bumper to roof, with no
+ *   determinate line anywhere that could be called where a "head" would meet
+ *   a "body" — the same conclusion as بومی, arrived at from a car's shape
+ *   rather than an owl's. The face sits straight on `torso`.
+ * - **No leg layers.** The wheels are structurally the right count and
+ *   position to tempt a `farLeg`/`nearLeg` mapping, but `walk`'s ±20°
+ *   oscillating swing table is the wrong motion for something that should
+ *   spin continuously about a fixed axle — the same "structurally capable,
+ *   semantically wrong" trap `gaits` exists to block (لاکی's flippers-in-arm-
+ *   slots is the precedent). So the wheels are static art baked into `torso`,
+ *   not a layer: nothing about them independently rotates relative to the
+ *   body in this version, and a layer for a joint that does not move is the
+ *   thing the head/torso rule already forbids, applied to a limb instead.
+ * - **`earL`/`earR` reused for twin roof antennas**, not side mirrors — a
+ *   folded-in mirror does not read as broken (real mirrors fold), so it is a
+ *   bad stand-in for the ears/pigtails "did this come loose" check. An
+ *   antenna is a clean structural match: `ears` is documented on
+ *   `PostureSpec` as "ear / antenna / tuft angle", and this is that case.
+ * - **Pivots measured off بومی's headless convention, not آوا's/خرسی's.**
+ *   Each antenna's `origin` is the literal on-curve vertex where the roofline
+ *   path already ends: `[58, 80]` is the endpoint of the body path's left
+ *   roof-shoulder cubic, `[142, 80]` the mirror point on the right — read
+ *   directly off the drawn body, the same way بومی's tuft origins are read
+ *   off its head-triangle paths. The chord-midpoint technique آوا/خرسی use is
+ *   specifically for a feature whose own centre sits *outside* the parent
+ *   silhouette with no drawn base to read a pivot from; an antenna's base
+ *   root is drawn exactly on the roofline, so that case does not apply here.
+ * - **A new collision class: clipping in, not pulling out.** Because the
+ *   antenna's root is pinned to the roofline vertex it rotates about, it
+ *   cannot pull free of the body by construction — the same reason بومی's
+ *   tufts carry no penetration guard in the test suite. What *can* happen at
+ *   extreme droop is the opposite: the stalk swings back down far enough that
+ *   its tip crosses under the roofline it grows from. `charkhiAntennaClip` in
+ *   `tools/lib/probes.mjs` measures this against the real roof cubics (the
+ *   same technique `lakiRimY` uses for لاکی's shell rim), swept across every
+ *   emotion at every intensity; the measured worst case is recorded in
+ *   `tools/baselines/geometry.json` rather than guessed.
+ */
+export declare const charkhi: CharacterSpec;
 /** The built-in roster, keyed by slug. */
 export declare const CHARACTERS: Record<string, CharacterSpec>;
 /** `CHARACTERS`' own keys, so the roster list can never drift from the registry it lists. */

@@ -87,6 +87,17 @@
       "clap": "fallback:missing-layer",
       "point": "fallback:missing-layer",
       "bounce": "rig-body"
+    },
+    "charkhi": {
+      "jump": "rig-body",
+      "spin": "rig-body",
+      "wave": "fallback:missing-layer",
+      "nod": "fallback:missing-layer",
+      "shake": "fallback:missing-layer",
+      "shrug": "fallback:missing-layer",
+      "clap": "fallback:missing-layer",
+      "point": "fallback:missing-layer",
+      "bounce": "rig-body"
     }
   },
   "pivots": {
@@ -257,6 +268,18 @@
     "khersi.head": [
       100,
       121
+    ],
+    "charkhi.torso": [
+      100,
+      148
+    ],
+    "charkhi.earL": [
+      58,
+      80
+    ],
+    "charkhi.earR": [
+      142,
+      80
     ]
   },
   "laki": {
@@ -619,6 +642,34 @@
           1.001
         ]
       }
+    }
+  },
+  "charkhi": {
+    "antennaPivots": {
+      "earL": [
+        58,
+        80
+      ],
+      "earR": [
+        142,
+        80
+      ]
+    },
+    "roof": {
+      "30": 128,
+      "58": 80,
+      "100": 71,
+      "142": 80,
+      "170": 128
+    },
+    "worstAntennaClip": {
+      "v": 1.302,
+      "emotion": "sad",
+      "intensity": 1
+    },
+    "clipOnsetDeg": {
+      "earL": 69.666,
+      "earR": 69.666
     }
   },
   "microWorst": {

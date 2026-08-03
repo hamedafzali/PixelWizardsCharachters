@@ -225,9 +225,88 @@ each new stacking relationship that matters needs its own such assertion —
 right for one emotion/intensity and wrong for another if any of the pieces
 move independently.
 
+## Base-pinned features risk clipping inward, not detaching outward
+
+آوا's and خرسی's ear/pigtail pivots (see "Measure, don't invent" above) are
+chord-midpoints because the drawn feature's own visual centre sits *outside*
+the parent silhouette it overlaps — there is no drawn base to read a pivot
+from, so the guard that matters is whether rotating it can pull the whole
+feature free of the parent disc (`avaPigtailPenetration`,
+`khersiEarPenetration` in `tools/lib/probes.mjs`).
+
+Not every feature is built that way. Some are rooted exactly on the parent's
+own silhouette — the origin is a literal coordinate that already appears in
+the parent's path data, not a computed intersection. A feature like that
+*cannot* detach by rotating about a point that already is the parent's own
+edge; the failure direction is the opposite one. What it can do is swing back
+far enough that its own drawn curve dips back *under* the edge it grows from —
+clipping in, never pulling out — and a penetration guard built for the
+detach case measures the wrong thing entirely for it.
+
+چرخی is the worked example. Its twin roof antennas reuse the `earL`/`earR`
+slots, but their origins — `(58, 80)` and `(142, 80)` — are the exact
+endpoints of the roof-shoulder cubics in the torso body's own `art` path
+string (see چرخی's docstring in `src/characters/index.ts`), the same
+on-curve-vertex convention بومی's headless tuft origins use, not the
+two-circle chord-midpoint آوا's and خرسی's pivots use. Because the pivot sits
+on the roofline itself, an antenna cannot pull free of the body by
+construction — there is nothing for `avaPigtailPenetration`-style overlap
+math to ever catch. The real risk is the stalk's own curve swinging low
+enough to dip under the roofline it grows from, so it needed a new probe
+rather than a reuse of the existing one: `charkhiRoofY` (a real-cubic
+evaluator over the painted roofline, the same binary-search-over-Bezier-`t`
+technique `lakiRimY` uses) and `charkhiAntennaClip`, which rotates sampled
+points along the antenna's own curve about the roofline pivot and measures
+clearance against `charkhiRoofY`, in `tools/lib/probes.mjs`.
+
+The threshold itself is measured, not assumed, the same discipline every
+other guard margin in this file follows: `charkhiAntennaClip` is swept across
+the full emotion × intensity grid in `test/charkhi.test.mjs`
+(`"چرخی's antennas never clip into the roofline across the full emotion x
+intensity range"`), finding a worst-case clearance of 1.302 art units (sad,
+intensity 1), and the rotation at which clipping would actually *begin* is
+found by bisection (`charkhiAntennaClipOnset`, asserted in the same file's
+`"the clip onset is well clear of what چرخی's own posture map ever asks
+for"`) at ≈69.7°, roughly 3.9× چرخی's own largest declared `ears` travel
+(18°, at `sad`). `tools/mutations.mjs` (`M47`) regresses
+`charkhiAntennaClip`'s own degenerate-sampling floor — reintroducing the
+trap caught during development, where sampling starts exactly at the
+antenna's pivot and reports a trivially-zero margin against any wall,
+swamping the real signal — and is killed by the same test.
+
 ## Characters
 
 سیمرغ is deliberately unlayered — it is the CSS-fallback case, and several
 cross-character tests exist only because it and بومی have no `head` layer.
 Keep at least two headless characters in the roster; `rig-crosschar.test.mjs`
 asserts this, because that is the shape that broke blink parenting twice.
+
+### Roster categories
+
+The nine-character roster spans four categories, and the same `ActorFrame`
+contract is expected to drive all of them without a character-specific
+escape hatch:
+
+- **Animals** — `roozi`, `pashmak`, `laki`, `tondpa`, `boomi`, `khersi`. The
+  largest group, and the one the original `ActorFrame` shape (emotion, gaze,
+  visemes, `walk`/`fly` gaits) was designed against.
+- **Fantasy creature** — `simorgh`, the roster's one unlayered/CSS-fallback
+  flier (see "The wing-hook convention" above).
+- **Human kid** — `ava`, the one character with a drawn neck/collar line
+  rather than an animal's continuous head-to-body form (see "The head/torso
+  pivot rule" above).
+- **Vehicles with faces** — `charkhi`, so far the only member. No wheels,
+  legs, arms or head layer; antennas standing in for the `earL`/`earR` slots.
+
+چرخی's build confirmed a category-level question raised when the taxonomy
+was first proposed: does a vehicle need its own `ActorFrame` field, for
+headlight-blink or wheel-spin? For چرخی specifically, no — headlight-blink is
+modeled as `eyes` (a headlight reads as an eye at this art scale), and
+wheel-spin is a `gaits`/locomotion-table question, not a frame field, made
+moot here since `charkhi.gaits` is `[]` and its wheels are static art. That is
+a finding about *this* vehicle's feature set, not a closed claim about the
+category: a future vehicle with genuinely novel semantics — turn signals
+driven as their own distinct gesture, say, rather than a repurposed blink —
+could still need a real extension. Treat "vehicles need no `ActorFrame`
+extension" as true of one worked example, not as roster-wide policy, until a
+second vehicle either confirms or breaks it.

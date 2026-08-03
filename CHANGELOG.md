@@ -1,5 +1,41 @@
 # Changelog
 
+## 0.8.0
+
+**New character**: چرخی, the roster's first entry since the original eight
+and its first vehicle — a new "vehicles with faces" category alongside
+animals, the one fantasy creature (سیمرغ) and the one human kid (آوا). It has
+no `head` layer (one continuous moulded body, the mechanical reading of
+بومی's headless rule), no leg or arm layers (its wheels are static art, not a
+joint — `walk`'s oscillating swing table is the wrong motion for something
+that should spin), and `gaits: []`. Its twin roof antennas reuse the
+`earL`/`earR` slots, pivoting at literal on-curve vertices of the torso's own
+path data rather than a computed chord-midpoint — see "Roster categories" and
+"Base-pinned features risk clipping inward, not detaching outward" in
+`CONTRIBUTING.md`.
+
+That second addition is a new collision class, not just a new character.
+آوا's and خرسی's ear/pigtail guards protect against a feature *pulling free*
+of its parent, because their pivot sits outside the parent's own silhouette.
+چرخی's antennas are pinned at their own root and cannot detach by
+construction — the only failure they can have is the opposite one, the
+stalk's curve swinging back far enough to dip *under* the roofline it grows
+from. That needed its own probe (`charkhiRoofY`, `charkhiAntennaClip`,
+`charkhiAntennaClipOnset` in `tools/lib/probes.mjs`) rather than a reuse of
+the existing penetration checks. The clip threshold is measured, not assumed:
+swept across the full emotion × intensity grid to a worst-case clearance of
+1.302 art units, with the actual clip-onset angle (≈69.7°) found by
+bisection rather than guessed, and a mutation (`M47`) that regresses the
+guard's own degenerate-sampling floor to confirm the check actually bites.
+
+چرخی also answered a category-level question raised when the roster taxonomy
+was first proposed: whether a vehicle needs its own `ActorFrame` field for
+headlight-blink or wheel-spin. For this character, no — a headlight reads as
+an `eyes` slot at this art scale, and wheel-spin is a locomotion-table
+question rather than a frame field. That is scoped to what چرخی's own feature
+set actually needed, not a closed claim about every future vehicle; see
+"Roster categories" in `CONTRIBUTING.md` for the caveat.
+
 ## 0.7.0
 
 Reduced motion, made actually reduced. Two features that scrub or hold a frame

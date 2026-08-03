@@ -739,9 +739,115 @@ export const simorgh = {
         };
     },
 };
+/**
+ * چرخی — the roster's first vehicle, and its first character with no `head`,
+ * no `farLeg`/`nearLeg`, and no `farArm`/`nearArm` at all.
+ *
+ * - **No head layer, for a mechanical reason instead of a biological one.**
+ *   The body is one continuous moulded form, bumper to roof, with no
+ *   determinate line anywhere that could be called where a "head" would meet
+ *   a "body" — the same conclusion as بومی, arrived at from a car's shape
+ *   rather than an owl's. The face sits straight on `torso`.
+ * - **No leg layers.** The wheels are structurally the right count and
+ *   position to tempt a `farLeg`/`nearLeg` mapping, but `walk`'s ±20°
+ *   oscillating swing table is the wrong motion for something that should
+ *   spin continuously about a fixed axle — the same "structurally capable,
+ *   semantically wrong" trap `gaits` exists to block (لاکی's flippers-in-arm-
+ *   slots is the precedent). So the wheels are static art baked into `torso`,
+ *   not a layer: nothing about them independently rotates relative to the
+ *   body in this version, and a layer for a joint that does not move is the
+ *   thing the head/torso rule already forbids, applied to a limb instead.
+ * - **`earL`/`earR` reused for twin roof antennas**, not side mirrors — a
+ *   folded-in mirror does not read as broken (real mirrors fold), so it is a
+ *   bad stand-in for the ears/pigtails "did this come loose" check. An
+ *   antenna is a clean structural match: `ears` is documented on
+ *   `PostureSpec` as "ear / antenna / tuft angle", and this is that case.
+ * - **Pivots measured off بومی's headless convention, not آوا's/خرسی's.**
+ *   Each antenna's `origin` is the literal on-curve vertex where the roofline
+ *   path already ends: `[58, 80]` is the endpoint of the body path's left
+ *   roof-shoulder cubic, `[142, 80]` the mirror point on the right — read
+ *   directly off the drawn body, the same way بومی's tuft origins are read
+ *   off its head-triangle paths. The chord-midpoint technique آوا/خرسی use is
+ *   specifically for a feature whose own centre sits *outside* the parent
+ *   silhouette with no drawn base to read a pivot from; an antenna's base
+ *   root is drawn exactly on the roofline, so that case does not apply here.
+ * - **A new collision class: clipping in, not pulling out.** Because the
+ *   antenna's root is pinned to the roofline vertex it rotates about, it
+ *   cannot pull free of the body by construction — the same reason بومی's
+ *   tufts carry no penetration guard in the test suite. What *can* happen at
+ *   extreme droop is the opposite: the stalk swings back down far enough that
+ *   its tip crosses under the roofline it grows from. `charkhiAntennaClip` in
+ *   `tools/lib/probes.mjs` measures this against the real roof cubics (the
+ *   same technique `lakiRimY` uses for لاکی's shell rim), swept across every
+ *   emotion at every intensity; the measured worst case is recorded in
+ *   `tools/baselines/geometry.json` rather than guessed.
+ */
+export const charkhi = {
+    slug: 'charkhi', name: 'چرخی', role: 'جاده‌ها',
+    eyes: { x: [76, 124], y: 104, r: 13 }, lidColor: '#e1f5fe', browColor: '#2a2a2a',
+    // No leg layers exist, so `canDrive` is false for both gaits before the
+    // declaration is even read. Declared empty anyway, so the decision is on
+    // the page rather than implied by an omission — the same call پشمک/خرسی
+    // make for the same structural reason.
+    gaits: [],
+    // A car body barely leans (small spine travel) and the antennas are rigid
+    // wire, not fur, so they get noticeably less travel than the shared
+    // preset — the same "narrower than default" call خرسی makes for stiff
+    // round ears, applied here because the material is rigid rather than soft.
+    // No headTilt/headDrop/tail/arms: there is nothing on this character for
+    // those channels to land on, the same dead end بومی's headDrop reaches.
+    posture: {
+        sad: { spine: 2, sink: 1, ears: 18 },
+        sleepy: { spine: 1, sink: 2, ears: 10 },
+        excited: { spine: -2, ears: -14 },
+        happy: { ears: -8 },
+        thinking: { ears: 6 },
+        surprised: { ears: -16 },
+    },
+    render({ emotion, intensity }) {
+        const e = eyes(76, 124, 104, 13, 'chIris', emotion.squint * intensity, emotion.wide * intensity);
+        const b = brows(76, 124, 84, emotion.brow, '#2a2a2a');
+        const wheel = (cx) => `<circle cx="${cx}" cy="172" r="19" fill="#262626"/>` +
+            `<circle cx="${cx}" cy="172" r="9" fill="#9aa0a6"/>` +
+            `<circle cx="${cx}" cy="172" r="3" fill="#5a5f66"/>`;
+        const antenna = (x0, y0, xc, yc, tx, ty) => `<path d="M${x0} ${y0} Q${xc} ${yc} ${tx} ${ty}" stroke="#5a5f66" stroke-width="3" stroke-linecap="round" fill="none"/>` +
+            `<circle cx="${tx}" cy="${ty}" r="5" fill="#e64a19"/>`;
+        return {
+            grads: `
+      <radialGradient id="chB" cx="42%" cy="22%" r="86%"><stop offset="0" stop-color="#ff8a65"/><stop offset=".55" stop-color="#e64a19"/><stop offset="1" stop-color="#a8320f"/></radialGradient>
+      <linearGradient id="chG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f2fbff"/><stop offset="1" stop-color="#b3e5fc"/></linearGradient>
+      <radialGradient id="chIris" cx="38%" cy="28%" r="76%"><stop offset="0" stop-color="#5a7a9a"/><stop offset=".55" stop-color="#2e4a64"/><stop offset="1" stop-color="#12202e"/></radialGradient>
+      <radialGradient id="chCo" cx="50%" cy="30%" r="72%"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#5a1a00" stop-opacity=".2"/></radialGradient>`,
+            art: '',
+            layers: {
+                shadow: { art: `<ellipse cx="100" cy="188" rx="56" ry="8" fill="#000" opacity=".11"/>` },
+                torso: {
+                    origin: [100, 148],
+                    art: 
+                    // The body silhouette. `charkhiAntennaClip` in probes.mjs evaluates the
+                    // second and third `C` segments below directly (the left roof-shoulder
+                    // ending at [58,80] and the apex running to [142,80]) rather than an
+                    // approximation, so this path is the ground truth for that guard too.
+                    `<path d="M40 168 C30 168 26 150 30 128 C33 108 42 92 58 80 C72 68 128 68 142 80 ` +
+                        `C158 92 167 108 170 128 C174 150 170 168 160 168 Z" fill="url(#chB)"/>` +
+                        wheel(62) + wheel(138) +
+                        `<ellipse cx="100" cy="108" rx="58" ry="44" fill="url(#chG)"/>` +
+                        `<path d="M40 168 C30 168 26 150 30 128 C33 108 42 92 58 80 C72 68 128 68 142 80 ` +
+                        `C158 92 167 108 170 128 C174 150 170 168 160 168 Z" fill="url(#chCo)"/>` +
+                        e + b +
+                        `<g id="mouthG"></g>` +
+                        `<path d="M62 140 h76" stroke="#7a1f00" stroke-width="4" stroke-linecap="round" opacity=".35"/>`,
+                },
+                earL: { origin: [58, 80], art: antenna(58, 80, 50, 55, 44, 40) },
+                earR: { origin: [142, 80], art: antenna(142, 80, 150, 55, 156, 40) },
+            },
+            mouth: { cx: 100, cy: 140, color: '#7a1f00' },
+        };
+    },
+};
 /** The built-in roster, keyed by slug. */
 export const CHARACTERS = {
-    roozi, ava, pashmak, laki, tondpa, boomi, khersi, simorgh,
+    roozi, ava, pashmak, laki, tondpa, boomi, khersi, simorgh, charkhi,
 };
 /** `CHARACTERS`' own keys, so the roster list can never drift from the registry it lists. */
 export const CHARACTER_SLUGS = Object.keys(CHARACTERS);

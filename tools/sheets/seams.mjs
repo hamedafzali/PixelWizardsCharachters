@@ -23,6 +23,7 @@ import {
   TP, tondpaSeamOverlap, KH, khersiSeamOverlap, khersiEarPenetration,
   earChordMidpoint, discBodySeamY, headPivot, MICRO_WORST,
   AV, avaPigtailPenetration,
+  CH, charkhiRoofY, charkhiAntennaClip, charkhiAntennaClipOnset,
 } from '../lib/probes.mjs'
 import { page, esc } from '../lib/sheet.mjs'
 
@@ -279,6 +280,44 @@ function ava() {
   return out.join('\n')
 }
 
+// ── چرخی ─────────────────────────────────────────────────────────────────────
+
+function charkhi() {
+  const out = [`<h2>چرخی — the antennas, clipping in rather than pulling out</h2>`]
+  out.push(`<p class="note">آوا's and خرسی's ear/pigtail pivots are chord-midpoints because the
+    drawn bunch's own centre sits outside the head disc, with no drawn base to read a pivot from —
+    so the failure they guard against is the bunch pulling <i>free</i> of the head. چرخی's antennas
+    are the opposite case: the root is drawn exactly on the roofline (a literal on-curve vertex of
+    the torso path, (${CH.earL.base[0]}, ${CH.earL.base[1]}) / (${CH.earR.base[0]}, ${CH.earR.base[1]})),
+    so the stalk cannot detach by rotating about a point that already is the body's own edge. What it
+    can do instead is swing back down far enough to dip <i>under</i> the roofline it grows from — a
+    clip inward, not a pull outward. The number is roof clearance in art units, positive is clear; the
+    guard wants more than 1.</p>`)
+  out.push(withRig('charkhi', {}, ({ svg, rig, dom }) => {
+    const rows = EMOS.map((emotion) => {
+      const cells = STEPS.map((intensity) => {
+        rig.apply({ emotion, intensity })
+        rig.finish()
+        dom.advance(32)
+        const p = resolvePosture(emotion, intensity, CHARACTERS.charkhi.posture)
+        const v = Math.min(...['earL', 'earR'].map((s) => charkhiAntennaClip(s, p.ears ?? 0)))
+        return `<td>${snapshot(svg, SIZE)}<div class="ph ${band(v, 1)}">${v.toFixed(2)}</div></td>`
+      }).join('')
+      return `<tr><td class="n">${esc(emotion)}</td>${cells}</tr>`
+    }).join('')
+    return `<div class="wrap"><table><tr><th>antenna clearance</th>${
+      STEPS.map((s) => `<th>intensity ${s}</th>`).join('')}</tr>${rows}</table></div>`
+  }))
+
+  const onsetL = charkhiAntennaClipOnset('earL')
+  out.push(`<p class="note">Worst measured clearance across the full emotion × intensity grid is
+    1.302 (sad, intensity 1) — found by sweeping, not assumed. Clipping itself would not begin until
+    ${onsetL.toFixed(1)}° of droop, roughly 3.9× چرخی's own largest declared <code>ears</code> travel
+    (18° at <code>sad</code>). Roofline for reference: y=${charkhiRoofY(58).toFixed(0)} at the
+    shoulder (x=58), falling to y=${charkhiRoofY(100).toFixed(0)} at the apex (x=100).</p>`)
+  return out.join('\n')
+}
+
 /** Two cells of the same character and pose, differing only in pivot. */
 function pivotCompare(slug, shippedOrigin, rejectedOrigin, pose, aLabel, bLabel) {
   return withRig(slug, {}, ({ svg }) => {
@@ -305,5 +344,6 @@ export function build() {
   parts.push(tondpa())
   parts.push(khersi())
   parts.push(ava())
+  parts.push(charkhi())
   return page(title, parts.join('\n'))
 }
