@@ -310,3 +310,82 @@ driven as their own distinct gesture, say, rather than a repurposed blink —
 could still need a real extension. Treat "vehicles need no `ActorFrame`
 extension" as true of one worked example, not as roster-wide policy, until a
 second vehicle either confirms or breaks it.
+
+## Architecture: measured and documented, not acted on
+
+Two questions came up in the architecture review that followed چرخی — skins/
+variants, and splitting the character bundle. Both were investigated,
+measured, and deliberately left unbuilt. Recorded here so the next person
+who wonders about either does not re-derive the same analysis, and knows
+what would actually justify picking it back up.
+
+### Skins/variants: not built
+
+Color is not a separable concept anywhere in this codebase today. Every
+character's `render()` closes directly over hardcoded hex literals in
+gradient `<stop>` definitions and `fill=` attributes, fully interleaved with
+the geometry in one template string — لاکی's shell alone has five gradients
+and 11 hardcoded colors in `src/characters/index.ts`. `lidColor`/`browColor`
+on `CharacterSpec` are the only colors that exist outside an `art` string,
+and neither is meant as a palette hook; they're just the two values blink
+and brows happen to need at the type level.
+
+A real skin system needs a `palette` field separating color tokens from
+shape, every render function in `characters/index.ts` rewritten to consume
+palette values instead of closing over literals, and a stable ID scheme for
+gradients (currently unique per character — a second palette on the same
+character needs either duplicated `<defs>` or dynamically generated IDs).
+That is a rewrite of the whole file, not an additive field.
+
+No character has an actual second-look request. This is the same rule
+argued everywhere else in this document: don't add a field speculatively.
+**Revisit trigger**: a real request for a second look on an *existing*
+character (a second livery for چرخی, say). When that happens, build it for
+that one character first, as the worked example — the same process every
+other pattern here went through — and only generalize the palette shape
+once a second case confirms it.
+
+### Bundle splitting: not built
+
+Measured, not assumed: the packed tarball is 130KB (`npm pack --dry-run`),
+of which `dist/characters/index.js` — the single object literal holding all
+nine `CharacterSpec`s — gzips to about 15KB, roughly 1.5KB marginal per
+character. The rig engine a consumer pulls in regardless of roster size
+(`rig.js` and its transitive deps) gzips to about 13KB on its own, a fixed
+cost unrelated to how many characters exist.
+
+The specific limitation: `CHARACTERS` is assembled as one `const` from all
+nine character modules in a single file. Standard bundler tree-shaking
+(webpack/esbuild/rollup) does not eliminate unused *properties* of an object
+literal, even for a statically-known access like `CHARACTERS.laki` — the
+whole object is one escaping binding, so an app that renders exactly one
+character still pays for all nine character art strings. That per-character
+cost (~1.5KB gzip) is added permanently, for every consumer, with every
+future roster addition, whether or not they use it.
+
+This is co-dependent with the picker: `characterRoster()` and
+`createCharacterPicker` (`src/picker.ts`) always enumerate the full
+`CHARACTER_SLUGS`, with no option to pass a subset. Splitting the character
+*data* alone does not help any consumer using the built-in picker — it only
+helps an app that embeds one fixed character and never shows the picker. A
+real fix has to address both the data (so an unused character's art is
+never bundled) and the picker (so it can be asked for a subset instead of
+the whole roster).
+
+Three ways to split the data, if it comes to that:
+
+1. **Per-character subpath exports** (`pixel-wizards-charachters/characters/laki`),
+   via `package.json`'s `exports` map — real static tree-shaking, additive,
+   doesn't touch the existing `CHARACTERS` import.
+2. **Runtime `loadCharacter(slug)`** via dynamic `import()` — probably the
+   better real-world fit, since most consumers choose a character by a
+   runtime string (a user's selection), which a static per-character import
+   can't tree-shake away anyway.
+3. **Category-level subpath exports** matching the taxonomy above (animals /
+   fantasy / human / vehicles) — coarser, less surface area to add, but
+   still couples e.g. all six animals together.
+
+**Revisit trigger**: the roster roughly doubling (~18-20 characters, where
+the marginal cost compounds to something actually worth avoiding), or an
+actual reported bundle-size complaint from a consumer. 15KB gzip for the
+entire current roster is not a real problem yet.
