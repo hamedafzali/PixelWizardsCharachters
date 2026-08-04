@@ -1,5 +1,77 @@
 # Changelog
 
+## 1.0.0
+
+The registry's published version is `0.4.0`. Everything below shipped since
+then — this is a version bump on an already-public package, not a first
+release. The `0.4.1` through `0.8.0` entries below have the full detail;
+this entry is the summary of that gap.
+
+**Studio tooling.** Three contact-sheet generators (`gestures.mjs`,
+`emotions.mjs`, `seams.mjs`) and a numeric baseline file (`geometry.json`,
+200 measurements) that render off a real mounted rig rather than restating
+its maths, so what's measured is what actually ships. An interactive studio
+(`examples/studio.html`) with a shared picker (`characterRoster()` /
+`createCharacterPicker()`, plus a React `<CharacterPicker>` twin) and a
+frame-by-frame scrubber for gestures and gaits, including the derived
+anticipation/settle beats that no `poses` array names.
+
+**Gesture library.** Six new gestures (`nod`, `shake`, `shrug`, `point`,
+`clap`, `bounce`), joining the original three, each a list of parts started
+in the same tick. Availability now splits into two independent axes —
+structural (missing limb, falls back to whole-body) and semantic (makes no
+sense in the current locomotion, blocks outright via `onGestureBlocked`) —
+with `planGesture()` to ask what would happen before asking for it.
+
+**Emotion depth.** Three new emotions (`confused`, `proud`, `shy`), each
+with its own brow shape, gaze bias, blink style and posture, verified for
+distinctness against the roster's own closest existing pair rather than a
+hand-picked threshold. Per-character emotion overrides (`EmotionOverrides`)
+let a character retune a preset without forking it.
+
+**Gaze and eye realism.** Gaze is now three things stacked — driven
+`gaze` (always dominant), the emotion's own bias scaled by intensity, and a
+procedural idle saccade (damped while walking or flying) — clamped as a
+sum. Blink rate and lid weight vary by emotion over the *entire* emotion
+set, not a sparse table with a silent default.
+
+**Lip-sync and viseme redesign.** The viseme table shrank from eleven
+shapes to five (`rest`, `aa`, `mbp`, `u`, `l`), chosen by measuring
+pairwise distinguishability rather than convenience, with every dropped
+shape routed to its measured nearest survivor. Letter-per-viseme timing was
+tested against six lexicon-free syllable estimators on a hand-marked
+corpus and kept — none beat it, because Persian's written form genuinely
+cannot distinguish some syllable counts without a lexicon.
+
+**Robustness.** A frame with a bad value (`emotion: 'joy'`, `viseme: 'x'`,
+`locomotion: 'run'`) used to either throw from inside a render or fail
+silently with no signal at all. It now keeps the character's current state
+and reports the rejection via `onInvalidFrame`, with `sanitizeFrame`
+exported for callers who want to check first — built for the case a model
+is driving the rig directly from generated JSON.
+
+**Accessibility: reduced motion, made actually reduced.** Two features
+that held a frame via a paused CSS animation (`scrubGesture()`,
+`pinGaitPhase()`'s CSS-fallback branch) were silently defeated by
+`RIG_CSS`'s own `prefers-reduced-motion` rule, which cannot tell a
+deliberate hold from a running animation — a reviewer on a reduced-motion
+browser saw nothing. Both now sample the pose directly and write it to
+`transform`, bypassing `animation` entirely. New
+`RigOptions.reducedMotion?: boolean | 'auto'` forces the rig independently
+of the OS query.
+
+**چرخی and the roster taxonomy.** The roster's first vehicle and first
+addition since the original eight, introducing a new collision class (a
+feature pinned at its own root, which can only clip inward toward its
+parent rather than pull free of it) and confirming — for this character's
+feature set specifically, not as a closed claim about every future vehicle
+— that no new `ActorFrame` field was needed. See "Roster categories" in
+`CONTRIBUTING.md`.
+
+**Also**: `repository`/`homepage`/`bugs` added to `package.json` so the npm
+page links back to source; two broken relative README links fixed;
+`CHANGELOG.md` now ships in the tarball; a `LICENSE` file added.
+
 ## 0.8.0
 
 **New character**: چرخی, the roster's first entry since the original eight

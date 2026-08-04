@@ -1,7 +1,7 @@
 {
   "name": "pixel-wizards-charachters",
-  "version": "0.8.0",
-  "description": "A framework-agnostic library of animated, actable children's characters. An ActorFrame is one moment of performance — emotion, Persian-viseme lip-sync, gaze, brows, gestures and locomotion.",
+  "version": "1.0.0",
+  "description": "Data-driven, AI-drivable animated children's characters for the web — emotion, gaze, gestures, locomotion and Persian-viseme lip-sync as one JSON frame. Zero runtime dependencies, React optional.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/hamedafzali/PixelWizardsCharachters.git"
@@ -44,15 +44,22 @@
   },
   "keywords": [
     "characters",
-    "animation",
+    "character-animation",
+    "avatar",
     "svg",
     "lip-sync",
+    "viseme",
     "persian",
+    "farsi",
     "children",
-    "avatar",
-    "react"
+    "kids",
+    "ai-agent",
+    "text-to-viseme",
+    "react",
+    "typescript"
   ],
   "license": "MIT",
+  "author": "hamed.afzali <afzali.hamed@gmail.com>",
   "peerDependencies": {
     "react": ">=18"
   },
