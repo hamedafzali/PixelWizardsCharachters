@@ -302,14 +302,21 @@ escape hatch:
 was first proposed: does a vehicle need its own `ActorFrame` field, for
 headlight-blink or wheel-spin? For چرخی specifically, no — headlight-blink is
 modeled as `eyes` (a headlight reads as an eye at this art scale), and
-wheel-spin is a `gaits`/locomotion-table question, not a frame field, made
-moot here since `charkhi.gaits` is `[]` and its wheels are static art. That is
-a finding about *this* vehicle's feature set, not a closed claim about the
-category: a future vehicle with genuinely novel semantics — turn signals
-driven as their own distinct gesture, say, rather than a repurposed blink —
-could still need a real extension. Treat "vehicles need no `ActorFrame`
-extension" as true of one worked example, not as roster-wide policy, until a
-second vehicle either confirms or breaks it.
+wheel-spin is a `gaits`/locomotion-table question, not a frame field. `1.1.0`
+answered the locomotion-table half of that, partially: `charkhi.gaits` is now
+`['roll']`, driving a suspension bob on `root`/`torso` — the same mechanism
+`walk`/`fly` already use for their body-mechanic half. The wheels themselves
+are still static art baked into `torso`, unchanged; nothing about them
+independently rotates. Literal wheel-spin would still mean splitting them out
+into their own layer and re-deriving `torso`'s paint order (its highlight/
+shadow gradients currently sit over the wheels), which is real, separate
+work, not done as part of `roll`. That is a finding about *this* vehicle's
+feature set, not a closed claim about the category: a future vehicle with
+genuinely novel semantics — turn signals driven as their own distinct
+gesture, say, rather than a repurposed blink — could still need a real
+extension. Treat "vehicles need no `ActorFrame` extension" as true of one
+worked example, not as roster-wide policy, until a second vehicle either
+confirms or breaks it.
 
 ## Architecture: measured and documented, not acted on
 

@@ -22,5 +22,5 @@ export { CHARACTERS, CHARACTER_SLUGS } from './characters/index.js';
 export { renderActorSVG, drawMouth } from './render.js';
 export { characterRoster, createCharacterPicker } from './picker.js';
 export { ActorRig, RIG_CSS, artKeyOf } from './rig.js';
-export { LocomotionDriver, GAITS, LOCO_TARGETS, WALK_PHASES, FLY_PHASES, WING_FOLD_SX, samplePhase, wrapPhase, canDrive, drivesGait, } from './locomotion.js';
+export { LocomotionDriver, GAITS, LOCO_TARGETS, WALK_PHASES, FLY_PHASES, ROLL_PHASES, WING_FOLD_SX, samplePhase, wrapPhase, canDrive, drivesGait, } from './locomotion.js';
 //# sourceMappingURL=index.js.map

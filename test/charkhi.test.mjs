@@ -20,11 +20,14 @@ test('چرخی has no leg or arm layers: the wheels are static art, not a joint 
   for (const layer of ['farLeg', 'nearLeg', 'farArm', 'nearArm']) assert.ok(!l.has(layer), `unexpected ${layer}`)
 })
 
-test('چرخی declares no drivable gait, and is structurally incapable of either anyway', () => {
-  assert.deepEqual(CHARACTERS.charkhi.gaits ?? [], [])
-  const has = (t) => layersOf().has(t)
+test('چرخی is structurally incapable of walk/fly, and declares only the root/torso roll gait it can actually do', () => {
+  assert.deepEqual(CHARACTERS.charkhi.gaits ?? [], ['roll'])
+  const has = (t) => t === 'root' || t === 'torso' || layersOf().has(t)
   assert.equal(canDrive('walk', has), false)
   assert.equal(canDrive('fly', has), false)
+  // root/torso are structurally universal, so چرخی's leglessness never blocks
+  // roll the way it blocks walk/fly -- only the declaration in `gaits` does.
+  assert.equal(canDrive('roll', has), true)
 })
 
 test('چرخی reuses earL/earR for antennas, and they hang off the torso (no head to hang off)', () => {

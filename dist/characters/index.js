@@ -785,11 +785,14 @@ export const simorgh = {
 export const charkhi = {
     slug: 'charkhi', name: 'چرخی', role: 'جاده‌ها',
     eyes: { x: [76, 124], y: 104, r: 13 }, lidColor: '#e1f5fe', browColor: '#2a2a2a',
-    // No leg layers exist, so `canDrive` is false for both gaits before the
-    // declaration is even read. Declared empty anyway, so the decision is on
-    // the page rather than implied by an omission — the same call پشمک/خرسی
-    // make for the same structural reason.
-    gaits: [],
+    // No leg or arm layers exist, so `walk`/`fly` are structurally impossible —
+    // `canDrive` is false for both before the declaration is even read. `roll`
+    // is different: it drives `root`/`torso` only, which every character has,
+    // so it is declared here. It is a chassis bob on the suspension, not the
+    // wheels spinning — the wheels are still static art baked into `torso` (see
+    // the class doc above), unchanged by this. See `ROLL_PHASES` in
+    // `locomotion.ts` for why that is the honest scope of this gait for now.
+    gaits: ['roll'],
     // A car body barely leans (small spine travel) and the antennas are rigid
     // wire, not fur, so they get noticeably less travel than the shared
     // preset — the same "narrower than default" call خرسی makes for stiff

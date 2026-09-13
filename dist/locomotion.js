@@ -29,6 +29,29 @@ export const FLY_PHASES = {
 };
 /** How far the wing folds in on the recovery stroke. */
 export const WING_FOLD_SX = 0.82;
+/**
+ * The named points of one roll bounce.
+ *
+ * This is **not** spinning wheels — چرخی's wheels are static art baked into
+ * its `torso` layer (see `charkhi` in `characters/index.ts`), not their own
+ * rig layer, so there is nothing here for a rotating-wheel track to drive.
+ * Giving it one would mean splitting the wheels out into real layers and
+ * re-deriving the paint order that currently sits `torso`'s highlight/shadow
+ * gradients over them — a real, separate piece of work, not a locomotion
+ * table. See `CHANGELOG.md` for this gait's entry and the deferral.
+ *
+ * What this drives instead is the chassis: a body that bobs on its
+ * suspension as it rolls, the same `root`/`torso` transform-only mechanism
+ * `walk`/`fly` already use for the body-mechanic half of their gaits, just
+ * bouncier and faster — چرخی fronts loading/progress screens, where a snappy
+ * cadence reads as "still working" better than a plodding one would.
+ */
+export const ROLL_PHASES = {
+    /** suspension loaded, chassis settled and tipped slightly back */
+    compress: 0,
+    /** suspension kicks the body up, nosing slightly forward */
+    rebound: 0.5,
+};
 /** The built-in gaits, one `Gait` per `GaitName`. */
 export const GAITS = {
     /**
@@ -135,6 +158,33 @@ export const GAITS = {
                 { at: 0, pose: { rot: 1.5 } },
                 { at: 0.4, pose: { rot: -1.5 } },
                 { at: 0.7, pose: { rot: 0 } },
+            ],
+        },
+    },
+    /**
+     * Chassis bob on the suspension — see {@link ROLL_PHASES} for why this is
+     * not a wheel-spin track. `root` only is `requires`: `root` and `torso` are
+     * always structurally present (`rig.ts`'s `has()` returns true for both
+     * unconditionally), so this never falls back to the CSS path once a
+     * character declares it — unlike `walk`/`fly`, which need per-character limb
+     * layers that may not exist.
+     *
+     * Faster and shallower than the walk bob: two keys instead of walk's eight,
+     * a snappier `rate`, and `torso` counter-rotating a couple degrees against
+     * `root` so the body reads as one rigid chassis rocking on springs rather
+     * than two independently wobbling halves.
+     */
+    roll: {
+        rate: 3,
+        requires: ['root'],
+        tracks: {
+            root: [
+                { at: ROLL_PHASES.compress, pose: { y: 0, rot: -3 } },
+                { at: ROLL_PHASES.rebound, pose: { y: -5, rot: 3 } },
+            ],
+            torso: [
+                { at: ROLL_PHASES.compress, pose: { rot: 2 } },
+                { at: ROLL_PHASES.rebound, pose: { rot: -2 } },
             ],
         },
     },

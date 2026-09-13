@@ -18,7 +18,7 @@ import type { Pose } from './timing.js';
  * Characters that have no limb layers keep the old CSS path; see
  * {@link canDrive}.
  */
-export type GaitName = 'walk' | 'fly';
+export type GaitName = 'walk' | 'fly' | 'roll';
 /** Layers a gait may drive. A subset of the rig's transform targets. */
 export type LocoTarget = 'root' | 'torso' | 'farArm' | 'nearArm' | 'farLeg' | 'nearLeg';
 /** `LocoTarget`'s own members, as a value — for iterating every possible target rather than hand-listing them again. */
@@ -68,6 +68,29 @@ export declare const FLY_PHASES: {
 };
 /** How far the wing folds in on the recovery stroke. */
 export declare const WING_FOLD_SX = 0.82;
+/**
+ * The named points of one roll bounce.
+ *
+ * This is **not** spinning wheels — چرخی's wheels are static art baked into
+ * its `torso` layer (see `charkhi` in `characters/index.ts`), not their own
+ * rig layer, so there is nothing here for a rotating-wheel track to drive.
+ * Giving it one would mean splitting the wheels out into real layers and
+ * re-deriving the paint order that currently sits `torso`'s highlight/shadow
+ * gradients over them — a real, separate piece of work, not a locomotion
+ * table. See `CHANGELOG.md` for this gait's entry and the deferral.
+ *
+ * What this drives instead is the chassis: a body that bobs on its
+ * suspension as it rolls, the same `root`/`torso` transform-only mechanism
+ * `walk`/`fly` already use for the body-mechanic half of their gaits, just
+ * bouncier and faster — چرخی fronts loading/progress screens, where a snappy
+ * cadence reads as "still working" better than a plodding one would.
+ */
+export declare const ROLL_PHASES: {
+    /** suspension loaded, chassis settled and tipped slightly back */
+    readonly compress: 0;
+    /** suspension kicks the body up, nosing slightly forward */
+    readonly rebound: 0.5;
+};
 /** The built-in gaits, one `Gait` per `GaitName`. */
 export declare const GAITS: Record<GaitName, Gait>;
 /**

@@ -9,7 +9,7 @@ import {
 } from '../dist/index.js'
 import { setupDom } from './helpers/dom.mjs'
 
-const LOCOS = ['idle', 'walk', 'fly']
+const LOCOS = ['idle', 'walk', 'fly', 'roll']
 const EMOTION_NAMES = Object.keys(EMOTIONS)
 const NEW_EMOTIONS = ['confused', 'proud', 'shy']
 

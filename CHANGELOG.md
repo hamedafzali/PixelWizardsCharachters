@@ -1,5 +1,34 @@
 # Changelog
 
+## 1.1.0
+
+**A `roll` gait for چرخی.** New `GaitName` value `'roll'` and matching
+`LOCOMOTIONS` entry, phase-driven like `walk`/`fly` through the same
+`Gait`/`PhaseKey` table (`GAITS.roll`, `ROLL_PHASES`). چرخی is the only
+character to declare it (`gaits: ['roll']`).
+
+This is a suspension bob — `root`/`torso` rocking as the chassis rolls — not
+the wheels spinning. `0.8.0`'s entry below answered "does چرخی need its own
+`ActorFrame` field for wheel-spin" with "no, that's a locomotion-table
+question," and left it there; this is that locomotion-table question,
+answered for the chassis half only. The wheels stay exactly what they were:
+two static `<circle>` groups baked into `torso`'s own `art`, painted under
+its highlight/shadow gradients, with no independent rotation. Turning those
+into a real spinning layer would mean splitting them out of `torso` and
+re-deriving that paint order — a separate, larger piece of work, not done
+here.
+
+`roll` only requires `root`, which (like `torso`) every character has
+structurally — unlike `walk`/`fly`, which need per-character limb layers and
+so fall back to a CSS body animation where those are missing. `roll` has no
+such fallback (`LOCO_ANIM.roll` is `null`): a character that declares it is
+always phase-driven. `rig.ts` gained a `loco-roll` class toggle alongside
+the existing `loco-walk`/`loco-fly`, for consumers styling by locomotion.
+
+Backward compatible: additive `GaitName`/`LOCOMOTIONS` values, one character
+opting in. No existing `ActorFrame`, `CharacterSpec`, or gait table changes
+shape.
+
 ## 1.0.0
 
 The registry's published version is `0.4.0`. Everything below shipped since

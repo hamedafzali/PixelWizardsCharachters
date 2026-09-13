@@ -31,5 +31,5 @@ export { characterRoster, createCharacterPicker } from './picker.js';
 export type { RosterEntry, RosterOptions, PickerOptions, CharacterPickerHandle } from './picker.js';
 export { ActorRig, RIG_CSS, artKeyOf } from './rig.js';
 export type { RigOptions } from './rig.js';
-export { LocomotionDriver, GAITS, LOCO_TARGETS, WALK_PHASES, FLY_PHASES, WING_FOLD_SX, samplePhase, wrapPhase, canDrive, drivesGait, type GaitName, type LocoTarget, type Gait, type PhaseKey, } from './locomotion.js';
+export { LocomotionDriver, GAITS, LOCO_TARGETS, WALK_PHASES, FLY_PHASES, ROLL_PHASES, WING_FOLD_SX, samplePhase, wrapPhase, canDrive, drivesGait, type GaitName, type LocoTarget, type Gait, type PhaseKey, } from './locomotion.js';
 //# sourceMappingURL=index.d.ts.map

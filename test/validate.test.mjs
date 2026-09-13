@@ -196,7 +196,7 @@ test('the value lists and the types they derive cannot drift apart', () => {
   // erased before a driver's JSON ever arrives.
   for (const locomotion of LOCOMOTIONS) assert.equal(sanitizeFrame({ locomotion }).locomotion, locomotion)
   for (const facing of FACINGS) assert.equal(sanitizeFrame({ facing }).facing, facing)
-  assert.deepEqual([...LOCOMOTIONS], ['idle', 'walk', 'fly'])
+  assert.deepEqual([...LOCOMOTIONS], ['idle', 'walk', 'fly', 'roll'])
   assert.deepEqual([...FACINGS], ['left', 'right'])
 })
 

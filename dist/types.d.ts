@@ -28,7 +28,7 @@ export type VisemeName = 'rest' | 'aa' | 'mbp' | 'u' | 'l';
  * These arrays are what `sanitizeFrame` asks instead, and the types are derived
  * *from* them so the list and the union cannot drift apart.
  */
-export declare const LOCOMOTIONS: readonly ["idle", "walk", "fly"];
+export declare const LOCOMOTIONS: readonly ["idle", "walk", "fly", "roll"];
 /** The valid values for `ActorFrame.facing`. */
 export declare const FACINGS: readonly ["left", "right"];
 export type Locomotion = typeof LOCOMOTIONS[number];

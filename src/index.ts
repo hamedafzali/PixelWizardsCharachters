@@ -61,7 +61,7 @@ export type { RosterEntry, RosterOptions, PickerOptions, CharacterPickerHandle }
 export { ActorRig, RIG_CSS, artKeyOf } from './rig.js'
 export type { RigOptions } from './rig.js'
 export {
-  LocomotionDriver, GAITS, LOCO_TARGETS, WALK_PHASES, FLY_PHASES, WING_FOLD_SX,
+  LocomotionDriver, GAITS, LOCO_TARGETS, WALK_PHASES, FLY_PHASES, ROLL_PHASES, WING_FOLD_SX,
   samplePhase, wrapPhase, canDrive, drivesGait,
   type GaitName, type LocoTarget, type Gait, type PhaseKey,
 } from './locomotion.js'

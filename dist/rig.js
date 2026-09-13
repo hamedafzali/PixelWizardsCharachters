@@ -93,6 +93,10 @@ const LOCO_ANIM = {
     idle: null,
     walk: { name: 'caWalk', dur: 0.5 },
     fly: { name: 'caFly', dur: 1.6 },
+    // No CSS keyframes: `root`/`torso` are always structurally present (see
+    // `drivenGait`'s `has`), so a character that declares `roll` is always
+    // phase-driven and never reaches the CSS-fallback branch this table backs.
+    roll: null,
 };
 /**
  * `caWalk`/`caFly` above, as data instead of CSS text.
@@ -535,6 +539,7 @@ export class ActorRig {
         // consumers style against, and the hook the unlayered wing rules need.
         this.svg.classList.toggle('loco-fly', this.frame.locomotion === 'fly');
         this.svg.classList.toggle('loco-walk', this.frame.locomotion === 'walk');
+        this.svg.classList.toggle('loco-roll', this.frame.locomotion === 'roll');
         // syncFrame runs every tick of a transition, so only a *change* of gesture
         // starts one — otherwise the animation would restart 60 times a second.
         const g = this.frame.gesture;
@@ -552,7 +557,7 @@ export class ActorRig {
      */
     drivenGait() {
         const l = this.frame.locomotion;
-        if (l !== 'walk' && l !== 'fly')
+        if (l !== 'walk' && l !== 'fly' && l !== 'roll')
             return null;
         // Structural capability *and* declared eligibility — see `drivesGait`.
         const has = (t) => t === 'root' || t === 'torso' || !!this.layers[t];

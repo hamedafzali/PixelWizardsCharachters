@@ -16,7 +16,7 @@
  * These arrays are what `sanitizeFrame` asks instead, and the types are derived
  * *from* them so the list and the union cannot drift apart.
  */
-export const LOCOMOTIONS = ['idle', 'walk', 'fly'];
+export const LOCOMOTIONS = ['idle', 'walk', 'fly', 'roll'];
 /** The valid values for `ActorFrame.facing`. */
 export const FACINGS = ['left', 'right'];
 /** A sensible resting frame for `character`: neutral, idle, facing right, saying nothing. */

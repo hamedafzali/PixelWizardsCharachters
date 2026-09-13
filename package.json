@@ -1,6 +1,6 @@
 {
   "name": "pixel-wizards-charachters",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Data-driven, AI-drivable animated children's characters for the web — emotion, gaze, gestures, locomotion and Persian-viseme lip-sync as one JSON frame. Zero runtime dependencies, React optional.",
   "repository": {
     "type": "git",
