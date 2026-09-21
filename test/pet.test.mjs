@@ -45,9 +45,21 @@ test('zone centres are read from the spec, not copied', () => {
   }
 })
 
-test('an unlayered character offers its head only, rather than an invented hip', () => {
+test('a character with no torso/tail layer offers its head only, rather than an invented hip', () => {
+  // سیمرغ used to be this example; it is layer-rig converted now (see
+  // CHANGELOG) and gained real back/tail zones as a side effect — covered by
+  // the derivation test above. بومی has a torso layer but no tail, so it is
+  // the roster's example of the remaining case: a real hip with no tail zone
+  // behind it, rather than an invented one.
+  const boomi = CHARACTERS.boomi ?? specs.find((s) => s.slug === 'boomi')
+  const names = petZones(boomi).map((z) => z.name)
+  assert.ok(names.includes('head') && names.includes('back'))
+  assert.ok(!names.includes('tail'), 'بومی invented a tail zone with no tail layer behind it')
+})
+
+test("سیمرغ, now converted, offers head, back and tail zones", () => {
   const simorgh = CHARACTERS.simorgh ?? specs.find((s) => s.slug === 'simorgh')
-  assert.deepEqual(petZones(simorgh).map((z) => z.name), ['head'])
+  assert.deepEqual(petZones(simorgh).map((z) => z.name), ['head', 'back', 'tail'])
 })
 
 test('zone centres stay far enough apart to stay distinguishable', () => {

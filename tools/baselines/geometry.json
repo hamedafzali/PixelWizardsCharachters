@@ -87,14 +87,14 @@
     "simorgh": {
       "jump": "rig-body",
       "spin": "rig-body",
-      "wave": "fallback:missing-layer",
-      "nod": "fallback:missing-layer",
-      "shake": "fallback:missing-layer",
-      "shrug": "fallback:missing-layer",
-      "clap": "fallback:missing-layer",
-      "point": "fallback:missing-layer",
+      "wave": "lyr-nearArm",
+      "nod": "lyr-head",
+      "shake": "lyr-head",
+      "shrug": "lyr-farArm+lyr-nearArm",
+      "clap": "lyr-farArm+lyr-nearArm",
+      "point": "lyr-nearArm",
       "bounce": "rig-body",
-      "nuzzle": "fallback:missing-layer"
+      "nuzzle": "lyr-head"
     },
     "charkhi": {
       "jump": "rig-body",
@@ -277,6 +277,26 @@
     "khersi.head": [
       100,
       121
+    ],
+    "simorgh.tail": [
+      100,
+      132
+    ],
+    "simorgh.farArm": [
+      74,
+      132
+    ],
+    "simorgh.torso": [
+      100,
+      176
+    ],
+    "simorgh.nearArm": [
+      126,
+      132
+    ],
+    "simorgh.head": [
+      100,
+      112
     ],
     "charkhi.torso": [
       100,

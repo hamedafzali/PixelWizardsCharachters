@@ -1,5 +1,45 @@
 # Changelog
 
+## 1.3.0
+
+**سیمرغ is layer-rig converted** — the last unlayered character, and the
+roster's only remaining CSS-fallback flier. Wings map to `farArm`/`nearArm`
+(`bmB`-style pivot at the shoulder line, `cy=132`, measured off the art rather
+than the old hardcoded `.wingL`/`.wingR` 50px/150px rule); the three crest
+feathers stay inside `head`, painted before the head circle, since there are
+three of them and not a mirrored pair; the five tail feathers become their own
+`tail` layer, pivoted at `[100, 132]` — not the visual centroid of the fan
+(`≈[100, 158]`), which sits inside `pet.test.mjs`'s 40-unit minimum-separation
+floor from the torso pivot, but level with the wings, reading the tail as
+rooted at the same shoulder line. `gaits: ['fly']` is now declared, so سیمرغ is
+phase-driven like بومی instead of running the legacy `caFly` CSS keyframe; it
+still has no `farLeg`/`nearLeg`, so `walk` is unchanged and still CSS-fallback.
+
+One real visual change, same as بومی's conversion: `LAYER_ORDER` paints
+`nearArm` after `torso`, so the right wing moves from behind the body to in
+front of it.
+
+**A side effect worth knowing about:** `pet.ts`'s `petZones()` reads `back` off
+`torso.origin` and `tail` off `tail.origin`, so سیمرغ — previously head-only,
+the roster's one "no layers at all" case for petting — now exposes all three
+pet zones (`head`, `back`, `tail`). بومی is now the roster's example of the
+partial case (a torso/back zone, no tail zone) that the old سیمرغ-based test
+covered.
+
+`gestureRouting.simorgh.*` moves from `fallback:missing-layer` to native layers
+for every gesture (`wave`/`point` → `lyr-nearArm`, `nod`/`shake`/`nuzzle` →
+`lyr-head`, `shrug`/`clap` → both arms) — see `tools/baselines/geometry.json`.
+No `gestureFallback` was added: the crest feathers move rigidly with the head
+layer they're painted inside, so there is no لاکی-style shell-clip risk to opt
+around.
+
+Six tests that used سیمرغ as the canonical example of an unlayered/CSS-fallback
+character were retargeted to the character that is now the real example of
+each case (چرخی for "no arm and no head layer at all", بومی for "a torso zone
+with no tail zone") rather than deleted, so each behaviour keeps a real,
+passing exerciser. `npm run baseline -- --write` accepted 12 additive changes
+(5 new pivots, 7 gesture-routing entries); nothing else moved.
+
 ## 1.2.0
 
 **نوازش — petting, as a rig capability.** New `PetDriver` (`src/pet.ts`) plus

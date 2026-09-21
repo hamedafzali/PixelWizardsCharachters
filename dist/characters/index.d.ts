@@ -139,6 +139,53 @@ export declare const boomi: CharacterSpec;
  *   drivable and neither is declared.
  */
 export declare const khersi: CharacterSpec;
+/**
+ * سیمرغ — the last unconverted character, and the one most likely to need to
+ * point, wave and nuzzle, since it is the app's guide. Converting it follows
+ * بومی's playbook (owl → phoenix, wings map to `farArm`/`nearArm`, the legacy
+ * `.wingL`/`.wingR` hooks are dropped) with two decisions of its own:
+ *
+ * - **The three crest feathers stay inside `head`**, painted before the head
+ *   circle exactly as before. They are not `earL`/`earR`: there are three
+ *   feathers, not a mirrored pair, and forcing a pair onto them would be the
+ *   same invented-pivot mistake the authoring rule on `LayerName` warns
+ *   against. Keeping them inside one layer's art string preserves their paint
+ *   order, so the picture does not change.
+ * - **The tail is its own layer**, not baked into `torso` — five feathers
+ *   fanned out behind the body, the closest thing on the roster to لاکی's
+ *   shell in that it reads as a single ornamental mass, but one that a
+ *   `tail`-driven posture (sad droop, excited perk) can now actually reach.
+ *   Its pivot is `[100, 132]`: not the visual centroid of the five ellipses
+ *   (≈`[100, 158]`, which sits only 18–28 units from the torso pivot below —
+ *   see the note on that number), but level with the wing pivots at `cy=132`,
+ *   reading the tail as rooted at the same shoulder line the wings root from,
+ *   which the art supports (the two outer feathers' own major axes project
+ *   back toward `x≈100, y≈132–136` — see the working in the plan doc, not
+ *   reproduced here since ellipses don't carry a drawn base the way a path
+ *   does).
+ * - **The feet move from the end of the flat art string into `torso`.** In
+ *   the old unlayered art they painted *after* the face because they were
+ *   simply last in the string; nothing made that order meaningful. They sit
+ *   at y 180–205 and the head circle ends at y 122, so the two never overlap
+ *   and folding the feet into `torso` (paint order: shadow → tail → farArm →
+ *   torso → nearArm → head) changes nothing visible.
+ * - **One real visual change, same as بومی's: `nearArm` now paints after
+ *   `torso`.** The right wing moves from behind the body to in front of it —
+ *   that is what near/far means, and it is a correction, not a regression,
+ *   but `npm run sheet` is where to actually look at it.
+ * - **Why the tail pivot is not the feathers' own centroid.** `pet.ts` reads
+ *   `back` off `torso.origin` and `tail` off `tail.origin` directly, and
+ *   `pet.test.mjs` guards a 40-unit floor between every pair of zones on every
+ *   character (چرخی's 44-unit head/back pair is the tightest on the roster
+ *   today). `torso.origin` sits at `[100, 176]`, the same near-the-feet hip
+ *   pivot every other character's spine lean uses; a tail pivot at the
+ *   feathers' own centroid would land 18–28 units away from that, inside the
+ *   guard's floor. `[100, 132]` was chosen for the shoulder-line reading
+ *   above, and it happens to also clear the guard by a comfortable margin
+ *   (44 units from `torso`, 56 from the head zone) — the geometry did not
+ *   need bending to pass the test, but the test is what caught the naive
+ *   choice before it shipped.
+ */
 export declare const simorgh: CharacterSpec;
 /**
  * چرخی — the roster's first vehicle, and its first character with no `head`,

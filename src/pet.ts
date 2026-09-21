@@ -71,10 +71,12 @@ export const PET_REACH = 54
  * - **back** — the `torso` layer origin (the hip pivot).
  * - **tail** — the `tail` layer origin.
  *
- * A character with no layers at all (سیمرغ, still unconverted) gets its head
- * zone only. That is the honest answer: without layers there is no measured
- * hip or tail to point at, and inventing one would be exactly the drift this
- * derivation exists to avoid.
+ * A character with no `torso`/`tail` layer at all gets its head zone only —
+ * بومی is the roster's example (a torso but no tail). That is the honest
+ * answer: without a layer there is no measured hip or tail to point at, and
+ * inventing one would be exactly the drift this derivation exists to avoid.
+ * (سیمرغ used to be the example here; it is layer-rig converted as of
+ * v1.3.0 and now exposes all three zones.)
  */
 export function petZones(spec: CharacterSpec): PetZone[] {
   const zones: PetZone[] = [{

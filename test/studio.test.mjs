@@ -244,12 +244,14 @@ test('changing character re-asks the rig how each gesture routes rather than reu
   assert.ok(other, 'only one character in the picker')
   assert.ok(changed, 'no character in the roster routes its gestures differently — is buildActions running at all?')
 
-  // سیمرغ is the deliberately unlayered character, so every limb gesture falls
-  // back to its whole body. That is the case the marker class exists for.
-  studio.document.querySelector('[data-slug="simorgh"]')
+  // چرخی has neither arm layer nor head layer (سیمرغ, the previous example
+  // here, is layer-rig converted as of v1.3.0 and no longer fits), so every
+  // limb/head gesture falls back to its whole body. That is the case the
+  // marker class exists for.
+  studio.document.querySelector('[data-slug="charkhi"]')
     .dispatchEvent(new studio.window.MouseEvent('click', { bubbles: true }))
   const fb = [...$('actions').querySelectorAll('button.fb')].map((b) => b.dataset.g)
-  assert.ok(fb.length > 0, 'سیمرغ falls back on nothing — either the roster or the marker changed')
+  assert.ok(fb.length > 0, 'چرخی falls back on nothing — either the roster or the marker changed')
 })
 
 test('the studio never hides a gesture it cannot fit', () => {

@@ -192,12 +192,17 @@ test('no character carries both wing conventions at once', () => {
   }
 })
 
-test('simorgh still flies under the unlayered convention', () => {
+test('simorgh now flies under the layered convention, not the unlayered one', () => {
+  // Was the roster's one CSS-fallback flier; converted (see CHANGELOG 1.3.0 /
+  // the redesign plan doc). This replaces the old test that pinned it to the
+  // unlayered `.wingL`/`.wingR` convention with the mirror-image assertion.
   const out = CHARACTERS.simorgh.render({ emotion: EMOTIONS.neutral, intensity: 1, frame: defaultFrame('simorgh') })
-  assert.equal(out.layers, undefined, 'simorgh is not converted yet')
-  assert.match(out.art, /class="wingL"/)
-  assert.match(out.art, /class="wingR"/)
-  // The rules its art depends on must still be present and unlayered.
+  assert.ok(out.layers, 'simorgh should be converted')
+  assert.ok(out.layers.farArm && out.layers.nearArm, 'simorgh should have wing layers')
+  const markup = out.art + Object.values(out.layers).map((l) => l.art).join('')
+  assert.doesNotMatch(markup, /class="wing[LR]"/, 'the legacy wing hooks should be gone')
+  // The unlayered CSS rules stay in RIG_CSS regardless — they exist for future
+  // unconverted fliers, not for simorgh specifically.
   assert.match(RIG_CSS, /\.ca-svg\.loco-fly \.wingL\{transform-origin:[^}]*animation:caWingL/)
   assert.match(RIG_CSS, /\.ca-svg\.loco-fly \.wingR\{transform-origin:[^}]*animation:caWingR/)
 })

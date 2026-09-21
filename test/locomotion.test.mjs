@@ -219,14 +219,21 @@ test('a driven character gets no CSS body animation, only the phase table', () =
   } finally { t.restore() }
 })
 
-test('simorgh has no limb layers, so it falls back to the CSS body animation', () => {
+test('simorgh flies: the wings beat, mirrored, with no CSS animation involved', () => {
+  // سیمرغ is converted (see CHANGELOG); this replaces the old test that
+  // pinned it as the unlayered CSS-fallback example, mirroring the boomi test
+  // just above since both are now phase-driven fliers.
   const t = mount(CHARACTERS.simorgh)
   try {
-    t.rig.apply({ locomotion: 'fly' })
-    t.advance(100)
-    assert.match(t.el('.rig-root').style.animation, /caFly/, 'the unlayered fallback stopped working')
-    assert.ok(t.svg().classList.contains('loco-fly'), 'and it still needs the class for the wing rules')
-    assert.ok(t.svg().querySelector('.wingL'), 'simorgh still uses the old wing hooks')
+    t.rig.apply({ locomotion: 'fly', speed: 1 })
+    t.advance(200)
+
+    const far = rotOf(t.tf('.lyr-farArm'))
+    const near = rotOf(t.tf('.lyr-nearArm'))
+    assert.ok(far !== 0, 'the wings never beat')
+    assert.ok(Math.abs(far + near) < 0.02, `wings should mirror, got ${far} / ${near}`)
+    assert.equal(t.el('.lyr-farArm').style.animation, '', 'a driven wing must not also carry a CSS animation')
+    assert.equal(t.svg().querySelectorAll('.wingL, .wingR').length, 0, 'a converted character must not keep the old wing hooks')
   } finally { t.restore() }
 })
 

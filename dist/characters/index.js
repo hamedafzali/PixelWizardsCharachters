@@ -706,9 +706,61 @@ export const khersi = {
         };
     },
 };
+/**
+ * سیمرغ — the last unconverted character, and the one most likely to need to
+ * point, wave and nuzzle, since it is the app's guide. Converting it follows
+ * بومی's playbook (owl → phoenix, wings map to `farArm`/`nearArm`, the legacy
+ * `.wingL`/`.wingR` hooks are dropped) with two decisions of its own:
+ *
+ * - **The three crest feathers stay inside `head`**, painted before the head
+ *   circle exactly as before. They are not `earL`/`earR`: there are three
+ *   feathers, not a mirrored pair, and forcing a pair onto them would be the
+ *   same invented-pivot mistake the authoring rule on `LayerName` warns
+ *   against. Keeping them inside one layer's art string preserves their paint
+ *   order, so the picture does not change.
+ * - **The tail is its own layer**, not baked into `torso` — five feathers
+ *   fanned out behind the body, the closest thing on the roster to لاکی's
+ *   shell in that it reads as a single ornamental mass, but one that a
+ *   `tail`-driven posture (sad droop, excited perk) can now actually reach.
+ *   Its pivot is `[100, 132]`: not the visual centroid of the five ellipses
+ *   (≈`[100, 158]`, which sits only 18–28 units from the torso pivot below —
+ *   see the note on that number), but level with the wing pivots at `cy=132`,
+ *   reading the tail as rooted at the same shoulder line the wings root from,
+ *   which the art supports (the two outer feathers' own major axes project
+ *   back toward `x≈100, y≈132–136` — see the working in the plan doc, not
+ *   reproduced here since ellipses don't carry a drawn base the way a path
+ *   does).
+ * - **The feet move from the end of the flat art string into `torso`.** In
+ *   the old unlayered art they painted *after* the face because they were
+ *   simply last in the string; nothing made that order meaningful. They sit
+ *   at y 180–205 and the head circle ends at y 122, so the two never overlap
+ *   and folding the feet into `torso` (paint order: shadow → tail → farArm →
+ *   torso → nearArm → head) changes nothing visible.
+ * - **One real visual change, same as بومی's: `nearArm` now paints after
+ *   `torso`.** The right wing moves from behind the body to in front of it —
+ *   that is what near/far means, and it is a correction, not a regression,
+ *   but `npm run sheet` is where to actually look at it.
+ * - **Why the tail pivot is not the feathers' own centroid.** `pet.ts` reads
+ *   `back` off `torso.origin` and `tail` off `tail.origin` directly, and
+ *   `pet.test.mjs` guards a 40-unit floor between every pair of zones on every
+ *   character (چرخی's 44-unit head/back pair is the tightest on the roster
+ *   today). `torso.origin` sits at `[100, 176]`, the same near-the-feet hip
+ *   pivot every other character's spine lean uses; a tail pivot at the
+ *   feathers' own centroid would land 18–28 units away from that, inside the
+ *   guard's floor. `[100, 132]` was chosen for the shoulder-line reading
+ *   above, and it happens to also clear the guard by a comfortable margin
+ *   (44 units from `torso`, 56 from the head zone) — the geometry did not
+ *   need bending to pass the test, but the test is what caught the naive
+ *   choice before it shipped.
+ */
 export const simorgh = {
     slug: 'simorgh', name: 'سیمرغ', role: 'راهنما',
     eyes: { x: [80, 120], y: 76, r: 11 }, lidColor: '#fbb26a', browColor: '#b45309',
+    // `nearArm`/`farArm` satisfy `GAITS.fly.requires`, so this is no longer the
+    // CSS fallback — it is phase-driven like بومی. No `walk`: there is still no
+    // `farLeg`/`nearLeg` layer (a phoenix does not walk in this rig), so that
+    // gait keeps taking the CSS body animation, unchanged from before.
+    gaits: ['fly'],
     render({ emotion, intensity }) {
         const e = eyes(80, 120, 76, 11, 'smIris', emotion.squint * intensity, emotion.wide * intensity);
         const b = brows(80, 120, 58, emotion.brow, '#b45309');
@@ -719,27 +771,46 @@ export const simorgh = {
       <linearGradient id="smC" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3d6"/><stop offset="1" stop-color="#ffe0ad"/></linearGradient>
       <radialGradient id="smIris" cx="36%" cy="28%" r="80%"><stop offset="0" stop-color="#6a4a2a"/><stop offset=".6" stop-color="#3a2410"/><stop offset="1" stop-color="#1a0e04"/></radialGradient>
       <radialGradient id="smCo" cx="50%" cy="40%" r="60%"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#7a3a00" stop-opacity=".18"/></radialGradient>`,
-            art: `<ellipse cx="100" cy="188" rx="52" ry="8" fill="#000" opacity=".10"/>
-      <ellipse cx="54" cy="152" rx="30" ry="12" transform="rotate(-32 54 152)" fill="#ef4444" opacity=".85"/>
-      <ellipse cx="74" cy="162" rx="30" ry="11" transform="rotate(-16 74 162)" fill="#f97316" opacity=".85"/>
-      <ellipse cx="100" cy="166" rx="30" ry="11" fill="#eab308" opacity=".85"/>
-      <ellipse cx="126" cy="162" rx="30" ry="11" transform="rotate(16 126 162)" fill="#22c55e" opacity=".85"/>
-      <ellipse cx="146" cy="152" rx="30" ry="12" transform="rotate(32 146 152)" fill="#3b82f6" opacity=".85"/>
-      <g class="wingL"><ellipse cx="52" cy="128" rx="24" ry="13" transform="rotate(-20 52 128)" fill="#fb923c"/><ellipse cx="54" cy="126" rx="17" ry="9" transform="rotate(-20 54 126)" fill="#fdba74"/></g>
-      <g class="wingR"><ellipse cx="148" cy="128" rx="24" ry="13" transform="rotate(20 148 128)" fill="#fb923c"/><ellipse cx="146" cy="126" rx="17" ry="9" transform="rotate(20 146 126)" fill="#fdba74"/></g>
-      <ellipse cx="100" cy="140" rx="40" ry="42" fill="url(#smB)"/><ellipse cx="100" cy="146" rx="26" ry="30" fill="url(#smC)"/><ellipse cx="100" cy="140" rx="40" ry="42" fill="url(#smCo)"/>
-      <ellipse cx="100" cy="150" rx="14" ry="16" fill="#fef3c7" opacity=".5"/>
-      <ellipse cx="84" cy="30" rx="7" ry="18" transform="rotate(-16 84 30)" fill="#ef4444"/>
-      <ellipse cx="100" cy="26" rx="7" ry="20" fill="#eab308"/>
-      <ellipse cx="116" cy="30" rx="7" ry="18" transform="rotate(16 116 30)" fill="#3b82f6"/>
-      <circle cx="100" cy="80" r="42" fill="url(#smH)"/><circle cx="100" cy="84" r="42" fill="url(#smCo)"/>
-      <ellipse cx="100" cy="90" rx="22" ry="15" fill="url(#smC)" opacity=".55"/>
-      ${e}
-      ${b}
-      <ellipse cx="72" cy="94" rx="8" ry="5" fill="#fca5a5" opacity=".5"/><ellipse cx="128" cy="94" rx="8" ry="5" fill="#fca5a5" opacity=".5"/>
-      <g id="mouthG"></g>
-      <path d="M84 180 l-6 12 M84 180 v13 M84 180 l6 12" stroke="#d97706" stroke-width="4" stroke-linecap="round"/>
-      <path d="M116 180 l-6 12 M116 180 v13 M116 180 l6 12" stroke="#d97706" stroke-width="4" stroke-linecap="round"/>`,
+            art: '',
+            layers: {
+                shadow: { art: `<ellipse cx="100" cy="188" rx="52" ry="8" fill="#000" opacity=".10"/>` },
+                tail: {
+                    origin: [100, 132],
+                    art: `<ellipse cx="54" cy="152" rx="30" ry="12" transform="rotate(-32 54 152)" fill="#ef4444" opacity=".85"/>` +
+                        `<ellipse cx="74" cy="162" rx="30" ry="11" transform="rotate(-16 74 162)" fill="#f97316" opacity=".85"/>` +
+                        `<ellipse cx="100" cy="166" rx="30" ry="11" fill="#eab308" opacity=".85"/>` +
+                        `<ellipse cx="126" cy="162" rx="30" ry="11" transform="rotate(16 126 162)" fill="#22c55e" opacity=".85"/>` +
+                        `<ellipse cx="146" cy="152" rx="30" ry="12" transform="rotate(32 146 152)" fill="#3b82f6" opacity=".85"/>`,
+                },
+                farArm: {
+                    origin: [74, 132],
+                    art: `<ellipse cx="52" cy="128" rx="24" ry="13" transform="rotate(-20 52 128)" fill="#fb923c"/>` +
+                        `<ellipse cx="54" cy="126" rx="17" ry="9" transform="rotate(-20 54 126)" fill="#fdba74"/>`,
+                },
+                torso: {
+                    origin: [100, 176],
+                    art: `<ellipse cx="100" cy="140" rx="40" ry="42" fill="url(#smB)"/><ellipse cx="100" cy="146" rx="26" ry="30" fill="url(#smC)"/><ellipse cx="100" cy="140" rx="40" ry="42" fill="url(#smCo)"/>` +
+                        `<ellipse cx="100" cy="150" rx="14" ry="16" fill="#fef3c7" opacity=".5"/>` +
+                        `<path d="M84 180 l-6 12 M84 180 v13 M84 180 l6 12" stroke="#d97706" stroke-width="4" stroke-linecap="round"/>` +
+                        `<path d="M116 180 l-6 12 M116 180 v13 M116 180 l6 12" stroke="#d97706" stroke-width="4" stroke-linecap="round"/>`,
+                },
+                nearArm: {
+                    origin: [126, 132],
+                    art: `<ellipse cx="148" cy="128" rx="24" ry="13" transform="rotate(20 148 128)" fill="#fb923c"/>` +
+                        `<ellipse cx="146" cy="126" rx="17" ry="9" transform="rotate(20 146 126)" fill="#fdba74"/>`,
+                },
+                head: {
+                    origin: [100, 112],
+                    art: `<ellipse cx="84" cy="30" rx="7" ry="18" transform="rotate(-16 84 30)" fill="#ef4444"/>` +
+                        `<ellipse cx="100" cy="26" rx="7" ry="20" fill="#eab308"/>` +
+                        `<ellipse cx="116" cy="30" rx="7" ry="18" transform="rotate(16 116 30)" fill="#3b82f6"/>` +
+                        `<circle cx="100" cy="80" r="42" fill="url(#smH)"/><circle cx="100" cy="84" r="42" fill="url(#smCo)"/>` +
+                        `<ellipse cx="100" cy="90" rx="22" ry="15" fill="url(#smC)" opacity=".55"/>` +
+                        e + b +
+                        `<ellipse cx="72" cy="94" rx="8" ry="5" fill="#fca5a5" opacity=".5"/><ellipse cx="128" cy="94" rx="8" ry="5" fill="#fca5a5" opacity=".5"/>` +
+                        `<g id="mouthG"></g>`,
+                },
+            },
             mouth: { cx: 100, cy: 100, color: '#e0850e', beak: true },
         };
     },

@@ -13,7 +13,7 @@ const LOCOS = ['idle', 'walk', 'fly', 'roll']
 const EMOTION_NAMES = Object.keys(EMOTIONS)
 const NEW_EMOTIONS = ['confused', 'proud', 'shy']
 
-/** The layered roster; سیمرغ is deliberately the unlayered fallback case. */
+/** The layered roster. Every character now emits at least one rig layer. */
 const LAYERED = CHARACTER_SLUGS.filter(
   (s) => !!CHARACTERS[s].render({ emotion: EMOTIONS.neutral, intensity: 0.7 }).layers,
 )
@@ -198,11 +198,15 @@ test('the structural mismatches are exactly the ones the roster predicts', () =>
     'بومی and چرخی are each one continuous form, so nod/shake fall back to the body')
 })
 
-test('the unlayered character takes the body path for every gesture it is allowed', () => {
-  const has = (l) => layersOf('simorgh').has(l)
+test('a character with neither arms nor a head takes the body path for every gesture', () => {
+  // سیمرغ used to be this example; it is converted now (see the plan doc /
+  // CHANGELOG), so چرخی is the roster's only character left with no arm layer
+  // *and* no head layer — every gesture in GESTURES targets one or the other
+  // (grep `layer: 'lyr-` in gestures.ts), so every one of them falls back.
+  const has = (l) => layersOf('charkhi').has(l)
   for (const g of GESTURE_NAMES) {
     const plan = planGesture(g, 'idle', null, has)
-    assert.equal(plan.parts[0].layer, 'rig-body', `${g} must reach سیمرغ through the body carrier`)
+    assert.equal(plan.parts[0].layer, 'rig-body', `${g} must reach چرخی through the body carrier`)
   }
 })
 

@@ -126,9 +126,12 @@ codebase, and a character must use exactly one of them.
 `RIG_CSS` (`src/rig.ts`) with a fixed `transform-origin` and a `@keyframes`
 animation that runs whenever `.loco-fly` is on the root: `.ca-svg.loco-fly
 .wingL{transform-origin:50px 110px;animation:caWingL .4s ease-in-out
-infinite}`. سیمرغ is the worked example — it never converted to the layered
-rig, so it still carries this pair of classes and nothing else drives its
-wings.
+infinite}`. سیمرغ was the worked example through v1.2.0; it is layer-rig
+converted as of v1.3.0 (see CHANGELOG), so as of this version no character in
+the roster actually exercises this path — the rules stay in `RIG_CSS` for
+whichever future character is added unlayered, and `rig-cache.test.mjs`'s
+`'no character carries both wing conventions at once'` test still guards
+against a converted character keeping them by mistake.
 
 **Converted characters** (a character with `farArm`/`nearArm` layers in
 `RigLayers`) are driven instead by the phase table in `locomotion.ts`,
@@ -290,8 +293,11 @@ escape hatch:
 - **Animals** — `roozi`, `pashmak`, `laki`, `tondpa`, `boomi`, `khersi`. The
   largest group, and the one the original `ActorFrame` shape (emotion, gaze,
   visemes, `walk`/`fly` gaits) was designed against.
-- **Fantasy creature** — `simorgh`, the roster's one unlayered/CSS-fallback
-  flier (see "The wing-hook convention" above).
+- **Fantasy creature** — `simorgh`. Layer-rig converted as of v1.3.0
+  (wings → `farArm`/`nearArm`, crest feathers stay inside `head`, tail
+  feathers get their own `tail` layer) — see "The wing-hook convention"
+  above and the v1.3.0 CHANGELOG entry for why the tail pivot sits level
+  with the wings rather than at the fan's own visual centre.
 - **Human kid** — `ava`, the one character with a drawn neck/collar line
   rather than an animal's continuous head-to-body form (see "The head/torso
   pivot rule" above).
