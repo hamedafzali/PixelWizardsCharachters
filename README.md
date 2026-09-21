@@ -131,6 +131,51 @@ locomotion state. To check before offering a button:
 import { planGesture, GESTURE_DURING } from 'pixel-wizards-charachters'
 ```
 
+## Petting (نوازش)
+
+A tap is an event; petting is not. Its meaning comes from *where* the hand is,
+how long it stays and how far it has travelled, so it needs somewhere to
+accumulate — which is what `PetDriver` is.
+
+```ts
+import { PetDriver, CHARACTERS } from 'pixel-wizards-charachters'
+
+const pet = new PetDriver(CHARACTERS.roozi)
+
+el.addEventListener('pointermove', (e) => pet.stroke(...toArtSpace(e)))
+el.addEventListener('pointerleave', () => pet.release())
+
+// once per frame, merged onto the frame you were sending anyway:
+const out = pet.tick(dt)
+if (out.emotion) frame = { ...frame, emotion: out.emotion, intensity: out.intensity }
+if (out.gaze) frame = { ...frame, gaze: out.gaze }
+if (out.gesture) frame = { ...frame, gesture: out.gesture }
+```
+
+The driver owns the zone under the hand, the affection accumulated and its
+decay, and what that looks like. Hit-testing against the DOM, pointer capture,
+sound, and whether petting earns a reward are app policy and stay in the app.
+
+**Affection accrues from travel, not from time held.** A finger parked on a
+character is not stroking it. Per-sample travel is clamped at both ends, so a
+jitter registers nothing and a flung swipe does not fill the bar.
+
+**Zones come from the drawing.** `petZones(spec)` reads the head centre from
+`eyes` and the back/tail centres from the `torso`/`tail` layer origins, so they
+cannot drift from the art. A character with no layers gets its head zone only.
+`zoneAt(spec, x, y)` resolves by nearest centre within `PET_REACH`, and returns
+`null` for a miss.
+
+| zone | reaction |
+| --- | --- |
+| `head` | `love`, greeting `nuzzle` |
+| `back` | `happy`, greeting `nuzzle` |
+| `tail` | `surprised`, resolving to `excited` past the delight threshold — a tail grab startles before it plays |
+
+`nuzzle` is a normal gesture and follows the usual rules: characters without a
+`head` layer lean with the whole body instead, and لاکی opts out because the
+measured travel would press its mouth into its own shell rim.
+
 ## Persian lip-sync
 
 ```ts
@@ -251,6 +296,7 @@ has no effect, the same as the OS query always had none.
 | locomotion (walk/fly) | never animates — phase-driven characters get no per-tick pose, CSS-fallback characters have their body-mechanic animation suppressed by stylesheet. `loco-walk`/`loco-fly` marker classes still toggle, for consumers styling against them |
 | mood idle animation, ear/tail/iris/brow CSS transitions | suppressed by stylesheet |
 | `playGesture()` | the gesture channel resolves at once, the same as every other channel snapping — no animation plays |
+| `PetDriver` | the expression still changes — a character that ignores the child reads as broken, not calm — but no gesture is emitted and `intensity` snaps instead of ramping. Suppressed on the JS path (`PetConfig.reducedMotion`); the stylesheet rule cannot see a driver that never asked CSS for anything |
 | `scrubGesture()` / `pinGaitPhase()` | still work: rather than pausing a CSS animation stylesheet rules would otherwise hide, both sample the pose directly and write it to `transform`, so a scrubbed frame stays visible |
 
 Two independent things enforce this, on purpose: `RIG_CSS`'s own
