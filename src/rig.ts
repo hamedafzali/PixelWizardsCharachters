@@ -48,11 +48,13 @@ export const RIG_CSS = `
 /* The arm layers are NOT in that transition list: phase-driven locomotion
    rewrites them every frame, and a 0.35s transition would smear the swing into
    mush — the same reason torso and head are excluded above. */
-/* Only unlayered fliers (simorgh) animate wings in CSS. Converted characters
-   (boomi) are driven by the phase table in locomotion.ts, get no limb rules
-   here, and must never carry .wingL/.wingR — nested under a driven layer, the
-   CSS animation would outrank the inline transform and win outright. The two
-   conventions are kept apart by canDrive(), and by a test in rig-cache. */
+/* Only unlayered fliers animate wings in CSS — none currently in the roster
+   (سیمرغ converted in v1.3.0), but the rules stay for whichever character is
+   next added unlayered. Converted characters (boomi, simorgh) are driven by
+   the phase table in locomotion.ts, get no limb rules here, and must never
+   carry .wingL/.wingR — nested under a driven layer, the CSS animation would
+   outrank the inline transform and win outright. The two conventions are kept
+   apart by canDrive(), and by a test in rig-cache. */
 .ca-svg.loco-fly .wingL{transform-origin:50px 110px;animation:caWingL .4s ease-in-out infinite}
 .ca-svg.loco-fly .wingR{transform-origin:150px 110px;animation:caWingR .4s ease-in-out infinite}
 @keyframes caBreathe{0%,100%{transform:scale(1)}50%{transform:scale(1.02)}}

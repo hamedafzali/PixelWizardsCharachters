@@ -552,8 +552,10 @@ export const tondpa: CharacterSpec = {
  *   the rig drives. The legacy `.wingL`/`.wingR` wrappers are *dropped* here:
  *   nesting them inside a layer made both `.loco-fly .wingL` and
  *   `.loco-fly .lyr-farArm` match, flapping the wing twice about two different
- *   pivots. Converting a character migrates it to the layer classes; the
- *   unconverted fliers (simorgh) keep the old hooks and the old rules.
+ *   pivots. Converting a character migrates it to the layer classes; an
+ *   unconverted flier would keep the old hooks and the old rules (none remain
+ *   in the roster as of v1.3.0 — سیمرغ, the last one, converted then too;
+ *   see its own docstring below).
  * - **Eyes are r=15, the roster's largest**, with facial discs behind them that
  *   deliberately do *not* scale with the widen transform (see below).
  */
