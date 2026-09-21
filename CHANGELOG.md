@@ -1,5 +1,63 @@
 # Changelog
 
+## 1.2.0
+
+**نوازش — petting, as a rig capability.** New `PetDriver` (`src/pet.ts`) plus
+one new `Gesture`, `nuzzle`. A tap is a discrete event and needs no driver;
+petting is a *sustained* input whose meaning is carried by where the hand is,
+how long it stays and how far it has travelled. That accumulation is state, and
+state that outlives one event belongs beside `IdleMicroMotion` and
+`LocomotionDriver` rather than in whichever app mounted the character —
+otherwise every app re-derives "how petted is this character right now", and
+they disagree.
+
+The driver owns three things and deliberately nothing else: which zone the hand
+is in, how much affection has accumulated and how it decays, and what that
+looks like (an emotion, a gaze, one-shot gestures). Hit-testing against the DOM,
+pointer capture, sound, and whether petting earns a star are app policy and stay
+in the app.
+
+**Zones are derived, not authored.** `petZones(spec)` reads the head centre from
+`spec.eyes` and the back/tail centres from the `torso`/`tail` layer origins, so
+they cannot drift from the drawing the way a hand-copied coordinate would. The
+`head` *layer* origin is the neck pivot, several units below the face, so using
+it would have put the head zone on the throat — `eyes` is the measurement that
+means "face". A character with no layers (سیمرغ) gets its head zone only, which
+is the honest answer: without layers there is no measured hip or tail to point
+at. The one authored number is `PET_REACH` (54), a design parameter rather than
+a measurement. Zones overlap at that radius — چرخی's head and back centres are
+44 apart — so `zoneAt` resolves by nearest centre, and the test guards a
+minimum *separation* rather than a non-overlap that was never true.
+
+**Affection accrues from travel, not from time held.** A finger parked on a
+character is not stroking it, and rewarding the rest would let a child leave one
+down and farm adoration. Per-sample travel is clamped at both ends so a jitter
+registers nothing and a flung swipe does not fill the bar.
+
+**Zone reactions are a table.** Head reads as affection (`love`), back as
+`happy`, and the tail startles before it plays — `surprised`, resolving to
+`excited` once past the delight threshold, which is how a child actually plays
+with a pet. Ears and tail come free from the existing `POSTURES` map.
+
+**لاکی opts out of `nuzzle`,** joining `nod`, and for the same measured reason:
+the suite reported -0.10 mouth clearance at t=0.421, so a nuzzling لاکی presses
+its mouth into its own shell rim. It leans its whole shell into the hand
+instead, which is also the better read for a tortoise. Caught by the existing
+`rig-cache` guard, not by inspection.
+
+**Reduced motion** is suppressed on the `this.reduced` path, not by `RIG_CSS` —
+`animation:none!important` cannot stop a driver that never asked CSS for
+anything. The expression still changes, because a character that ignores the
+child reads as broken rather than calm; what stops is the motion (no gesture is
+emitted, and intensity snaps instead of ramping). Suppression sits at the single
+point where `pending` is set: an earlier draft also nulled the gesture on the
+way out, which looked like defence-in-depth but was dead code no test could
+distinguish — mutation-verifying it is what surfaced that.
+
+Backward compatible: additive `Gesture` value, one new module, one character
+opting out of one gesture. No existing `ActorFrame`, `CharacterSpec` or gesture
+shape changes.
+
 ## 1.1.0
 
 **A `roll` gait for چرخی.** New `GaitName` value `'roll'` and matching

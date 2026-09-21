@@ -43,6 +43,8 @@ export type {
   NumericChannel, DiscreteChannel, InterpolationProfile,
 } from './interpolate.js'
 export { IdleMicroMotion, blinkStyle, BLINK_STYLES } from './micro.js'
+export { PetDriver, petZones, zoneAt, PET_REACH } from './pet.js'
+export type { PetZone, PetZoneName, PetConfig, PetOutput } from './pet.js'
 export type { MicroConfig, MicroOutput, BlinkStyle } from './micro.js'
 export {
   GESTURES, GESTURE_NAMES, GESTURE_DURING, planGesture,

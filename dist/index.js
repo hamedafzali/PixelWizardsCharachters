@@ -14,6 +14,7 @@ export { buildAction, actionStops, ensureAction, poseToTransform, composePoses }
 export { sampleAction, sampleActionFrames, frameCount, parseEasing, easeBezier, EASING_KEYWORDS, } from './sample.js';
 export { FrameInterpolator, EASINGS, DEFAULT_PROFILE } from './interpolate.js';
 export { IdleMicroMotion, blinkStyle, BLINK_STYLES } from './micro.js';
+export { PetDriver, petZones, zoneAt, PET_REACH } from './pet.js';
 export { GESTURES, GESTURE_NAMES, GESTURE_DURING, planGesture, gestureLayers, gaitDrivenLayers, conflictsWithGait, locoTargetLayer, } from './gestures.js';
 export { VISEMES, PMAP, textToVisemes } from './visemes.js';
 export { sanitizeFrame } from './validate.js';

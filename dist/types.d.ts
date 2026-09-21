@@ -32,7 +32,7 @@ export declare const LOCOMOTIONS: readonly ["idle", "walk", "fly", "roll"];
 /** The valid values for `ActorFrame.facing`. */
 export declare const FACINGS: readonly ["left", "right"];
 export type Locomotion = typeof LOCOMOTIONS[number];
-export type Gesture = 'wave' | 'jump' | 'spin' | 'nod' | 'shake' | 'shrug' | 'point' | 'clap' | 'bounce';
+export type Gesture = 'wave' | 'jump' | 'spin' | 'nod' | 'shake' | 'shrug' | 'point' | 'clap' | 'bounce' | 'nuzzle';
 export type Facing = typeof FACINGS[number];
 /** One moment of performance. This is the AI ⇄ rig contract. */
 export interface ActorFrame {

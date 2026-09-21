@@ -37,7 +37,7 @@ test('چرخی reuses earL/earR for antennas, and they hang off the torso (no he
 
 // ------------------------------------------------------- gestures --------------
 
-test('the 3-native/6-fallback gesture split predicted for a headless, limbless body', () => {
+test('the 3-native/7-fallback gesture split predicted for a headless, limbless body', () => {
   const native = []
   const fallback = []
   for (const g of GESTURE_NAMES) {
@@ -46,7 +46,7 @@ test('the 3-native/6-fallback gesture split predicted for a headless, limbless b
   }
   assert.deepEqual(native.sort(), ['bounce', 'jump', 'spin'],
     'only the whole-body-only gestures run natively with zero limb layers')
-  assert.deepEqual(fallback.sort(), ['clap', 'nod', 'point', 'shake', 'shrug', 'wave'],
+  assert.deepEqual(fallback.sort(), ['clap', 'nod', 'nuzzle', 'point', 'shake', 'shrug', 'wave'],
     'every limb/head gesture structurally falls back to rig-body')
 })
 

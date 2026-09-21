@@ -356,7 +356,12 @@ export const laki = {
     // A nod travels 6.5 units down, and the window above allows 2.8 — لاکی would
     // nod its mouth in under the shell rim. It nods with its whole body instead,
     // which the shell moves with. Measured, not assumed; there is a test.
-    gestureFallback: ['nod'],
+    //
+    // `nuzzle` joins it for the same reason and was caught the same way: the
+    // suite measured -0.10 clearance at t=0.421, so a nuzzling لاکی presses its
+    // mouth into the rim. Leaning the whole shell into the hand is also the
+    // better read for a tortoise — it is what a tortoise would actually do.
+    gestureFallback: ['nod', 'nuzzle'],
     render({ emotion, intensity }) {
         const e = eyes(90, 110, 48, 9, 'lkIris', emotion.squint * intensity, emotion.wide * intensity);
         const b = brows(90, 110, 36, emotion.brow, '#188a3e');

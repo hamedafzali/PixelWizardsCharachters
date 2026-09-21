@@ -31,7 +31,7 @@ test('every gesture in the type union is in the registry, and vice versa', () =>
   // a compile error — but an *extra* key, or a name that drifted, is not.
   assert.deepEqual(
     [...GESTURE_NAMES].sort(),
-    ['bounce', 'clap', 'jump', 'nod', 'point', 'shake', 'shrug', 'spin', 'wave'],
+    ['bounce', 'clap', 'jump', 'nod', 'nuzzle', 'point', 'shake', 'shrug', 'spin', 'wave'],
   )
 })
 

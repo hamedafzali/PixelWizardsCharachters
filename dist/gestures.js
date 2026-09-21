@@ -163,6 +163,37 @@ export const GESTURES = {
         // Bouncing is repeated jumping, so it inherits the jump's restriction.
         during: GROUNDED,
     },
+    // ── affection ─────────────────────────────────────────────────────────────
+    //
+    // A nuzzle is a *press*, not a beat. The head turns into the hand, holds
+    // there, and comes back slowly — so unlike `nod`, whose repeats carry the
+    // meaning, the middle keys here barely differ, the way `point`'s do.
+    //
+    // Same lead-in treatment as `nod` and `shake` above, and for the same reason:
+    // the derived anticipation always loads *downward*, but this peak is a
+    // sideways tilt, so the counter-move (a small turn away from the hand) is
+    // authored as the first pose and `anticipation` is dialled down rather than
+    // re-tuning a shipped curve.
+    nuzzle: {
+        parts: [{
+                layer: 'lyr-head',
+                action: {
+                    dur: 1.15,
+                    poses: [{ rot: -4 }, { rot: 13, y: 3 }, { rot: 11, y: 4 }, { rot: 12, y: 3 }, { rot: 0, y: 0 }],
+                    anticipation: 0.2, settle: 0.45, antTime: 0.1, settleTime: 0.26,
+                },
+            }],
+        fallback: {
+            layer: 'rig-body',
+            action: {
+                dur: 1.1,
+                poses: [{ rot: -3 }, { rot: 9, y: 2 }, { rot: 8, y: 3 }, { rot: 0, y: 0 }],
+                anticipation: 0.25, settle: 0.5,
+            },
+        },
+        // Affection is not grounded: a flying سیمرغ can be stroked too.
+        during: ALL_LOCO,
+    },
 };
 /** `GESTURES`' own keys, so a consumer never keeps a hand-written second list that can drift from the registry. */
 export const GESTURE_NAMES = Object.keys(GESTURES);

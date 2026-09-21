@@ -9,7 +9,8 @@
       "shrug": "lyr-farArm+lyr-nearArm",
       "clap": "lyr-farArm+lyr-nearArm",
       "point": "lyr-nearArm",
-      "bounce": "rig-body"
+      "bounce": "rig-body",
+      "nuzzle": "lyr-head"
     },
     "ava": {
       "jump": "rig-body",
@@ -20,7 +21,8 @@
       "shrug": "lyr-farArm+lyr-nearArm",
       "clap": "lyr-farArm+lyr-nearArm",
       "point": "lyr-nearArm",
-      "bounce": "rig-body"
+      "bounce": "rig-body",
+      "nuzzle": "lyr-head"
     },
     "pashmak": {
       "jump": "rig-body",
@@ -31,7 +33,8 @@
       "shrug": "fallback:missing-layer",
       "clap": "fallback:missing-layer",
       "point": "fallback:missing-layer",
-      "bounce": "rig-body"
+      "bounce": "rig-body",
+      "nuzzle": "lyr-head"
     },
     "laki": {
       "jump": "rig-body",
@@ -42,7 +45,8 @@
       "shrug": "lyr-farArm+lyr-nearArm",
       "clap": "lyr-farArm+lyr-nearArm",
       "point": "lyr-nearArm",
-      "bounce": "rig-body"
+      "bounce": "rig-body",
+      "nuzzle": "fallback:character-opt-out"
     },
     "tondpa": {
       "jump": "rig-body",
@@ -53,7 +57,8 @@
       "shrug": "fallback:missing-layer",
       "clap": "fallback:missing-layer",
       "point": "fallback:missing-layer",
-      "bounce": "rig-body"
+      "bounce": "rig-body",
+      "nuzzle": "lyr-head"
     },
     "boomi": {
       "jump": "rig-body",
@@ -64,7 +69,8 @@
       "shrug": "lyr-farArm+lyr-nearArm",
       "clap": "lyr-farArm+lyr-nearArm",
       "point": "lyr-nearArm",
-      "bounce": "rig-body"
+      "bounce": "rig-body",
+      "nuzzle": "fallback:missing-layer"
     },
     "khersi": {
       "jump": "rig-body",
@@ -75,7 +81,8 @@
       "shrug": "fallback:missing-layer",
       "clap": "fallback:missing-layer",
       "point": "fallback:missing-layer",
-      "bounce": "rig-body"
+      "bounce": "rig-body",
+      "nuzzle": "lyr-head"
     },
     "simorgh": {
       "jump": "rig-body",
@@ -86,7 +93,8 @@
       "shrug": "fallback:missing-layer",
       "clap": "fallback:missing-layer",
       "point": "fallback:missing-layer",
-      "bounce": "rig-body"
+      "bounce": "rig-body",
+      "nuzzle": "fallback:missing-layer"
     },
     "charkhi": {
       "jump": "rig-body",
@@ -97,7 +105,8 @@
       "shrug": "fallback:missing-layer",
       "clap": "fallback:missing-layer",
       "point": "fallback:missing-layer",
-      "bounce": "rig-body"
+      "bounce": "rig-body",
+      "nuzzle": "fallback:missing-layer"
     }
   },
   "pivots": {
@@ -305,7 +314,8 @@
       }
     },
     "optOut": [
-      "nod"
+      "nod",
+      "nuzzle"
     ]
   },
   "tondpa": {
@@ -328,6 +338,10 @@
       "shake": {
         "overlap": 257.28,
         "t": 0.896
+      },
+      "nuzzle": {
+        "overlap": 248.64,
+        "t": 0.846
       }
     }
   },
@@ -351,6 +365,10 @@
       "shake": {
         "overlap": 451.25,
         "t": 0.896
+      },
+      "nuzzle": {
+        "overlap": 438,
+        "t": 0.85
       }
     },
     "earPivots": {
@@ -640,6 +658,35 @@
           0,
           0.999,
           1.001
+        ]
+      }
+    },
+    "nuzzle": {
+      "dur": 1.15,
+      "layers": [
+        "lyr-head"
+      ],
+      "at": {
+        "0.1": [
+          0,
+          0.48,
+          -0.468,
+          1.02,
+          0.974
+        ],
+        "0.5": [
+          0,
+          3.129,
+          11.871,
+          1,
+          1
+        ],
+        "0.9": [
+          0,
+          -0.227,
+          0,
+          0.999,
+          1
         ]
       }
     }

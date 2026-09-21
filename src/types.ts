@@ -44,6 +44,7 @@ export type Locomotion = typeof LOCOMOTIONS[number]
 export type Gesture =
   | 'wave' | 'jump' | 'spin'
   | 'nod' | 'shake' | 'shrug' | 'point' | 'clap' | 'bounce'
+  | 'nuzzle'
 export type Facing = typeof FACINGS[number]
 
 /** One moment of performance. This is the AI ⇄ rig contract. */
