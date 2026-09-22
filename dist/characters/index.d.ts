@@ -233,6 +233,19 @@ export declare const simorgh: CharacterSpec;
  *   `tools/baselines/geometry.json` rather than guessed.
  */
 export declare const charkhi: CharacterSpec;
+/**
+ * `role` reconciled against KoodakBook's `kit.tsx` module hosting, 2026-09.
+ * The two used to disagree (پشمک `صداها`/sounds hosting stories, لاکی
+ * `شمارش`/counting hosting review, تندپا `رنگ‌ها`/colours hosting games,
+ * خرسی `احساس‌ها`/emotions hosting math) — two independent taxonomies for the
+ * same fact, drifted apart. `role` is not read by the app anywhere (grep
+ * confirms it), so the app's module assignment is the one that actually
+ * matters; `role` now just describes it. چرخی's `جاده‌ها`/roads is
+ * unchanged and unmapped in `kit.tsx` on purpose — it is not a module host,
+ * it is meant for the home screen's journey-path illustration (see the
+ * KoodakBook redesign plan doc), which is a placement decision, not a role
+ * one.
+ */
 /** The built-in roster, keyed by slug. */
 export declare const CHARACTERS: Record<string, CharacterSpec>;
 /** `CHARACTERS`' own keys, so the roster list can never drift from the registry it lists. */

@@ -251,7 +251,7 @@ export const ava: CharacterSpec = {
  *   preset reaches every channel it has except `arms`.
  */
 export const pashmak: CharacterSpec = {
-  slug: 'pashmak', name: 'پشمک', role: 'صداها',
+  slug: 'pashmak', name: 'پشمک', role: 'قصه‌ها',
   eyes: { x: [80, 116], y: 76, r: 11 }, lidColor: '#c9d5e4', browColor: '#5a6b80',
   // Neither legs nor wings: nothing to phase-drive, both gaits fall back to the
   // CSS body animation. Declared empty rather than omitted, so it reads as a
@@ -342,7 +342,7 @@ export const pashmak: CharacterSpec = {
  *   report about `canDrive` being structural rather than intentional.
  */
 export const laki: CharacterSpec = {
-  slug: 'laki', name: 'لاکی', role: 'شمارش',
+  slug: 'laki', name: 'لاکی', role: 'مرور',
   eyes: { x: [90, 110], y: 48, r: 9 }, lidColor: '#84e6a0', browColor: '#188a3e',
   // Walk only. The back flippers occupy the arm slots — which is right, they
   // are what the walk swings — so `canDrive('fly')` is structurally true. A
@@ -450,7 +450,7 @@ export const laki: CharacterSpec = {
  *   stays hidden however far the tip swings.
  */
 export const tondpa: CharacterSpec = {
-  slug: 'tondpa', name: 'تندپا', role: 'رنگ‌ها',
+  slug: 'tondpa', name: 'تندپا', role: 'بازی‌ها',
   eyes: { x: [84, 116], y: 82, r: 11 }, lidColor: '#e4eaf1', browColor: '#8a93a8',
   // Neither gait is phase-driven, and not by default: the feet are pads with no
   // joint (see above) and there is no arm art of any kind. Both take the CSS
@@ -661,7 +661,7 @@ export const boomi: CharacterSpec = {
  *   drivable and neither is declared.
  */
 export const khersi: CharacterSpec = {
-  slug: 'khersi', name: 'خرسی', role: 'احساس‌ها',
+  slug: 'khersi', name: 'خرسی', role: 'ریاضی',
   eyes: { x: [84, 116], y: 80, r: 10.5 }, lidColor: '#c79f63', browColor: '#6a4526',
   // No legs beyond the pads and no arms of any kind, so `canDrive` is false for
   // both gaits before the declaration is even consulted. Declared empty anyway,
@@ -966,6 +966,19 @@ export const charkhi: CharacterSpec = {
   },
 }
 
+/**
+ * `role` reconciled against KoodakBook's `kit.tsx` module hosting, 2026-09.
+ * The two used to disagree (پشمک `صداها`/sounds hosting stories, لاکی
+ * `شمارش`/counting hosting review, تندپا `رنگ‌ها`/colours hosting games,
+ * خرسی `احساس‌ها`/emotions hosting math) — two independent taxonomies for the
+ * same fact, drifted apart. `role` is not read by the app anywhere (grep
+ * confirms it), so the app's module assignment is the one that actually
+ * matters; `role` now just describes it. چرخی's `جاده‌ها`/roads is
+ * unchanged and unmapped in `kit.tsx` on purpose — it is not a module host,
+ * it is meant for the home screen's journey-path illustration (see the
+ * KoodakBook redesign plan doc), which is a placement decision, not a role
+ * one.
+ */
 /** The built-in roster, keyed by slug. */
 export const CHARACTERS: Record<string, CharacterSpec> = {
   roozi, ava, pashmak, laki, tondpa, boomi, khersi, simorgh, charkhi,

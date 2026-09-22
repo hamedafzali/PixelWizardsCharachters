@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.3.1
+
+**`role` reconciled with KoodakBook's actual module hosting.** پشمک
+`صداها`→`قصه‌ها`, لاکی `شمارش`→`مرور`, تندپا `رنگ‌ها`→`بازی‌ها`, خرسی
+`احساس‌ها`→`ریاضی`. `role` is descriptive metadata with no consumer in the
+library itself and, per a repo grep, none in KoodakBook either — the app's
+`kit.tsx` module assignment is the fact that actually matters, so `role` now
+just states it instead of disagreeing with it. چرخی's `جاده‌ها` is unchanged;
+see the docstring above `CHARACTERS` for why it stays unmapped in `kit.tsx`
+on purpose.
+
 ## 1.3.0
 
 **سیمرغ is layer-rig converted** — the last unlayered character, and the
