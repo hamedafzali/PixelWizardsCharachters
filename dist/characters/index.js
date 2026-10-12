@@ -927,6 +927,101 @@ export const charkhi = {
     },
 };
 /**
+ * ربو — a small helper robot: a boxy head with a glass face screen on a drawn
+ * neck, a body with a chest light, two jointed arms, and a wheeled base. It is
+ * the roster's first machine with a face *and* limbs, so it answers the
+ * authoring questions differently from چرخی:
+ *
+ * - **A `head` layer, because there is a neck.** The neck is a separate drawn
+ *   form (torso art) and the head box sits on it, so the head/body line is the
+ *   head box's bottom edge at y=102 — measured off the drawing, the same kind
+ *   of answer آوا's collar gives. The neck runs from y=90 to y=112, so it
+ *   stays tucked under the head across the posture `headDrop` range in both
+ *   directions instead of showing a gap.
+ * - **Arm layers on drawn shoulder bolts.** Each arm's `origin` is the centre
+ *   of the bolt circle drawn on the body side, `[60, 122]` and `[140, 122]`.
+ *   The arms are real joints that swing, so wave/point/clap/shrug use them
+ *   rather than falling back to the body.
+ * - **`earL`/`earR` reused for twin antennas**, as چرخی does: `ears` on
+ *   `PostureSpec` is documented as "ear / antenna / tuft angle". Each root is
+ *   an on-curve point of the head path's flat top edge (`H` from x=72 to
+ *   x=128 at y=36), `[82, 36]` and `[118, 36]`. Because the stalks stand up
+ *   from a flat edge, it would take a droop near 90° before a tip crossed back
+ *   under the edge, far past the posture range below.
+ * - **`roll` only.** The base is a wheel housing, static art in `torso` like
+ *   چرخی's wheels. The arms make `fly` structurally drivable, but a robot
+ *   flapping its arms to hover is the "structurally capable, semantically
+ *   wrong" case `gaits` exists for, so it is not declared.
+ */
+export const robo = {
+    slug: 'robo', name: 'ربو', role: 'پرسش‌ها',
+    eyes: { x: [80, 120], y: 68, r: 11 }, lidColor: '#e0f7fa', browColor: '#1e1b4b',
+    gaits: ['roll'],
+    // Metal does not slump much, so spine travel stays small and the feeling
+    // lives in the head, the antennas and the arms instead.
+    posture: {
+        sad: { spine: 3, sink: 1, headDrop: 4, ears: 16, arms: 14 },
+        sleepy: { spine: 1, sink: 2, headTilt: 10, ears: 10, arms: 8 },
+        excited: { spine: -2, ears: -14, arms: -20 },
+        happy: { ears: -8, arms: -8 },
+        thinking: { headTilt: -6, ears: 6 },
+        surprised: { ears: -16, arms: -10 },
+    },
+    render({ emotion, intensity }) {
+        const e = eyes(80, 120, 68, 11, 'rbIris', emotion.squint * intensity, emotion.wide * intensity);
+        const b = brows(80, 120, 52, emotion.brow, '#1e1b4b');
+        const antenna = (x0, tx) => `<path d="M${x0} 36 L${tx} 18" stroke="#4338ca" stroke-width="3.5" stroke-linecap="round"/>` +
+            `<circle cx="${tx}" cy="16" r="5.5" fill="url(#rbL)"/>` +
+            `<circle cx="${tx - 1.6}" cy="14.4" r="1.8" fill="#fff" opacity=".8"/>`;
+        const arm = (x0, dir, fill) => `<path d="M${x0} 122 q${dir * 14} 10 ${dir * 16} 30" stroke="${fill}" stroke-width="10" stroke-linecap="round" fill="none"/>` +
+            `<path d="M${x0 + dir * 10} 158 a7 7 0 1 0 ${dir * 12} 0" stroke="${fill}" stroke-width="4.5" stroke-linecap="round" fill="none"/>`;
+        const head = 'M72 36 H128 C142 36 150 44 150 58 V82 C150 95 142 102 128 102 H72 C58 102 50 95 50 82 V58 C50 44 58 36 72 36 Z';
+        return {
+            grads: `
+      <linearGradient id="rbB" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c7d2fe"/><stop offset=".55" stop-color="#818cf8"/><stop offset="1" stop-color="#4f46e5"/></linearGradient>
+      <linearGradient id="rbG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f0fdff"/><stop offset="1" stop-color="#b2ebf2"/></linearGradient>
+      <radialGradient id="rbL" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#cffafe"/><stop offset=".5" stop-color="#22d3ee"/><stop offset="1" stop-color="#0891b2"/></radialGradient>
+      <radialGradient id="rbIris" cx="38%" cy="28%" r="76%"><stop offset="0" stop-color="#5a6fd8"/><stop offset=".55" stop-color="#312e81"/><stop offset="1" stop-color="#14123a"/></radialGradient>
+      <radialGradient id="rbCo" cx="50%" cy="30%" r="75%"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#1e1b4b" stop-opacity=".22"/></radialGradient>`,
+            art: '',
+            layers: {
+                shadow: { art: `<ellipse cx="100" cy="188" rx="46" ry="7" fill="#000" opacity=".11"/>` },
+                farArm: { origin: [60, 122], art: arm(60, -1, '#6366f1') },
+                torso: {
+                    // Where the body sits on the wheel housing; a spine lean pivots here.
+                    origin: [100, 162],
+                    art: `<rect x="70" y="160" width="60" height="22" rx="11" fill="#312e81"/>` +
+                        `<circle cx="84" cy="171" r="4" fill="#a5b4fc"/><circle cx="100" cy="171" r="4" fill="#a5b4fc"/><circle cx="116" cy="171" r="4" fill="#a5b4fc"/>` +
+                        `<rect x="90" y="90" width="20" height="22" rx="4" fill="#4338ca"/>` +
+                        `<rect x="60" y="108" width="80" height="56" rx="18" fill="url(#rbB)"/>` +
+                        `<rect x="60" y="108" width="80" height="56" rx="18" fill="url(#rbCo)"/>` +
+                        `<rect x="80" y="120" width="40" height="28" rx="8" fill="#312e81" opacity=".85"/>` +
+                        `<circle cx="100" cy="134" r="8" fill="url(#rbL)"/>` +
+                        `<circle cx="97.5" cy="131.5" r="2.4" fill="#fff" opacity=".85"/>` +
+                        `<circle cx="60" cy="122" r="6" fill="#4338ca"/><circle cx="140" cy="122" r="6" fill="#4338ca"/>` +
+                        `<path d="M86 156 h28" stroke="#312e81" stroke-width="3" stroke-linecap="round" opacity=".4"/>`,
+                },
+                nearArm: { origin: [140, 122], art: arm(140, 1, 'url(#rbB)') },
+                earL: { origin: [82, 36], art: antenna(82, 76) },
+                earR: { origin: [118, 36], art: antenna(118, 124) },
+                head: {
+                    // The bottom edge of the head box, where it sits on the drawn neck.
+                    origin: [100, 102],
+                    art: `<circle cx="48" cy="70" r="7" fill="#4338ca"/><circle cx="152" cy="70" r="7" fill="#4338ca"/>` +
+                        `<path d="${head}" fill="url(#rbB)"/>` +
+                        `<path d="${head}" fill="url(#rbCo)"/>` +
+                        `<rect x="60" y="44" width="80" height="50" rx="16" fill="url(#rbG)"/>` +
+                        `<path d="M66 50 q10 -3 22 -2" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".7" fill="none"/>` +
+                        e + b +
+                        `<ellipse cx="70" cy="82" rx="5.5" ry="3.5" fill="#f472b6" opacity=".45"/><ellipse cx="130" cy="82" rx="5.5" ry="3.5" fill="#f472b6" opacity=".45"/>` +
+                        `<g id="mouthG"></g>`,
+                },
+            },
+            mouth: { cx: 100, cy: 86, color: '#3730a3' },
+        };
+    },
+};
+/**
  * `role` reconciled against KoodakBook's `kit.tsx` module hosting, 2026-09.
  * The two used to disagree (پشمک `صداها`/sounds hosting stories, لاکی
  * `شمارش`/counting hosting review, تندپا `رنگ‌ها`/colours hosting games,
@@ -941,7 +1036,7 @@ export const charkhi = {
  */
 /** The built-in roster, keyed by slug. */
 export const CHARACTERS = {
-    roozi, ava, pashmak, laki, tondpa, boomi, khersi, simorgh, charkhi,
+    roozi, ava, pashmak, laki, tondpa, boomi, khersi, simorgh, charkhi, robo,
 };
 /** `CHARACTERS`' own keys, so the roster list can never drift from the registry it lists. */
 export const CHARACTER_SLUGS = Object.keys(CHARACTERS);

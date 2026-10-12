@@ -286,7 +286,7 @@ asserts this, because that is the shape that broke blink parenting twice.
 
 ### Roster categories
 
-The nine-character roster spans four categories, and the same `ActorFrame`
+The ten-character roster spans five categories, and the same `ActorFrame`
 contract is expected to drive all of them without a character-specific
 escape hatch:
 
@@ -303,6 +303,11 @@ escape hatch:
   pivot rule" above).
 - **Vehicles with faces** — `charkhi`, so far the only member. No wheels,
   legs, arms or head layer; antennas standing in for the `earL`/`earR` slots.
+- **Robots** — `robo`. A machine with a drawn neck, so unlike چرخی it gets a
+  measured `head` layer (the head box's bottom edge), plus `farArm`/`nearArm`
+  pivoted on drawn shoulder bolts and twin antennas in `earL`/`earR`. Its
+  wheeled base is static `torso` art and it declares `gaits: ['roll']` only:
+  the arms make `fly` structurally drivable, but it is not declared.
 
 چرخی's build confirmed a category-level question raised when the taxonomy
 was first proposed: does a vehicle need its own `ActorFrame` field, for

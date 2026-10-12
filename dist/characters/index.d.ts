@@ -234,6 +234,34 @@ export declare const simorgh: CharacterSpec;
  */
 export declare const charkhi: CharacterSpec;
 /**
+ * ربو — a small helper robot: a boxy head with a glass face screen on a drawn
+ * neck, a body with a chest light, two jointed arms, and a wheeled base. It is
+ * the roster's first machine with a face *and* limbs, so it answers the
+ * authoring questions differently from چرخی:
+ *
+ * - **A `head` layer, because there is a neck.** The neck is a separate drawn
+ *   form (torso art) and the head box sits on it, so the head/body line is the
+ *   head box's bottom edge at y=102 — measured off the drawing, the same kind
+ *   of answer آوا's collar gives. The neck runs from y=90 to y=112, so it
+ *   stays tucked under the head across the posture `headDrop` range in both
+ *   directions instead of showing a gap.
+ * - **Arm layers on drawn shoulder bolts.** Each arm's `origin` is the centre
+ *   of the bolt circle drawn on the body side, `[60, 122]` and `[140, 122]`.
+ *   The arms are real joints that swing, so wave/point/clap/shrug use them
+ *   rather than falling back to the body.
+ * - **`earL`/`earR` reused for twin antennas**, as چرخی does: `ears` on
+ *   `PostureSpec` is documented as "ear / antenna / tuft angle". Each root is
+ *   an on-curve point of the head path's flat top edge (`H` from x=72 to
+ *   x=128 at y=36), `[82, 36]` and `[118, 36]`. Because the stalks stand up
+ *   from a flat edge, it would take a droop near 90° before a tip crossed back
+ *   under the edge, far past the posture range below.
+ * - **`roll` only.** The base is a wheel housing, static art in `torso` like
+ *   چرخی's wheels. The arms make `fly` structurally drivable, but a robot
+ *   flapping its arms to hover is the "structurally capable, semantically
+ *   wrong" case `gaits` exists for, so it is not declared.
+ */
+export declare const robo: CharacterSpec;
+/**
  * `role` reconciled against KoodakBook's `kit.tsx` module hosting, 2026-09.
  * The two used to disagree (پشمک `صداها`/sounds hosting stories, لاکی
  * `شمارش`/counting hosting review, تندپا `رنگ‌ها`/colours hosting games,

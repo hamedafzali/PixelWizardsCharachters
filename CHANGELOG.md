@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.4.0
+
+**New character: ربو (`robo`)**, a small helper robot and the first member of
+a new "robots" category. A boxy head with a glass face screen sits on a drawn
+neck, so it has a real `head` layer pivoted at `[100, 102]`, the head box's
+bottom edge. Arms are `farArm`/`nearArm` pivoted on the drawn shoulder bolts
+(`[60, 122]`, `[140, 122]`), so wave/point/clap/shrug use the arms. Twin
+antennas reuse `earL`/`earR`, rooted on the flat top edge of the head
+(`[82, 36]`, `[118, 36]`). The wheel housing is static `torso` art, and
+`gaits` is `['roll']` only. Its pivots and gesture routing are added to
+`tools/baselines/geometry.json`; nothing else in the baseline changed.
+
 ## 1.3.1
 
 **`role` reconciled with KoodakBook's actual module hosting.** پشمک

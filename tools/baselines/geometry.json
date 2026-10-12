@@ -107,6 +107,18 @@
       "point": "fallback:missing-layer",
       "bounce": "rig-body",
       "nuzzle": "fallback:missing-layer"
+    },
+    "robo": {
+      "jump": "rig-body",
+      "spin": "rig-body",
+      "wave": "lyr-nearArm",
+      "nod": "lyr-head",
+      "shake": "lyr-head",
+      "shrug": "lyr-farArm+lyr-nearArm",
+      "clap": "lyr-farArm+lyr-nearArm",
+      "point": "lyr-nearArm",
+      "bounce": "rig-body",
+      "nuzzle": "lyr-head"
     }
   },
   "pivots": {
@@ -309,6 +321,30 @@
     "charkhi.earR": [
       142,
       80
+    ],
+    "robo.farArm": [
+      60,
+      122
+    ],
+    "robo.torso": [
+      100,
+      162
+    ],
+    "robo.nearArm": [
+      140,
+      122
+    ],
+    "robo.earL": [
+      82,
+      36
+    ],
+    "robo.earR": [
+      118,
+      36
+    ],
+    "robo.head": [
+      100,
+      102
     ]
   },
   "laki": {
