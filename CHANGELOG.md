@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.4.1
+
+**`pixel-wizards-charachters/react` types now resolve under
+`moduleResolution: "node"`.** That setting (the Create React App default)
+ignores `exports`, so TypeScript could not find the React entry's types and
+the import failed to typecheck even though the bundler loaded it fine. A
+`typesVersions` map now points it at `dist/react.d.ts`. No runtime change.
+
 ## 1.4.0
 
 **New character: ربو (`robo`)**, a small helper robot and the first member of
