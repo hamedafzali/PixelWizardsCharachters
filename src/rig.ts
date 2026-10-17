@@ -15,6 +15,7 @@ import {
 import { planGesture, type GesturePart, type GesturePlan } from './gestures.js'
 import { VISEMES, textToVisemes } from './visemes.js'
 import { sanitizeFrame, isKnownGesture, type OnInvalidFrame } from './validate.js'
+import { MotionEngine, resolveMotion, type MotionOverrides, type MotionSettings, type MotionTarget } from './motion.js'
 
 /**
  * CSS the rig needs.
@@ -44,7 +45,9 @@ export const RIG_CSS = `
 /* torso + head are rewritten every frame by the micro-motion loop, so a
    transition on them would smear rather than ease. The remaining posture-only
    layers still ease here. */
-.ca-svg .lyr-earL,.ca-svg .lyr-earR,.ca-svg .lyr-tail{transition:transform .35s cubic-bezier(.3,.7,.3,1)}
+/* .ca-spring marks a layer the motion engine's secondary springs own: it is
+   rewritten every tick, so it is excluded for the same reason. */
+.ca-svg .lyr-earL:not(.ca-spring),.ca-svg .lyr-earR:not(.ca-spring),.ca-svg .lyr-tail:not(.ca-spring){transition:transform .35s cubic-bezier(.3,.7,.3,1)}
 /* The arm layers are NOT in that transition list: phase-driven locomotion
    rewrites them every frame, and a 0.35s transition would smear the swing into
    mush — the same reason torso and head are excluded above. */
@@ -228,6 +231,52 @@ export interface RigOptions {
    * README's accessibility section for what "reduced" means per feature.
    */
   reducedMotion?: boolean | 'auto'
+  /**
+   * Motion-engine overrides for this rig, layered over the character's own
+   * `CharacterSpec.motion` and `DEFAULT_MOTION`. `false` on any driver turns it
+   * off; `{ secondary: false, attention: false, body: false, depth: false }`
+   * restores the pre-engine rig exactly. Change it live with
+   * {@link ActorRig.setMotion}.
+   */
+  motion?: MotionOverrides
+}
+
+let rigSeq = 0
+
+/**
+ * Give every gradient id this rig's own suffix, and every reference to it.
+ *
+ * Gradient ids are authored per character (`fxH`, `avS`), so two rigs showing
+ * the same character put two identical ids in one document, and `url(#fxH)`
+ * resolves to whichever came first — harmless while both were identical, wrong
+ * the moment depth shading moves one of them. Only ids declared inside
+ * `<defs>` are touched, so `#mouthG` keeps its name.
+ */
+function namespaceIds(html: string, suffix: string): string {
+  const defs = /<defs>([\s\S]*?)<\/defs>/.exec(html)?.[1] ?? ''
+  for (const m of defs.matchAll(/\sid="([^"]+)"/g)) {
+    const id = m[1]!
+    const to = `${id}-${suffix}`
+    html = html
+      .split(`id="${id}"`).join(`id="${to}"`)
+      .split(`url(#${id})`).join(`url(#${to})`)
+      .split(`href="#${id}"`).join(`href="#${to}"`)
+  }
+  return html
+}
+
+/** A CSS gesture in flight, kept so the motion engine can see it. */
+interface CssGesture {
+  target: MotionTarget
+  action: TimedAction
+  start: number
+}
+
+/** `'lyr-head'` → `'head'`, `'rig-body'` → `'body'`. */
+function gestureTarget(cls: string): MotionTarget | null {
+  if (cls === 'rig-body') return 'body'
+  if (cls === 'rig-root') return 'root'
+  return cls.startsWith('lyr-') ? (cls.slice(4) as LayerName) : null
 }
 
 /** Where a composed transform can be written. */
@@ -283,6 +332,20 @@ export class ActorRig {
   private reduced = false
   /** a pinned gait phase, or null to let the cycle run; see {@link pinGaitPhase} */
   private pinnedPhase: number | null = null
+  private motionOverrides: MotionOverrides | undefined
+  private engine: MotionEngine
+  /** CSS gestures in flight — invisible to JS otherwise; see {@link basePose} */
+  private cssGestures: CssGesture[] = []
+  /** the CSS loco fallback on `.rig-root`, and when it started */
+  private rootLoco: { loco: 'walk' | 'fly'; dur: number; start: number } | null = null
+  private rootAnim = ''
+  /** gestures currently held by {@link scrubGesture} */
+  private scrubbing = new Set<Gesture>()
+  /** how far the face is slid across its parent by depth, art units */
+  private faceX = 0
+  private grads: { el: Element; base: number; orig: string | null }[] = []
+  private lastShade = 0
+  private readonly uid = `r${++rigSeq}`
 
   constructor(spec: CharacterSpec, opts: RigOptions = {}) {
     this.spec = spec
@@ -290,6 +353,24 @@ export class ActorRig {
     this.frame = defaultFrame(spec.slug)
     this.micro = new IdleMicroMotion(opts.micro)
     this.interp = new FrameInterpolator(this.frame, opts.interpolation)
+    this.engine = new MotionEngine(resolveMotion(spec.motion, opts.motion))
+  }
+
+  /** The motion-engine settings in effect, after every override level. */
+  get motion(): MotionSettings {
+    return this.engine.settings
+  }
+
+  /**
+   * Retune the motion engine live, layered over the character's and the
+   * options' settings. `undefined` drops the live level. Spring state carries
+   * over, so a change of stiffness mid-wobble does not jump.
+   */
+  setMotion(overrides?: MotionOverrides): void {
+    this.motionOverrides = overrides
+    this.engine.settings = resolveMotion(this.spec.motion, this.opts.motion, overrides)
+    this.markSpringLayers()
+    this.settleMotionIfStill()
   }
 
   /** The frame as last requested, before easing. */
@@ -307,6 +388,10 @@ export class ActorRig {
     this.interp.finish()
     this.frame = this.interp.current
     this.syncFrame()
+    // "Arrive now" includes the springs, or a finish() mid-wobble would still
+    // be wobbling.
+    this.tickMotion(0, true)
+    this.flushTransforms()
   }
 
   /** Mount into a host element and start the idle + blink loops. */
@@ -351,6 +436,7 @@ export class ActorRig {
       // outright. Held on the instance so `updateGaze` — which also runs from
       // `syncFrame`, off this loop — sees the same value.
       this.saccade = m.gaze
+      this.tickMotion(dtMs / 1000)
       this.updateGaze()
       this.flushTransforms()
       this.raf = requestAnimationFrame(step)
@@ -389,7 +475,127 @@ export class ActorRig {
   /** Swap to a different character (keeps the current frame's behaviour). */
   setCharacter(spec: CharacterSpec): void {
     this.spec = spec
+    this.engine.settings = resolveMotion(spec.motion, this.opts.motion, this.motionOverrides)
     this.apply({ character: spec.slug })
+  }
+
+  /**
+   * Run the motion engine and stage its output as each target's `motion`
+   * contribution. Does not flush; the caller does.
+   *
+   * `snap` — or any state where motion must hold still or cannot be seen:
+   * reduced motion, no loop, a pinned gait, a held scrub — lands every spring
+   * on its target, so a frozen frame shows the at-rest pose and never a wobble
+   * caught mid-swing.
+   */
+  private tickMotion(dt: number, snap = false): void {
+    if (!this.svg) return
+    const still = snap || this.reduced || this.raf === null ||
+      this.pinnedPhase !== null || this.scrubbing.size > 0
+    const now = this.lastTick
+    this.cssGestures = this.cssGestures.filter((g) => now - g.start <= g.action.dur * 1000)
+    const out = this.engine.tick(dt, {
+      frame: this.frame,
+      gaze: this.intentGaze(),
+      has: (l) => !!this.layers[l],
+      pose: (t) => this.basePose(t),
+    }, still)
+    for (const bucket of this.contrib.values()) bucket.delete('motion')
+    for (const t of Object.keys(out.poses) as MotionTarget[]) {
+      this.setContribution(t, 'motion', out.poses[t]!)
+    }
+    if (out.faceX !== this.faceX) {
+      this.faceX = out.faceX
+      this.updateEyes()
+      this.updateBrow()
+      this.updateFace()
+    }
+    this.updateShade(out.shade)
+    if (out.blink && this.opts.blink && !this.reduced) this.blink()
+  }
+
+  /** {@link tickMotion} at rest, when nothing else will tick it. */
+  private settleMotionIfStill(): void {
+    if (this.reduced || this.raf === null) {
+      this.tickMotion(0, true)
+      this.flushTransforms()
+    }
+  }
+
+  /**
+   * A target's pose from every source except the motion engine — what the
+   * springs chase. CSS gestures and the CSS gait fallback do not pass through
+   * the contribution table, so they are sampled from the same data that built
+   * their keyframes; without that a soft ear would sit rigid through a jump.
+   */
+  private basePose(t: MotionTarget): Pose {
+    const key = t === 'torso' && !this.layers.torso ? 'body' : t
+    const parts: Pose[] = []
+    const bucket = this.contrib.get(key)
+    if (bucket) for (const [src, p] of bucket) if (src !== 'motion') parts.push(p)
+    const now = this.lastTick
+    for (const g of this.cssGestures) {
+      if (g.target !== t) continue
+      const u = (now - g.start) / (g.action.dur * 1000)
+      if (u >= 0 && u <= 1) parts.push(sampleAction(g.action, u))
+    }
+    if (t === 'root' && this.rootLoco) {
+      const r = this.rootLoco
+      parts.push(samplePhase(LOCO_FALLBACK_POSES[r.loco], wrapPhase((now - r.start) / 1000 / r.dur)))
+    }
+    return composePoses(parts)
+  }
+
+  /** Where the eyes are told to look: frame gaze plus emotion bias, no saccade. */
+  private intentGaze(): { x: number; y: number } {
+    const bias = resolveEmotion(this.frame.emotion, this.opts.emotions).gaze
+    const k = this.frame.intensity
+    const clamp = (v: number) => (v < -1 ? -1 : v > 1 ? 1 : v)
+    return {
+      x: clamp(this.frame.gaze.x + (bias?.x ?? 0) * k),
+      y: clamp(this.frame.gaze.y + (bias?.y ?? 0) * k),
+    }
+  }
+
+  /** Tag the layers the secondary springs own, so their CSS transition is off. */
+  private markSpringLayers(): void {
+    const live = !this.reduced && typeof requestAnimationFrame === 'function'
+    const soft = new Set(live ? this.engine.softLayers((l) => !!this.layers[l]) : [])
+    for (const [n, el] of Object.entries(this.layers) as [LayerName, SVGElement][]) {
+      el.classList.toggle('ca-spring', soft.has(n))
+    }
+  }
+
+  /** The mouth rides the face slide; see {@link tickMotion}. */
+  private updateFace(): void {
+    if (this.mouthG) this.mouthG.style.transform = this.faceX ? `translate(${this.faceX.toFixed(3)}px,0px)` : ''
+    for (const lid of this.lids) {
+      const cx = Number(lid.getAttribute('data-cx')) + this.faceX
+      const cy = lid.getAttribute('cy')
+      lid.setAttribute('cx', cx.toFixed(3))
+      lid.style.transformOrigin = `${cx.toFixed(3)}px ${cy}px`
+    }
+  }
+
+  /**
+   * Slide each radial gradient's highlight against the turn: as the body yaws
+   * toward the light it catches it on the far side. The authored `cx` is the
+   * yaw-0 value and is restored verbatim at 0.
+   */
+  private updateShade(yaw: number): void {
+    const d = this.engine.settings.depth
+    const amt = d ? d.shade : 0
+    const v = Math.round(yaw * amt * 100) / 100
+    if (v === this.lastShade) return
+    this.lastShade = v
+    for (const g of this.grads) {
+      if (v === 0) {
+        if (g.orig === null) g.el.removeAttribute('cx')
+        else g.el.setAttribute('cx', g.orig)
+      } else {
+        g.el.setAttribute('cx', `${(g.base - v).toFixed(2)}%`)
+      }
+    }
   }
 
   /**
@@ -406,7 +612,8 @@ export class ActorRig {
   /** Full render — only when the drawn art changes. Re-caches rig hooks. */
   private render(): void {
     if (!this.host) return
-    this.host.innerHTML = renderActorSVG(this.spec, this.frame, this.opts.size, this.opts.emotions)
+    this.host.innerHTML = namespaceIds(
+      renderActorSVG(this.spec, this.frame, this.opts.size, this.opts.emotions), this.uid)
     this.svg = this.host.querySelector('svg')
     if (!this.svg) return
     this.svg.classList.add('ca-svg')
@@ -420,11 +627,24 @@ export class ActorRig {
     this.mood = this.svg.querySelector('.rig-mood')
     this.layers = {}
     for (const n of ['shadow', 'accBack', 'tail', 'farArm', 'farLeg', 'torso',
-      'nearLeg', 'nearArm', 'earL', 'earR', 'head', 'accFront'] as LayerName[]) {
+      'nearLeg', 'nearArm', 'earL', 'earR', 'head', 'torsoFront', 'accFront'] as LayerName[]) {
       const el = this.svg.querySelector<SVGElement>(`.lyr-${n}`)
       if (el) this.layers[n] = el
     }
+    // Shading: only percentage (or default 50%) centres can be slid; a
+    // userSpaceOnUse gradient in absolute units is left exactly as authored.
+    this.grads = []
+    for (const el of Array.from(this.svg.querySelectorAll('defs radialGradient'))) {
+      const orig = el.getAttribute('cx')
+      const m = orig === null ? ['', '50'] : /^(-?[\d.]+)%$/.exec(orig)
+      if (m) this.grads.push({ el, base: Number(m[1]), orig })
+    }
+    this.lastShade = 0
+    this.faceX = 0
+    this.rootAnim = ''
+    this.rootLoco = null
     this.injectLids()
+    this.markSpringLayers()
     this.lastArtKey = this.artKey(this.frame)
   }
 
@@ -460,6 +680,7 @@ export class ActorRig {
       const el = document.createElementNS(ns, 'ellipse')
       el.setAttribute('class', 'blinkLid')
       el.setAttribute('cx', String(cx))
+      el.setAttribute('data-cx', String(cx))
       el.setAttribute('cy', String(y))
       el.setAttribute('rx', String(r * 1.3))
       el.setAttribute('ry', String(r * 1.5))
@@ -497,7 +718,10 @@ export class ActorRig {
       const cx = Number(g.getAttribute('data-cx'))
       const cy = Number(g.getAttribute('data-cy'))
       if (!Number.isFinite(cx) || !Number.isFinite(cy)) continue
-      g.setAttribute('transform', eyeWidenTransform(cx, cy, s))
+      // The face slide goes outside the widen, so the eye scales about its own
+      // centre wherever it has slid to. Omitted at 0 to keep the plain form.
+      const slide = this.faceX ? `translate(${this.faceX.toFixed(3)} 0) ` : ''
+      g.setAttribute('transform', slide + eyeWidenTransform(cx, cy, s))
     }
     for (const lid of this.lidsLo) {
       const r = Number(lid.getAttribute('data-lr'))
@@ -537,6 +761,7 @@ export class ActorRig {
     this.updateEyes()
     this.updatePosture()
     this.updateMotion()
+    this.settleMotionIfStill()
     this.opts.onFrame?.(this.frame)
     // Armed by apply(), so arrival fires exactly once per transition — and an
     // apply() that changes nothing never arms it at all.
@@ -581,7 +806,12 @@ export class ActorRig {
   }
 
   private updateBrow(): void {
-    if (this.browsG) this.browsG.style.transform = `translateY(${-this.frame.browRaise * 5}px)`
+    if (!this.browsG) return
+    const y = -this.frame.browRaise * 5
+    // translateY stays its own function whatever the slide, so the vertical
+    // channel keeps one spelling for anything that reads it back.
+    const slide = this.faceX ? `translateX(${this.faceX.toFixed(3)}px) ` : ''
+    this.browsG.style.transform = `${slide}translateY(${y}px)`
   }
 
   /**
@@ -623,9 +853,18 @@ export class ActorRig {
       // The CSS body animation is the *fallback*. A phase-driven character gets
       // its bob from the gait table instead; leaving this on would double it,
       // and a running animation would outrank the driver's inline transform.
-      this.root.style.animation = loco && this.drivenGait() === null
-        ? `${loco.name} ${(loco.dur / speed).toFixed(2)}s linear infinite`
-        : ''
+      const css = loco && this.drivenGait() === null
+      const animation = css ? `${loco.name} ${(loco.dur / speed).toFixed(2)}s linear infinite` : ''
+      // Compared against what was last *assigned*, not read back: the style
+      // object may normalise the shorthand and would restart the clock.
+      if (animation !== this.rootAnim) {
+        this.rootAnim = animation
+        const l = this.frame.locomotion
+        this.rootLoco = css && (l === 'walk' || l === 'fly')
+          ? { loco: l, dur: loco.dur / speed, start: this.lastTick }
+          : null
+      }
+      this.root.style.animation = animation
     }
     // The classes stay on for every character: they are the state marker
     // consumers style against, and the hook the unlayered wing rules need.
@@ -712,6 +951,7 @@ export class ActorRig {
         if (t !== 'root' && t !== 'torso' && !this.layers[t]) continue
         this.setContribution(t, 'loco', this.loco.pose(t))
       }
+      this.tickMotion(0, true)
       this.flushTransforms()
       return 'phase'
     }
@@ -790,6 +1030,11 @@ export class ActorRig {
       el.style.animation = animation
       started.push({ el, animation })
       dur = Math.max(dur, part.action.dur)
+      const target = gestureTarget(part.layer)
+      if (target) {
+        this.cssGestures = this.cssGestures.filter((c) => c.target !== target)
+        this.cssGestures.push({ target, action: part.action, start: this.lastTick })
+      }
     }
     if (!started.length) return
 
@@ -859,6 +1104,8 @@ export class ActorRig {
     if (!svg) return null
     const plan = this.planFor(g)
     if (plan === null || plan.mode === 'blocked') return plan
+    if (t === null) this.scrubbing.delete(g)
+    else this.scrubbing.add(g)
 
     const suffix = plan.mode === 'fallback' ? '_fb' : ''
     for (const part of plan.parts) {
@@ -885,6 +1132,9 @@ export class ActorRig {
       el.style.animationDelay = `${-clamped * part.action.dur}s`
       el.style.animationPlayState = 'paused'
     }
+    // A held frame shows the springs at rest, not frozen mid-swing. Staged
+    // only: a flush here would overwrite the sampled pose written above.
+    this.tickMotion(0, true)
     return plan
   }
 
@@ -956,6 +1206,9 @@ export class ActorRig {
     if (this.raf !== null) cancelAnimationFrame(this.raf)
     this.raf = null
     this.contrib.clear()
+    this.cssGestures = []
+    this.scrubbing.clear()
+    this.grads = []
     this.lastGesture = null
     if (this.host) this.host.innerHTML = ''
     this.host = this.svg = this.mouthG = this.browsG = null

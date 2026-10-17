@@ -1,5 +1,38 @@
 # Changelog
 
+## 1.5.0
+
+**A motion engine every character shares, tuned by settings.** The new
+`MotionEngine` (`src/motion.ts`) adds four drivers on top of the poses:
+
+- spring-driven ears and tails that lag and settle (`secondary`)
+- a head that follows the gaze and blinks on big looks (`attention`)
+- lean, stop-rock, emotion pop and landing squash (`body`)
+- a 2.5D three-quarter turn through the new `ActorFrame.yaw`, with per-layer
+  parallax, a face slide and moving gradient shading (`depth`)
+
+The engine has no per-character code. `DEFAULT_MOTION` is overridden by
+`CharacterSpec.motion` and then by `RigOptions.motion`. Any part can be
+`false`. `rig.setMotion()` and `rig.motion` change and read the settings at
+runtime.
+
+When the character is at rest the engine adds nothing, so existing frames
+render as before. Reduced motion, `finish()`, `pinGaitPhase()` and
+`scrubGesture()` all land the springs at once.
+
+- چرخی's antennae have a measured lag cap of 10° (the 28° default clips the
+  roof), and its roll lean is 2.
+- `attention.rise` defaults to 0, because a head that lifts with the gaze was
+  measured to open the تندپا/خرسی neck seams and bury لاکی's mouth.
+- Gradient ids are now namespaced per rig, so two copies of a character on one
+  page no longer share `<defs>`.
+- The studio has a yaw slider.
+- New tests are in `test/motion.test.mjs`, and mutations M48–M56 prove each
+  guard can fail. `tools/baselines/geometry.json` is unchanged.
+- Mutations M15 and M26 had stopped matching after earlier refactors, so the
+  run marked them invalid. Their patterns are updated, and all 56 now apply
+  and are caught.
+
 ## 1.4.1
 
 **`pixel-wizards-charachters/react` types now resolve under

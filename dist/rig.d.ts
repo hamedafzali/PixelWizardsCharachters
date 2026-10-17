@@ -3,6 +3,7 @@ import { type MicroConfig } from './micro.js';
 import { type InterpolationProfile } from './interpolate.js';
 import { type GesturePlan } from './gestures.js';
 import { type OnInvalidFrame } from './validate.js';
+import { type MotionOverrides, type MotionSettings } from './motion.js';
 /**
  * CSS the rig needs.
  *
@@ -19,7 +20,7 @@ import { type OnInvalidFrame } from './validate.js';
  *
  * Injected once per document. Respects `prefers-reduced-motion`.
  */
-export declare const RIG_CSS = "\n.ca-svg{display:block}\n.ca-svg .rig-root{transform-origin:100px 190px;will-change:transform}\n.ca-svg .rig-body{transform-origin:100px 188px;will-change:transform}\n.ca-svg .rig-mood{transform-origin:100px 150px;will-change:transform}\n.ca-svg .iris{transition:transform .18s cubic-bezier(.3,.7,.3,1)}\n.ca-svg .browsG{transition:transform .16s ease}\n.ca-svg .blinkLid{transition:transform .09s ease;transform:scaleY(0)}\n.ca-svg .blinkLid.shut{transform:scaleY(1)}\n/* torso + head are rewritten every frame by the micro-motion loop, so a\n   transition on them would smear rather than ease. The remaining posture-only\n   layers still ease here. */\n.ca-svg .lyr-earL,.ca-svg .lyr-earR,.ca-svg .lyr-tail{transition:transform .35s cubic-bezier(.3,.7,.3,1)}\n/* The arm layers are NOT in that transition list: phase-driven locomotion\n   rewrites them every frame, and a 0.35s transition would smear the swing into\n   mush \u2014 the same reason torso and head are excluded above. */\n/* Only unlayered fliers animate wings in CSS \u2014 none currently in the roster\n   (\u0633\u06CC\u0645\u0631\u063A converted in v1.3.0), but the rules stay for whichever character is\n   next added unlayered. Converted characters (boomi, simorgh) are driven by\n   the phase table in locomotion.ts, get no limb rules here, and must never\n   carry .wingL/.wingR \u2014 nested under a driven layer, the CSS animation would\n   outrank the inline transform and win outright. The two conventions are kept\n   apart by canDrive(), and by a test in rig-cache. */\n.ca-svg.loco-fly .wingL{transform-origin:50px 110px;animation:caWingL .4s ease-in-out infinite}\n.ca-svg.loco-fly .wingR{transform-origin:150px 110px;animation:caWingR .4s ease-in-out infinite}\n@keyframes caBreathe{0%,100%{transform:scale(1)}50%{transform:scale(1.02)}}\n@keyframes caFloaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}\n@keyframes caWiggle{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}\n@keyframes caSway{0%,100%{transform:rotate(-2deg) translateY(0)}50%{transform:rotate(2deg) translateY(-2px)}}\n@keyframes caNod{0%,100%{transform:translateY(0)}40%{transform:translateY(-4px)}70%{transform:translateY(1px)}}\n@keyframes caDroop{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(3px) rotate(-1deg)}}\n@keyframes caPop{0%{transform:scale(1)}30%{transform:scale(1.12)}60%{transform:scale(.97)}100%{transform:scale(1)}}\n@keyframes caWalk{0%,100%{transform:translateY(0) rotate(-2deg)}25%{transform:translateY(-4px)}50%{transform:translateY(0) rotate(2deg)}75%{transform:translateY(-4px)}}\n@keyframes caFly{0%,100%{transform:translateY(-3px)}50%{transform:translateY(3px)}}\n@keyframes caWingL{0%,100%{transform:rotate(0)}50%{transform:rotate(-24deg)}}\n@keyframes caWingR{0%,100%{transform:rotate(0)}50%{transform:rotate(24deg)}}\n/* .ca-reduced is the manual twin of the media query below: render() sets it\n   whenever this.reduced is true, whether that came from the OS or from\n   RigOptions.reducedMotion. Same rule body as the media query on purpose \u2014\n   one policy, two triggers, so a forced override behaves exactly like the OS\n   setting for every CSS-driven animation and transition, not just the ones a\n   JS check happens to gate. */\n.ca-svg.ca-reduced,.ca-svg.ca-reduced *{animation:none!important;transition:none!important}\n@media (prefers-reduced-motion:reduce){.ca-svg,.ca-svg *{animation:none!important;transition:none!important}}\n";
+export declare const RIG_CSS = "\n.ca-svg{display:block}\n.ca-svg .rig-root{transform-origin:100px 190px;will-change:transform}\n.ca-svg .rig-body{transform-origin:100px 188px;will-change:transform}\n.ca-svg .rig-mood{transform-origin:100px 150px;will-change:transform}\n.ca-svg .iris{transition:transform .18s cubic-bezier(.3,.7,.3,1)}\n.ca-svg .browsG{transition:transform .16s ease}\n.ca-svg .blinkLid{transition:transform .09s ease;transform:scaleY(0)}\n.ca-svg .blinkLid.shut{transform:scaleY(1)}\n/* torso + head are rewritten every frame by the micro-motion loop, so a\n   transition on them would smear rather than ease. The remaining posture-only\n   layers still ease here. */\n/* .ca-spring marks a layer the motion engine's secondary springs own: it is\n   rewritten every tick, so it is excluded for the same reason. */\n.ca-svg .lyr-earL:not(.ca-spring),.ca-svg .lyr-earR:not(.ca-spring),.ca-svg .lyr-tail:not(.ca-spring){transition:transform .35s cubic-bezier(.3,.7,.3,1)}\n/* The arm layers are NOT in that transition list: phase-driven locomotion\n   rewrites them every frame, and a 0.35s transition would smear the swing into\n   mush \u2014 the same reason torso and head are excluded above. */\n/* Only unlayered fliers animate wings in CSS \u2014 none currently in the roster\n   (\u0633\u06CC\u0645\u0631\u063A converted in v1.3.0), but the rules stay for whichever character is\n   next added unlayered. Converted characters (boomi, simorgh) are driven by\n   the phase table in locomotion.ts, get no limb rules here, and must never\n   carry .wingL/.wingR \u2014 nested under a driven layer, the CSS animation would\n   outrank the inline transform and win outright. The two conventions are kept\n   apart by canDrive(), and by a test in rig-cache. */\n.ca-svg.loco-fly .wingL{transform-origin:50px 110px;animation:caWingL .4s ease-in-out infinite}\n.ca-svg.loco-fly .wingR{transform-origin:150px 110px;animation:caWingR .4s ease-in-out infinite}\n@keyframes caBreathe{0%,100%{transform:scale(1)}50%{transform:scale(1.02)}}\n@keyframes caFloaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}\n@keyframes caWiggle{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}\n@keyframes caSway{0%,100%{transform:rotate(-2deg) translateY(0)}50%{transform:rotate(2deg) translateY(-2px)}}\n@keyframes caNod{0%,100%{transform:translateY(0)}40%{transform:translateY(-4px)}70%{transform:translateY(1px)}}\n@keyframes caDroop{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(3px) rotate(-1deg)}}\n@keyframes caPop{0%{transform:scale(1)}30%{transform:scale(1.12)}60%{transform:scale(.97)}100%{transform:scale(1)}}\n@keyframes caWalk{0%,100%{transform:translateY(0) rotate(-2deg)}25%{transform:translateY(-4px)}50%{transform:translateY(0) rotate(2deg)}75%{transform:translateY(-4px)}}\n@keyframes caFly{0%,100%{transform:translateY(-3px)}50%{transform:translateY(3px)}}\n@keyframes caWingL{0%,100%{transform:rotate(0)}50%{transform:rotate(-24deg)}}\n@keyframes caWingR{0%,100%{transform:rotate(0)}50%{transform:rotate(24deg)}}\n/* .ca-reduced is the manual twin of the media query below: render() sets it\n   whenever this.reduced is true, whether that came from the OS or from\n   RigOptions.reducedMotion. Same rule body as the media query on purpose \u2014\n   one policy, two triggers, so a forced override behaves exactly like the OS\n   setting for every CSS-driven animation and transition, not just the ones a\n   JS check happens to gate. */\n.ca-svg.ca-reduced,.ca-svg.ca-reduced *{animation:none!important;transition:none!important}\n@media (prefers-reduced-motion:reduce){.ca-svg,.ca-svg *{animation:none!important;transition:none!important}}\n";
 /**
  * The art cache key. A full re-render happens only when this changes.
  *
@@ -96,6 +97,14 @@ export interface RigOptions {
      * README's accessibility section for what "reduced" means per feature.
      */
     reducedMotion?: boolean | 'auto';
+    /**
+     * Motion-engine overrides for this rig, layered over the character's own
+     * `CharacterSpec.motion` and `DEFAULT_MOTION`. `false` on any driver turns it
+     * off; `{ secondary: false, attention: false, body: false, depth: false }`
+     * restores the pre-engine rig exactly. Change it live with
+     * {@link ActorRig.setMotion}.
+     */
+    motion?: MotionOverrides;
 }
 /**
  * A live character puppet bound to a DOM element. Render once, then feed it
@@ -137,7 +146,29 @@ export declare class ActorRig {
     private reduced;
     /** a pinned gait phase, or null to let the cycle run; see {@link pinGaitPhase} */
     private pinnedPhase;
+    private motionOverrides;
+    private engine;
+    /** CSS gestures in flight — invisible to JS otherwise; see {@link basePose} */
+    private cssGestures;
+    /** the CSS loco fallback on `.rig-root`, and when it started */
+    private rootLoco;
+    private rootAnim;
+    /** gestures currently held by {@link scrubGesture} */
+    private scrubbing;
+    /** how far the face is slid across its parent by depth, art units */
+    private faceX;
+    private grads;
+    private lastShade;
+    private readonly uid;
     constructor(spec: CharacterSpec, opts?: RigOptions);
+    /** The motion-engine settings in effect, after every override level. */
+    get motion(): MotionSettings;
+    /**
+     * Retune the motion engine live, layered over the character's and the
+     * options' settings. `undefined` drops the live level. Spring state carries
+     * over, so a change of stiffness mid-wobble does not jump.
+     */
+    setMotion(overrides?: MotionOverrides): void;
     /** The frame as last requested, before easing. */
     get goal(): ActorFrame;
     /** True while any channel is still travelling toward the goal. */
@@ -162,6 +193,37 @@ export declare class ActorRig {
     private flushTransforms;
     /** Swap to a different character (keeps the current frame's behaviour). */
     setCharacter(spec: CharacterSpec): void;
+    /**
+     * Run the motion engine and stage its output as each target's `motion`
+     * contribution. Does not flush; the caller does.
+     *
+     * `snap` — or any state where motion must hold still or cannot be seen:
+     * reduced motion, no loop, a pinned gait, a held scrub — lands every spring
+     * on its target, so a frozen frame shows the at-rest pose and never a wobble
+     * caught mid-swing.
+     */
+    private tickMotion;
+    /** {@link tickMotion} at rest, when nothing else will tick it. */
+    private settleMotionIfStill;
+    /**
+     * A target's pose from every source except the motion engine — what the
+     * springs chase. CSS gestures and the CSS gait fallback do not pass through
+     * the contribution table, so they are sampled from the same data that built
+     * their keyframes; without that a soft ear would sit rigid through a jump.
+     */
+    private basePose;
+    /** Where the eyes are told to look: frame gaze plus emotion bias, no saccade. */
+    private intentGaze;
+    /** Tag the layers the secondary springs own, so their CSS transition is off. */
+    private markSpringLayers;
+    /** The mouth rides the face slide; see {@link tickMotion}. */
+    private updateFace;
+    /**
+     * Slide each radial gradient's highlight against the turn: as the body yaws
+     * toward the light it catches it on the far side. The authored `cx` is the
+     * yaw-0 value and is restored verbatim at 0.
+     */
+    private updateShade;
     /**
      * Retune the emotion presets live. Overrides don't change the art key, so we
      * force a full re-render (the squint/widen/brow are baked into the art), then

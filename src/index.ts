@@ -60,6 +60,13 @@ export { CHARACTERS, CHARACTER_SLUGS } from './characters/index.js'
 export { renderActorSVG, drawMouth } from './render.js'
 export { characterRoster, createCharacterPicker } from './picker.js'
 export type { RosterEntry, RosterOptions, PickerOptions, CharacterPickerHandle } from './picker.js'
+export {
+  MotionEngine, Spring, DEFAULT_MOTION, resolveMotion, parentOf,
+} from './motion.js'
+export type {
+  MotionSettings, MotionOverrides, SpringSpec, SecondarySettings, SecondaryLayerSettings,
+  AttentionSettings, BodySettings, DepthSettings, MotionTarget, MotionInput, MotionOutput,
+} from './motion.js'
 export { ActorRig, RIG_CSS, artKeyOf } from './rig.js'
 export type { RigOptions } from './rig.js'
 export {

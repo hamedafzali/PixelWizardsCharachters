@@ -26,6 +26,7 @@ const VALIDATE = ['test/validate.test.mjs']
 const DISTINCT = ['test/viseme-distinct.test.mjs']
 const REDUCTION = ['test/viseme-reduction.test.mjs']
 const REDUCED = ['test/rig-integration.test.mjs', 'test/scrub.test.mjs']
+const MOTION = ['test/motion.test.mjs']
 
 export default [
   // ── blink lids are parented where the eyes are ─────────────────────────────
@@ -169,7 +170,7 @@ export default [
     note: 'a scrubbed gesture always seeks to frame 0 — the slider moves, the rig does not',
     file: 'src/rig.ts',
     tests: SCRUB,
-    mutate: replace('el.style.animationDelay = `${-Math.max(0, Math.min(1, t)) * part.action.dur}s`',
+    mutate: replace('el.style.animationDelay = `${-clamped * part.action.dur}s`',
       "el.style.animationDelay = '0s'"),
     expect: "el.style.animationDelay = '0s'",
   },
@@ -285,8 +286,8 @@ export default [
     note: 'a value is added to LOCOMOTIONS that no gait implements — the silent no-op, reintroduced from the other end',
     file: 'src/types.ts',
     tests: VALIDATE,
-    mutate: replace("export const LOCOMOTIONS = ['idle', 'walk', 'fly'] as const", "export const LOCOMOTIONS = ['idle', 'walk', 'fly', 'run'] as const"),
-    expect: "'fly', 'run'] as const",
+    mutate: replace("export const LOCOMOTIONS = ['idle', 'walk', 'fly', 'roll'] as const", "export const LOCOMOTIONS = ['idle', 'walk', 'fly', 'roll', 'run'] as const"),
+    expect: "'roll', 'run'] as const",
   },
   {
     // The original collision, restored exactly: `press` stops being consulted
@@ -497,5 +498,96 @@ export default [
       'export function charkhiAntennaClip(side, earDeg, steps = 200, tMin = 0) {',
     ),
     expect: 'export function charkhiAntennaClip(side, earDeg, steps = 200, tMin = 0) {',
+  },
+  // ── the motion engine ──────────────────────────────────────────────────────
+  {
+    id: 'M48',
+    note: 'attention lifts the head with the gaze again (rise 1.5, the first guess) — measured to open the tondpa/khersi neck seams and sink laki\'s mouth into the shell',
+    file: 'src/motion.ts',
+    tests: MOTION,
+    mutate: replace('    rise: 0,', '    rise: 1.5,'),
+    expect: '    rise: 1.5,',
+  },
+  {
+    id: 'M49',
+    note: "charkhi's antennae get the default 28° lag limit back — measured to dip the stalk within 0.65 of the roof",
+    file: 'src/characters/index.ts',
+    tests: MOTION,
+    mutate: replace(
+      'earL: { spring: { freq: 5, damping: 0.3 }, limit: 10 },',
+      'earL: { spring: { freq: 5, damping: 0.3 }, limit: 28 },',
+    ),
+    expect: 'limit: 28 },',
+  },
+  {
+    id: 'M50',
+    note: 'a spring never lands exactly on its target, so a settled rig keeps writing translate(0.000 0) instead of the authored transform',
+    file: 'src/motion.ts',
+    tests: MOTION,
+    mutate: replace(
+      'if (Math.abs(this.value - target) < REST && Math.abs(this.velocity) < REST * 10) this.snap(target)',
+      'void REST',
+    ),
+    expect: 'void REST',
+  },
+  {
+    id: 'M51',
+    note: 'ears are always parented to the torso, so on a headed character their depth offset is doubled by the head\'s',
+    file: 'src/motion.ts',
+    tests: MOTION,
+    mutate: replace(
+      "case 'earL': case 'earR': return has('head') ? 'head' : 'torso'",
+      "case 'earL': case 'earR': return 'torso'",
+    ),
+    expect: "case 'earL': case 'earR': return 'torso'",
+  },
+  {
+    id: 'M52',
+    note: 'gradient ids are not namespaced, so two rigs of one character share ids and one rig\'s shading moves the other\'s',
+    file: 'src/rig.ts',
+    tests: MOTION,
+    mutate: replace(
+      'this.host.innerHTML = namespaceIds(\n      renderActorSVG(this.spec, this.frame, this.opts.size, this.opts.emotions), this.uid)',
+      'this.host.innerHTML = String(\n      renderActorSVG(this.spec, this.frame, this.opts.size, this.opts.emotions))',
+    ),
+    expect: 'this.host.innerHTML = String(',
+  },
+  {
+    id: 'M53',
+    note: 'facing front again writes the cached numeric centre instead of restoring the authored cx attribute verbatim',
+    file: 'src/rig.ts',
+    tests: MOTION,
+    mutate: replace(
+      "      if (v === 0) {\n        if (g.orig === null) g.el.removeAttribute('cx')\n        else g.el.setAttribute('cx', g.orig)\n      } else {",
+      '      {',
+    ),
+    expect: "      {\n        g.el.setAttribute('cx', `${(g.base - v).toFixed(2)}%`)",
+  },
+  {
+    id: 'M54',
+    note: 'a pinned gait phase no longer freezes the springs, so a "frozen" pose keeps wobbling',
+    file: 'src/rig.ts',
+    tests: MOTION,
+    mutate: replace(
+      'this.pinnedPhase !== null || this.scrubbing.size > 0',
+      'this.scrubbing.size > 0',
+    ),
+    expect: 'this.raf === null ||\n      this.scrubbing.size > 0',
+  },
+  {
+    id: 'M55',
+    note: 'the emotion pop stretches without narrowing — the squash stops preserving area',
+    file: 'src/motion.ts',
+    tests: MOTION,
+    mutate: replace("add('body', { rot, sy: 1 + s, sx: 1 / (1 + s) })", "add('body', { rot, sy: 1 + s, sx: 1 })"),
+    expect: 'sx: 1 })',
+  },
+  {
+    id: 'M56',
+    note: 'a gaze-evoked blink ignores blink:false',
+    file: 'src/rig.ts',
+    tests: MOTION,
+    mutate: replace('if (out.blink && this.opts.blink && !this.reduced) this.blink()', 'if (out.blink && !this.reduced) this.blink()'),
+    expect: 'if (out.blink && !this.reduced) this.blink()',
   },
 ]

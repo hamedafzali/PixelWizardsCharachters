@@ -118,6 +118,9 @@
       <input type="range" id="gazeY" min="-1" max="1" step="0.05" value="0">
     </div>
 
+    <label>چرخش (yaw) · <span class="val" id="yawV">0.00</span></label>
+    <input type="range" id="yaw" min="-1" max="1" step="0.05" value="0">
+
     <label>حرکت (locomotion)</label>
     <div class="seg" id="loco">
       <button data-v="idle" class="on">ایستاده</button>
@@ -226,6 +229,7 @@ function bindRange(id, key, dp=2) {
 }
 bindRange('intensity','intensity'); bindRange('mouthOpen','mouthOpen')
 bindRange('browRaise','browRaise'); bindRange('speed','speed',1)
+bindRange('yaw','yaw')
 document.getElementById('gazeX').oninput = e => push({ gaze:{ ...frame.gaze, x:+e.target.value } })
 document.getElementById('gazeY').oninput = e => push({ gaze:{ ...frame.gaze, y:+e.target.value } })
 emoSel.onchange = e => push({ emotion: e.target.value })

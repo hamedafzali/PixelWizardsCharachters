@@ -922,6 +922,21 @@ export const charkhi: CharacterSpec = {
     thinking: { ears: 6 },
     surprised: { ears: -16 },
   },
+  // Motion-engine tuning. Wire with a ball on the end whips fast and stiff,
+  // not slow and floppy like fur, so the antenna springs are higher and
+  // looser. The lag `limit` is measured, not picked: past ~13.9° on top of
+  // the sad posture the stalk dips within 1 unit of the roofline (the same
+  // floor the posture guard uses), so 10° keeps 1.09 of margin — see
+  // `test/motion.test.mjs`. A car body barely pitches forward on the road.
+  motion: {
+    secondary: {
+      layers: {
+        earL: { spring: { freq: 5, damping: 0.3 }, limit: 10 },
+        earR: { spring: { freq: 5, damping: 0.3 }, limit: 10 },
+      },
+    },
+    body: { lean: { roll: 2 } },
+  },
   render({ emotion, intensity }) {
     const e = eyes(76, 124, 104, 13, 'chIris', emotion.squint * intensity, emotion.wide * intensity)
     const b = brows(76, 124, 84, emotion.brow, '#2a2a2a')

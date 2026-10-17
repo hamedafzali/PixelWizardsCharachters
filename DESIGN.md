@@ -273,3 +273,57 @@ sides — too far down buries the mouth, too far up detaches the head — and th
 shared مغرور/خجالتی presets walked straight out of that window when they landed.
 تندپا's مغرور is the same story against the head/body seam. Both have per-
 character overrides, and both were found by the seam tests rather than by eye.
+
+## The motion engine: settings, not characters
+
+`src/motion.ts` is the one place that moves things on its own over time. It is
+pure (no DOM): each tick it gets the frame, the gaze the character *intends*
+(before the saccade), which layers exist, and the pose every other source has
+already set on each target. It returns one extra `'motion'` contribution per
+target, plus a face offset, a shading shift and a blink request. The rig
+composes that contribution like any other.
+
+**No character names.** Each driver reads only its settings, and a character
+changes them through `CharacterSpec.motion`. A test checks that
+`DEFAULT_MOTION` contains no character slug.
+
+**Springs are world-space.** A soft layer's spring chases the place where its
+pose would be if its ancestors' rotation had carried it along fully
+(`anchor + own`). The output is how far it lags behind that place
+(`w − anchor − own`), clamped to `limit`. So a head turn of 10° first shows as
+an ear *counter*-rotation that then decays away. The ancestors include the
+engine's own head turn, so attention moves the ears too. Rotation is the main
+signal (`inertia`); vertical and horizontal motion of the ancestors adds a
+smaller swing (`lift`, `drag`), with opposite signs on the two sides so a pair
+of ears splays apart instead of swinging together.
+
+**Depth offsets are relative to the parent.** Each layer is offset by
+`yaw · (depth − parentDepth) · travel`. Ears inside a head at 0.2 therefore
+move back by 0.2 and stay on the body plane, instead of picking up the head's
+offset a second time.
+
+**Measured, not guessed:**
+
+- `attention.rise` (lifting the head when the eyes look up) started at 1.5. It
+  opened تندپا's neck seam to 113 (the floor is 120) and خرسی's to 188 (the
+  floor is 220), and it pushed لاکی's mouth 0.14 into the shell. At 0 the
+  numbers are 156.6, 241 and 1.61, so the head shows an upward look by pitch
+  alone.
+- The default 28° ear lag clips چرخی's antennae within 0.65 of the roof; past
+  about 13.9° the stalk dips under 1 unit. Its spec caps the lag at 10° (margin
+  1.09) and stiffens the spring.
+- Ears and pigtails pass with the defaults: خرسی's penetration is 11.47 and
+  آوا's is 16.09, against a floor of 8.
+
+`test/motion.test.mjs` re-runs every one of these probes across the extra
+range the engine adds: every emotion × intensity × gaze × yaw, with the lag
+at ± its limit. Mutations M48–M56 prove each guard can fail.
+
+**Settled means exact.** An exponential decay never actually reaches zero, so
+a spring snaps onto its target once it is within 1e-4. Without that, a rig at
+rest would keep writing `translate(0.000 0)` instead of the authored
+transform, and a yaw back to 0 would not restore the gradients verbatim.
+
+**Gradient ids are namespaced per rig.** The shading moves a radial gradient's
+`cx`. Before 1.5, two rigs of the same character on one page shared gradient
+ids, so turning one would have shaded the other.

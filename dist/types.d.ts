@@ -7,6 +7,7 @@
  * is hidden in call sites, so the whole performance is data.
  */
 import type { GaitName } from './locomotion.js';
+import type { MotionOverrides } from './motion.js';
 export type EmotionName = 'neutral' | 'happy' | 'excited' | 'thinking' | 'encouraging' | 'sad' | 'surprised' | 'sleepy' | 'love' | 'confused' | 'proud' | 'shy';
 /**
  * Persian viseme groups (phoneme families that share a mouth shape).
@@ -58,6 +59,13 @@ export interface ActorFrame {
     facing: Facing;
     /** one-shot action; null when none is playing */
     gesture: Gesture | null;
+    /**
+     * Body turn toward (+) or away from (−) the facing direction, -1..1 — the
+     * 2.5D channel. Layers slide by their depth, the face slides across the head
+     * and the shading moves against it; see `DepthSettings`. Optional so frames
+     * written before it existed stay valid; absent means 0.
+     */
+    yaw?: number;
 }
 /** A sensible resting frame for `character`: neutral, idle, facing right, saying nothing. */
 export declare function defaultFrame(character: string): ActorFrame;
@@ -267,6 +275,14 @@ export interface CharacterSpec {
      * character's shell everybody's problem.
      */
     gestureFallback?: readonly Gesture[];
+    /**
+     * This character's motion-engine tuning — which layers are soft, how stiff,
+     * how far the head turns, how deep each layer sits. Sparse: anything omitted
+     * comes from `DEFAULT_MOTION`, and `false` switches a driver off. See
+     * `src/motion.ts`. The engine itself has no per-character code; this is the
+     * only place a character differs.
+     */
+    motion?: MotionOverrides;
     /**
      * Produce the SVG fragments for a given emotion pose. `art` must expose the
      * rig hooks: `.iris[data-r]` groups, one `.browsG` group, and `#mouthG`.

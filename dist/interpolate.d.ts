@@ -22,7 +22,7 @@ export type EasingName = 'linear' | 'easeIn' | 'easeOut' | 'easeInOut' | 'easeOu
 /** The named curves a `ChannelSpec.ease` may reference, keyed by `EasingName`. */
 export declare const EASINGS: Record<EasingName, Easing>;
 /** Continuous channels — blended. */
-export type NumericChannel = 'intensity' | 'mouthOpen' | 'gazeX' | 'gazeY' | 'browRaise' | 'speed';
+export type NumericChannel = 'intensity' | 'mouthOpen' | 'gazeX' | 'gazeY' | 'browRaise' | 'speed' | 'yaw';
 /** Discrete channels — held, then jumped. Never blended. */
 export type DiscreteChannel = 'emotion' | 'viseme' | 'facing' | 'locomotion' | 'character' | 'gesture';
 export type ChannelName = NumericChannel | DiscreteChannel;

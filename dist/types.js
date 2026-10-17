@@ -33,6 +33,7 @@ export function defaultFrame(character) {
         speed: 1,
         facing: 'right',
         gesture: null,
+        yaw: 0,
     };
 }
 /**

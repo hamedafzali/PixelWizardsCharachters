@@ -42,9 +42,9 @@ export function rotateAbout([x, y], [px, py], deg, dx = 0, dy = 0) {
   ]
 }
 
-/** The same, for a circle carried rigidly by the joint. */
-export function spin({ cx, cy, r }, pivot, deg, dy = 0) {
-  const [x, y] = rotateAbout([cx, cy], pivot, deg, 0, dy)
+/** The same, for a circle carried rigidly by the joint. `dx` is the head turn's slide. */
+export function spin({ cx, cy, r }, pivot, deg, dy = 0, dx = 0) {
+  const [x, y] = rotateAbout([cx, cy], pivot, deg, dx, dy)
   return { cx: x, cy: y, r }
 }
 
@@ -211,8 +211,8 @@ export const TP = {
 }
 
 /** Head ∩ body area for تندپا, in square art units. */
-export function tondpaSeamOverlap(rot, dy, pivot = headPivot('tondpa')) {
-  const parts = [TP.disc, ...TP.cheeks].map((c) => spin(c, pivot, rot, dy))
+export function tondpaSeamOverlap(rot, dy, pivot = headPivot('tondpa'), dx = 0) {
+  const parts = [TP.disc, ...TP.cheeks].map((c) => spin(c, pivot, rot, dy, dx))
   const body = inEllipse(TP.body)
   return areaWhere((x, y) => body(x, y) && parts.some((p) => inDisc(p)(x, y)), { y1: 190 })
 }
@@ -232,8 +232,8 @@ export const KH = {
 }
 
 /** Head ∩ body area for خرسی. */
-export function khersiSeamOverlap(tilt, drop, pivot = headPivot('khersi')) {
-  const h = spin(KH.head, pivot, tilt, drop)
+export function khersiSeamOverlap(tilt, drop, pivot = headPivot('khersi'), dx = 0) {
+  const h = spin(KH.head, pivot, tilt, drop, dx)
   const body = inEllipse(KH.body)
   return areaWhere((x, y) => body(x, y) && inDisc(h)(x, y), { y1: 195, step: 0.5 })
 }
@@ -242,12 +242,12 @@ export function khersiSeamOverlap(tilt, drop, pivot = headPivot('khersi')) {
  * How deeply an ear still bites into the head disc, in art units. Positive is
  * attached; this is what the chord-midpoint pivot exists to keep positive.
  */
-export function khersiEarPenetration(side, earDeg, tilt, drop) {
+export function khersiEarPenetration(side, earDeg, tilt, drop, dx = 0) {
   const headP = headPivot('khersi')
   const earP = headPivot('khersi', side)
   const sign = side === 'earL' ? 1 : -1
-  const e = spin(spin(KH.ears[side], earP, sign * earDeg), headP, tilt, drop)
-  const h = spin(KH.head, headP, tilt, drop)
+  const e = spin(spin(KH.ears[side], earP, sign * earDeg), headP, tilt, drop, dx)
+  const h = spin(KH.head, headP, tilt, drop, dx)
   return h.r - (Math.hypot(e.cx - h.cx, e.cy - h.cy) - e.r)
 }
 
@@ -284,12 +284,12 @@ export const AV = {
 }
 
 /** How deeply a pigtail bunch still overlaps the head disc, in art units. */
-export function avaPigtailPenetration(side, earDeg, tilt, drop) {
+export function avaPigtailPenetration(side, earDeg, tilt, drop, dx = 0) {
   const headP = headPivot('ava')
   const earP = headPivot('ava', side)
   const sign = side === 'earL' ? 1 : -1
-  const e = spin(spin(AV.pigtails[side], earP, sign * earDeg), headP, tilt, drop)
-  const h = spin(AV.head, headP, tilt, drop)
+  const e = spin(spin(AV.pigtails[side], earP, sign * earDeg), headP, tilt, drop, dx)
+  const h = spin(AV.head, headP, tilt, drop, dx)
   return h.r - (Math.hypot(e.cx - h.cx, e.cy - h.cy) - e.r)
 }
 

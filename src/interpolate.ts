@@ -45,7 +45,7 @@ export const EASINGS: Record<EasingName, Easing> = {
 
 /** Continuous channels — blended. */
 export type NumericChannel =
-  | 'intensity' | 'mouthOpen' | 'gazeX' | 'gazeY' | 'browRaise' | 'speed'
+  | 'intensity' | 'mouthOpen' | 'gazeX' | 'gazeY' | 'browRaise' | 'speed' | 'yaw'
 
 /** Discrete channels — held, then jumped. Never blended. */
 export type DiscreteChannel =
@@ -83,6 +83,9 @@ export const DEFAULT_PROFILE: Required<Record<ChannelName, ChannelSpec>> = {
   intensity: { duration: 260, delay: 20, easing: 'easeInOut' },
   browRaise: { duration: 300, delay: 90, easing: 'easeOutBack' },
   speed: { duration: 400, delay: 0, easing: 'easeInOut' },
+  // A body turn is slower than a glance; the depth spring adds its own follow
+  // on top, so this only has to avoid a jump.
+  yaw: { duration: 320, delay: 30, easing: 'easeInOut' },
   facing: { duration: 0, delay: 0, easing: 'snap' },
   locomotion: { duration: 0, delay: 60, easing: 'snap' },
   gesture: { duration: 0, delay: 0, easing: 'snap' },
@@ -96,9 +99,10 @@ const CLAMP: Partial<Record<NumericChannel, [number, number]>> = {
   browRaise: [0, 1],
   gazeX: [-1, 1],
   gazeY: [-1, 1],
+  yaw: [-1, 1],
 }
 
-const NUMERIC: NumericChannel[] = ['intensity', 'mouthOpen', 'gazeX', 'gazeY', 'browRaise', 'speed']
+const NUMERIC: NumericChannel[] = ['intensity', 'mouthOpen', 'gazeX', 'gazeY', 'browRaise', 'speed', 'yaw']
 const DISCRETE: DiscreteChannel[] = ['emotion', 'viseme', 'facing', 'locomotion', 'character', 'gesture']
 
 const DEFAULT_EPSILON = 0.001
@@ -250,6 +254,7 @@ export class FrameInterpolator {
       speed: this.num.speed.value,
       facing: this.dis.facing.value as Facing,
       gesture: this.dis.gesture.value as Gesture | null,
+      yaw: this.num.yaw.value,
     }
   }
 
@@ -267,6 +272,7 @@ export class FrameInterpolator {
       speed: this.num.speed.to,
       facing: this.dis.facing.to as Facing,
       gesture: this.dis.gesture.to as Gesture | null,
+      yaw: this.num.yaw.to,
     }
   }
 
@@ -292,6 +298,7 @@ function readNumeric(f: ActorFrame, c: NumericChannel): number {
   switch (c) {
     case 'gazeX': return f.gaze.x
     case 'gazeY': return f.gaze.y
+    case 'yaw': return f.yaw ?? 0
     default: return f[c]
   }
 }

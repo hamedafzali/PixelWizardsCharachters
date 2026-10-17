@@ -88,6 +88,7 @@ interface ActorFrame {
   speed: number              // ~0.5..2 motion tempo multiplier
   facing: 'left' | 'right'
   gesture: Gesture | null    // one-shot action
+  yaw?: number               // -1..1 turn toward three-quarter view, 0 = front
 }
 ```
 
@@ -230,6 +231,7 @@ than as a state change.
 | `intensity` | 260ms | 20ms | easeInOut — the emotion arrives, then deepens |
 | `browRaise` | 300ms | 90ms | easeOutBack — trails and overshoots, so it reads as a reaction |
 | `speed` | 400ms | 0 | easeInOut |
+| `yaw` | 320ms | 30ms | easeInOut |
 | `locomotion` | 0 | 60ms | snap, after a beat |
 | `facing` / `gesture` / `character` | 0 | 0 | snap |
 
@@ -243,6 +245,37 @@ new ActorRig(spec, { interpolation: { gazeX: { duration: 200 } } })
 `rig.settling` is true while they differ. `rig.finish()` lands everything at
 once — as does `prefers-reduced-motion`, automatically.
 
+## Motion: springs, attention, weight, depth
+
+On top of the poses, every rig runs one shared **motion engine**
+(`MotionEngine`, in `src/motion.ts`). It has four drivers, and each one is
+configured by settings. None of them has code for a particular character.
+
+| driver | what it does |
+| --- | --- |
+| `secondary` | Ears and tail are springs that chase their pose, so they lag a head turn and overshoot a little when it stops. Per layer: `spring {freq, damping}`, `inertia`, `lift`, `drag`, `limit` (the largest lag allowed, in degrees). |
+| `attention` | The head turns toward the gaze, a little behind the eyes (`turn`, `pitch`, `tilt`, `torsoFollow`, `spring`). A big look also triggers a blink (`blink: {threshold, cooldown}`, or `false` to turn it off). |
+| `body` | The body leans while moving (`lean.walk/roll/fly`, scaled by `speed`) and rocks back when it stops. A change of emotion pops the body by that emotion's `energy`, and landing from flight squashes it (`pop`, `land`, `popSpring`). Area is kept: as the body stretches taller it gets narrower. |
+| `depth` | `ActorFrame.yaw` slides each layer by its `depth` (far layers one way, near layers the other) and moves the face and the gradient shading. Together these fake a three-quarter view. A sideways look also turns the head a little (`follow`). |
+
+Settings resolve in three layers. `DEFAULT_MOTION` comes first, then the
+character's `CharacterSpec.motion`, then `RigOptions.motion`, and later layers
+win. Any driver, layer or blink can be `false` to turn it off. An object given
+after a `false` starts again from the defaults.
+
+```ts
+// on a character spec: stiffer, shorter-swinging antennae
+motion: { secondary: { layers: { earL: { spring: { freq: 5, damping: 0.3 }, limit: 10 } } } }
+
+// per rig, at runtime
+rig.setMotion({ depth: false, attention: { turn: 5 } })
+rig.motion // the resolved settings
+```
+
+When the character is at rest (gaze 0, idle, yaw 0) the engine adds nothing.
+Wherever the rig has to hold still, the springs land at once with no wobble:
+reduced motion, `finish()`, `pinGaitPhase()` and `scrubGesture()`.
+
 ## Options
 
 ```ts
@@ -253,6 +286,7 @@ new ActorRig(spec, {
   reducedMotion: 'auto',                 // 'auto' | boolean — see Accessibility below
   emotions: { happy: { squint: 0.5 } },  // retune the presets per character
   interpolation: { gazeX: { duration: 200 } },
+  motion: { depth: false },              // tune or switch off the motion engine — see Motion below
   onFrame: (f) => (debugEl.textContent = f.emotion),
   onSettled: (f) => analytics.track('pose', f),
   onGestureBlocked: (g, reason) => console.log(g, reason),
@@ -297,6 +331,7 @@ has no effect, the same as the OS query always had none.
 | mood idle animation, ear/tail/iris/brow CSS transitions | suppressed by stylesheet |
 | `playGesture()` | the gesture channel resolves at once, the same as every other channel snapping — no animation plays |
 | `PetDriver` | the expression still changes — a character that ignores the child reads as broken, not calm — but no gesture is emitted and `intensity` snaps instead of ramping. Suppressed on the JS path (`PetConfig.reducedMotion`); the stylesheet rule cannot see a driver that never asked CSS for anything |
+| motion engine (springs, head follow, lean, yaw) | lands at its target at once; nothing wobbles or lags |
 | `scrubGesture()` / `pinGaitPhase()` | still work: rather than pausing a CSS animation stylesheet rules would otherwise hide, both sample the pose directly and write it to `transform`, so a scrubbed frame stays visible |
 
 Two independent things enforce this, on purpose: `RIG_CSS`'s own

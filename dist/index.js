@@ -22,6 +22,7 @@ export { eyes, brows, eyeWidenScale, eyeWidenTransform, eyeLidRy } from './draw.
 export { CHARACTERS, CHARACTER_SLUGS } from './characters/index.js';
 export { renderActorSVG, drawMouth } from './render.js';
 export { characterRoster, createCharacterPicker } from './picker.js';
+export { MotionEngine, Spring, DEFAULT_MOTION, resolveMotion, parentOf, } from './motion.js';
 export { ActorRig, RIG_CSS, artKeyOf } from './rig.js';
 export { LocomotionDriver, GAITS, LOCO_TARGETS, WALK_PHASES, FLY_PHASES, ROLL_PHASES, WING_FOLD_SX, samplePhase, wrapPhase, canDrive, drivesGait, } from './locomotion.js';
 //# sourceMappingURL=index.js.map
