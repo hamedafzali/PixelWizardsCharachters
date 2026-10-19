@@ -8,6 +8,7 @@
  */
 import type { GaitName } from './locomotion.js';
 import type { MotionOverrides } from './motion.js';
+import type { Body3DSpec } from './body3d.js';
 export type EmotionName = 'neutral' | 'happy' | 'excited' | 'thinking' | 'encouraging' | 'sad' | 'surprised' | 'sleepy' | 'love' | 'confused' | 'proud' | 'shy';
 /**
  * Persian viseme groups (phoneme families that share a mouth shape).
@@ -283,6 +284,13 @@ export interface CharacterSpec {
      * only place a character differs.
      */
     motion?: MotionOverrides;
+    /**
+     * This character's 3D body for the three.js renderer
+     * (`pixel-wizards-charachters/three`), as primitives per layer in the same
+     * art space as the SVG. Optional: a character without it is SVG-only. See
+     * `src/body3d.ts`.
+     */
+    body3d?: Body3DSpec;
     /**
      * Produce the SVG fragments for a given emotion pose. `art` must expose the
      * rig hooks: `.iris[data-r]` groups, one `.browsG` group, and `#mouthG`.

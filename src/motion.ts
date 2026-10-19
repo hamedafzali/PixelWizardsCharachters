@@ -355,6 +355,15 @@ export interface MotionOutput {
   shade: number
   /** a gaze-evoked blink is due */
   blink: boolean
+  /**
+   * Where the head is looking right now, each axis -1..1: the attention
+   * springs' own state, before `turn`/`pitch` turn it into a 2D pose. A
+   * renderer that can rotate a head for real (the three.js one) reads this
+   * instead of the slide. 0 when attention is off.
+   */
+  look: { x: number; y: number }
+  /** The depth springs' yaw, -1..1, for the body and for the head. 0 when depth is off. */
+  yaw: { body: number; head: number }
 }
 
 const clamp = (v: number, lo: number, hi: number): number => (v < lo ? lo : v > hi ? hi : v)
@@ -427,7 +436,7 @@ export class MotionEngine {
   }
 
   tick(dt: number, input: MotionInput, snap = false): MotionOutput {
-    const out: MotionOutput = { poses: {}, faceX: 0, shade: 0, blink: false }
+    const out: MotionOutput = { poses: {}, faceX: 0, shade: 0, blink: false, look: { x: 0, y: 0 }, yaw: { body: 0, head: 0 } }
     const add = (t: MotionTarget, p: Pose): void => {
       const cur = out.poses[t] ?? {}
       out.poses[t] = {
@@ -453,6 +462,7 @@ export class MotionEngine {
     if (a) {
       const gx = step(this.headX, input.gaze.x)
       const gy = step(this.headY, input.gaze.y)
+      out.look = { x: gx, y: gy }
       const head: Pose = { x: a.turn * gx, y: a.rise * gy, rot: a.pitch * gy + a.tilt * gx }
       if (input.has('head')) add('head', head)
       const k = a.torsoFollow
@@ -508,6 +518,7 @@ export class MotionEngine {
       const faceParent: LayerName = input.has('head') ? 'head' : 'torso'
       out.faceX = (input.has('head') ? yh : yb) * (d.face - depthOf(faceParent)) * d.travel
       out.shade = yb
+      out.yaw = { body: yb, head: yh }
     }
 
     // --- secondary -------------------------------------------------------

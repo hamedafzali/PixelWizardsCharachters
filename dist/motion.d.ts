@@ -218,6 +218,21 @@ export interface MotionOutput {
     shade: number;
     /** a gaze-evoked blink is due */
     blink: boolean;
+    /**
+     * Where the head is looking right now, each axis -1..1: the attention
+     * springs' own state, before `turn`/`pitch` turn it into a 2D pose. A
+     * renderer that can rotate a head for real (the three.js one) reads this
+     * instead of the slide. 0 when attention is off.
+     */
+    look: {
+        x: number;
+        y: number;
+    };
+    /** The depth springs' yaw, -1..1, for the body and for the head. 0 when depth is off. */
+    yaw: {
+        body: number;
+        head: number;
+    };
 }
 /**
  * Runs the four drivers. One instance per rig.

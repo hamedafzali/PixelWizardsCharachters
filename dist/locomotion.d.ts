@@ -150,4 +150,27 @@ export declare class LocomotionDriver {
     /** The pose this target should contribute right now — identity when idle. */
     pose(target: LocoTarget): Pose;
 }
+/**
+ * The rig's `caWalk`/`caFly` CSS body animations, as data instead of CSS text.
+ *
+ * Used where the CSS animation cannot be: the SVG rig's reduced-motion
+ * `pinGaitPhase` branch, and the three.js renderer, which has no stylesheet.
+ * In the SVG rig's case: the
+ * usual hold pauses the real animation, but under reduced motion the
+ * stylesheet's `animation:none!important` cannot tell a paused animation from
+ * a running one and kills the hold along with it (see `RIG_CSS`'s `.ca-reduced`
+ * rule). Sampling this table with `samplePhase` and writing the pose directly
+ * is the one path that rule cannot veto.
+ *
+ * Read off the `@keyframes` percentages directly: `caWalk`'s `rotate` is only
+ * ever authored at 0%/50%/100%, so its value at 25%/75% here is what CSS's
+ * missing-property interpolation would already produce there. `samplePhase`
+ * eases each segment with a smoothstep rather than `caWalk`'s own `linear`
+ * timing function, so this is the intent of the fallback body-mechanic, not a
+ * pixel-identical replay of it — the same honest limitation `sampleAction`
+ * already documents for gestures.
+ */
+export declare const LOCO_FALLBACK_POSES: Record<'walk' | 'fly', readonly PhaseKey[]>;
+/** One cycle of each fallback body animation, seconds at `speed: 1` — the `caWalk`/`caFly` durations. */
+export declare const LOCO_FALLBACK_DUR: Record<'walk' | 'fly', number>;
 //# sourceMappingURL=locomotion.d.ts.map

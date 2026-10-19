@@ -8,7 +8,7 @@ import { spawn } from 'node:child_process'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 const port = Number(process.env.PORT) || 4180
-const entry = '/examples/studio.html'
+const entry = process.env.ENTRY || '/examples/studio.html'
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',

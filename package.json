@@ -1,7 +1,7 @@
 {
   "name": "pixel-wizards-charachters",
-  "version": "1.5.0",
-  "description": "Data-driven, AI-drivable animated children's characters for the web — emotion, gaze, gestures, locomotion and Persian-viseme lip-sync as one JSON frame. Zero runtime dependencies, React optional.",
+  "version": "1.6.0",
+  "description": "Data-driven, AI-drivable animated children's characters for the web — emotion, gaze, gestures, locomotion and Persian-viseme lip-sync as one JSON frame. Zero runtime dependencies; React and three.js (3D renderer) optional.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/hamedafzali/PixelWizardsCharachters.git"
@@ -21,12 +21,19 @@
     "./react": {
       "types": "./dist/react.d.ts",
       "default": "./dist/react.js"
+    },
+    "./three": {
+      "types": "./dist/three/index.d.ts",
+      "default": "./dist/three/index.js"
     }
   },
   "typesVersions": {
     "*": {
       "react": [
         "./dist/react.d.ts"
+      ],
+      "three": [
+        "./dist/three/index.d.ts"
       ]
     }
   },
@@ -40,6 +47,7 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "demo": "npm run build && node scripts/serve.mjs",
+    "demo:3d": "npm run build && ENTRY=/examples/three.html node scripts/serve.mjs",
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "npm run build",
     "test": "npm run build && node --test \"test/*.test.mjs\"",
@@ -63,23 +71,33 @@
     "ai-agent",
     "text-to-viseme",
     "react",
-    "typescript"
+    "typescript",
+    "three",
+    "threejs",
+    "3d",
+    "webgl"
   ],
   "license": "MIT",
   "author": "hamed.afzali <afzali.hamed@gmail.com>",
   "peerDependencies": {
-    "react": ">=18"
+    "react": ">=18",
+    "three": ">=0.160.0"
   },
   "peerDependenciesMeta": {
     "react": {
+      "optional": true
+    },
+    "three": {
       "optional": true
     }
   },
   "devDependencies": {
     "@types/react": "^18.3.0",
+    "@types/three": "^0.170.0",
     "jsdom": "^29.1.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "three": "^0.170.0",
     "typescript": "^5.5.0"
   },
   "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"

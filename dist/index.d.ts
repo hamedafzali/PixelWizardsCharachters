@@ -10,7 +10,7 @@
 export type { ActorFrame, EmotionName, VisemeName, Locomotion, Gesture, Facing, BrowKey, EmotionSpec, EmotionOverrides, VisemeSpec, CharacterSpec, LayerName, RigLayer, RigLayers, PostureSpec, PostureMap, } from './types.js';
 export { defaultFrame, LAYER_ORDER, LOCOMOTIONS, FACINGS } from './types.js';
 export { EMOTIONS, EMOTION_LABELS, resolveEmotion } from './emotions.js';
-export { POSTURES, resolvePosture } from './posture.js';
+export { POSTURES, resolvePosture, posturePoses } from './posture.js';
 export { buildAction, actionStops, ensureAction, poseToTransform, composePoses } from './timing.js';
 export type { Pose, TimedAction } from './timing.js';
 export { sampleAction, sampleActionFrames, frameCount, parseEasing, easeBezier, EASING_KEYWORDS, } from './sample.js';
@@ -33,7 +33,9 @@ export { characterRoster, createCharacterPicker } from './picker.js';
 export type { RosterEntry, RosterOptions, PickerOptions, CharacterPickerHandle } from './picker.js';
 export { MotionEngine, Spring, DEFAULT_MOTION, resolveMotion, parentOf, } from './motion.js';
 export type { MotionSettings, MotionOverrides, SpringSpec, SecondarySettings, SecondaryLayerSettings, AttentionSettings, BodySettings, DepthSettings, MotionTarget, MotionInput, MotionOutput, } from './motion.js';
+export { DEFAULT_TURN3D, BROW_LINES } from './body3d.js';
+export type { Body3DSpec, Layer3D, Part3D, Shape3D, Face3D, Turn3D } from './body3d.js';
 export { ActorRig, RIG_CSS, artKeyOf } from './rig.js';
 export type { RigOptions } from './rig.js';
-export { LocomotionDriver, GAITS, LOCO_TARGETS, WALK_PHASES, FLY_PHASES, ROLL_PHASES, WING_FOLD_SX, samplePhase, wrapPhase, canDrive, drivesGait, type GaitName, type LocoTarget, type Gait, type PhaseKey, } from './locomotion.js';
+export { LocomotionDriver, GAITS, LOCO_TARGETS, LOCO_FALLBACK_POSES, LOCO_FALLBACK_DUR, WALK_PHASES, FLY_PHASES, ROLL_PHASES, WING_FOLD_SX, samplePhase, wrapPhase, canDrive, drivesGait, type GaitName, type LocoTarget, type Gait, type PhaseKey, } from './locomotion.js';
 //# sourceMappingURL=index.d.ts.map

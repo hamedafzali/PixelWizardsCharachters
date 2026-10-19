@@ -3,14 +3,14 @@ import { defaultFrame } from './types.js'
 import { renderActorSVG, drawMouth } from './render.js'
 import { resolveEmotion } from './emotions.js'
 import { eyeWidenScale, eyeWidenTransform, eyeLidRy } from './draw.js'
-import { resolvePosture } from './posture.js'
+import { resolvePosture, posturePoses } from './posture.js'
 import { ensureAction, composePoses, poseToTransform, type Pose, type TimedAction } from './timing.js'
 import { sampleAction } from './sample.js'
 import { IdleMicroMotion, blinkStyle, type MicroConfig } from './micro.js'
 import { FrameInterpolator, type InterpolationProfile } from './interpolate.js'
 import {
-  LocomotionDriver, LOCO_TARGETS, drivesGait, wrapPhase, samplePhase,
-  type GaitName, type LocoTarget, type PhaseKey,
+  LocomotionDriver, LOCO_TARGETS, LOCO_FALLBACK_POSES, drivesGait, wrapPhase, samplePhase,
+  type GaitName, type LocoTarget,
 } from './locomotion.js'
 import { planGesture, type GesturePart, type GesturePlan } from './gestures.js'
 import { VISEMES, textToVisemes } from './visemes.js'
@@ -109,37 +109,6 @@ const LOCO_ANIM: Record<string, { name: string; dur: number } | null> = {
   // `drivenGait`'s `has`), so a character that declares `roll` is always
   // phase-driven and never reaches the CSS-fallback branch this table backs.
   roll: null,
-}
-
-/**
- * `caWalk`/`caFly` above, as data instead of CSS text.
- *
- * Only exists for {@link ActorRig.pinGaitPhase}'s reduced-motion branch: the
- * usual hold pauses the real animation, but under reduced motion the
- * stylesheet's `animation:none!important` cannot tell a paused animation from
- * a running one and kills the hold along with it (see `RIG_CSS`'s `.ca-reduced`
- * rule). Sampling this table with `samplePhase` and writing the pose directly
- * is the one path that rule cannot veto.
- *
- * Read off the `@keyframes` percentages directly: `caWalk`'s `rotate` is only
- * ever authored at 0%/50%/100%, so its value at 25%/75% here is what CSS's
- * missing-property interpolation would already produce there. `samplePhase`
- * eases each segment with a smoothstep rather than `caWalk`'s own `linear`
- * timing function, so this is the intent of the fallback body-mechanic, not a
- * pixel-identical replay of it — the same honest limitation `sampleAction`
- * already documents for gestures.
- */
-const LOCO_FALLBACK_POSES: Record<'walk' | 'fly', readonly PhaseKey[]> = {
-  walk: [
-    { at: 0, pose: { y: 0, rot: -2 } },
-    { at: 0.25, pose: { y: -4, rot: 0 } },
-    { at: 0.5, pose: { y: 0, rot: 2 } },
-    { at: 0.75, pose: { y: -4, rot: 0 } },
-  ],
-  fly: [
-    { at: 0, pose: { y: -3 } },
-    { at: 0.5, pose: { y: 3 } },
-  ],
 }
 
 /**
@@ -826,14 +795,8 @@ export class ActorRig {
    */
   private updatePosture(): void {
     const p = resolvePosture(this.frame.emotion, this.frame.intensity, this.spec.posture)
-    this.setContribution('torso', 'posture', { y: p.sink, rot: p.spine })
-    this.setContribution('head', 'posture', { y: p.headDrop, rot: p.headTilt })
-    // Ears mirror: positive `ears` droops both outward and down.
-    this.setContribution('earL', 'posture', { rot: -p.ears })
-    this.setContribution('earR', 'posture', { rot: p.ears })
-    this.setContribution('tail', 'posture', { rot: p.tail })
-    this.setContribution('farArm', 'posture', { rot: p.arms })
-    this.setContribution('nearArm', 'posture', { rot: -p.arms })
+    const poses = posturePoses(p)
+    for (const l of Object.keys(poses) as LayerName[]) this.setContribution(l as TransformTarget, 'posture', poses[l]!)
     // Write immediately: when the loop is off (reduced motion, SSR-ish hosts)
     // posture is still a held pose that must land.
     this.flushTransforms()

@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3D Preview</title>
+<style>
+  :root { --bg: #fbf6ef; --panel: #fff; --ink: #2a1a12; --muted: #8a776a; --line: #eadfd2; --accent: #f7902f; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #1d1714; --panel: #2a221d; --ink: #f5ebe1; --muted: #b3a294; --line: #3d322b; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.4 system-ui, sans-serif; padding: 16px; }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  p.sub { margin: 0 0 16px; color: var(--muted); }
+  .stage { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 16px; }
+  .view { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+  .view h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 8px; }
+  .controls { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: grid; gap: 10px; max-width: 760px; }
+  .row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .row > span { width: 80px; color: var(--muted); }
+  button { font: inherit; border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 8px; padding: 4px 10px; cursor: pointer; }
+  button.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  input[type=range] { width: 160px; }
+  input[type=text] { font: inherit; padding: 4px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); }
+</style>
+<script type="importmap">
+{ "imports": { "three": "../node_modules/three/build/three.module.js" } }
+</script>
+</head>
+<body>
+<h1><span id="name">روزی</span> — 2D and 3D, one frame</h1>
+<p class="sub">Both renderers read the same ActorFrame, posture, gaits, gestures and motion settings. Drag on the 3D view to orbit.</p>
+
+<div class="stage">
+  <div class="view"><h2>SVG rig</h2><div id="svg"></div></div>
+  <div class="view"><h2>three.js</h2><div id="three"></div></div>
+</div>
+
+<div class="controls">
+  <div class="row" id="chars"><span>Character</span></div>
+  <div class="row" id="emotions"><span>Emotion</span></div>
+  <div class="row" id="locos"><span>Move</span></div>
+  <div class="row" id="gestures"><span>Gesture</span></div>
+  <div class="row"><span>Gaze x</span><input type="range" id="gx" min="-1" max="1" step="0.05" value="0">
+    <span>Gaze y</span><input type="range" id="gy" min="-1" max="1" step="0.05" value="0"></div>
+  <div class="row"><span>Yaw</span><input type="range" id="yaw" min="-1" max="1" step="0.05" value="0">
+    <span>Brows</span><input type="range" id="brow" min="0" max="1" step="0.05" value="0"></div>
+  <div class="row"><span>Facing</span><button id="facing">right</button></div>
+  <div class="row"><span>Speak</span><input type="text" id="say" value="سلام! من روزی هستم"><button id="sayBtn">بگو</button></div>
+</div>
+
+<script type="module">
+import { ActorRig, CHARACTERS, EMOTIONS, EMOTION_LABELS, GESTURE_NAMES, LOCOMOTIONS } from '../dist/index.js'
+import { ThreeActor } from '../dist/three/index.js'
+
+// ?c=<slug> picks the character, so a link can open on any of them.
+let spec = CHARACTERS[new URLSearchParams(location.search).get('c')] ?? CHARACTERS.roozi
+document.getElementById('name').textContent = spec.name
+document.getElementById('say').value = `سلام! من ${spec.name} هستم`
+const rig = new ActorRig(spec, { size: 300 }).mount(document.getElementById('svg'))
+const actor = new ThreeActor(spec, { size: 300 }).mount(document.getElementById('three'))
+const both = (f) => { rig.apply(f); actor.apply(f) }
+
+// Orbit by dragging: turns the 3D view's object, not the frame, so it is a
+// camera aid and never reaches the character's own channels.
+{
+  const el = document.querySelector('#three canvas')
+  let drag = null, spin = 0
+  el.addEventListener('pointerdown', (e) => { drag = e.clientX; el.setPointerCapture(e.pointerId) })
+  el.addEventListener('pointermove', (e) => {
+    if (drag === null) return
+    spin += (e.clientX - drag) * 0.01; drag = e.clientX
+    const o = actor.actor?.object.parent
+    if (o) o.rotation.y = spin
+  })
+  el.addEventListener('pointerup', () => { drag = null })
+}
+
+const buttons = (id, items, label, onPick, initial) => {
+  const row = document.getElementById(id)
+  const all = []
+  for (const it of items) {
+    const b = document.createElement('button')
+    b.textContent = label(it)
+    if (it === initial) b.classList.add('on')
+    b.onclick = () => {
+      if (initial !== undefined) for (const x of all) x.classList.toggle('on', x === b)
+      onPick(it)
+    }
+    row.appendChild(b); all.push(b)
+  }
+}
+buttons('chars', Object.keys(CHARACTERS), (s) => CHARACTERS[s].name, (slug) => {
+  spec = CHARACTERS[slug]
+  rig.setCharacter(spec); actor.setCharacter(spec)
+  document.getElementById('name').textContent = spec.name
+  document.getElementById('say').value = `سلام! من ${spec.name} هستم`
+  history.replaceState(null, '', `?c=${slug}`)
+}, spec.slug)
+buttons('emotions', Object.keys(EMOTIONS), (e) => EMOTION_LABELS[e] ?? e, (emotion) => both({ emotion, intensity: 1 }), 'neutral')
+buttons('locos', LOCOMOTIONS, (l) => l, (locomotion) => both({ locomotion }), 'idle')
+buttons('gestures', GESTURE_NAMES, (g) => g, (gesture) => { both({ gesture: null }); both({ gesture }) })
+
+const range = (id, key) => document.getElementById(id).addEventListener('input', () => {
+  const gx = +document.getElementById('gx').value, gy = +document.getElementById('gy').value
+  if (key === 'gaze') both({ gaze: { x: gx, y: gy } })
+  else both({ [key]: +document.getElementById(id).value })
+})
+range('gx', 'gaze'); range('gy', 'gaze'); range('yaw', 'yaw'); range('brow', 'browRaise')
+
+document.getElementById('facing').onclick = (e) => {
+  const facing = e.target.textContent === 'right' ? 'left' : 'right'
+  e.target.textContent = facing
+  both({ facing })
+}
+document.getElementById('sayBtn').onclick = () => {
+  const t = document.getElementById('say').value
+  rig.speak(t); actor.speak(t)
+}
+</script>
+</body>
+</html>

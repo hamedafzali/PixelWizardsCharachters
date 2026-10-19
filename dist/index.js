@@ -9,7 +9,7 @@
  */
 export { defaultFrame, LAYER_ORDER, LOCOMOTIONS, FACINGS } from './types.js';
 export { EMOTIONS, EMOTION_LABELS, resolveEmotion } from './emotions.js';
-export { POSTURES, resolvePosture } from './posture.js';
+export { POSTURES, resolvePosture, posturePoses } from './posture.js';
 export { buildAction, actionStops, ensureAction, poseToTransform, composePoses } from './timing.js';
 export { sampleAction, sampleActionFrames, frameCount, parseEasing, easeBezier, EASING_KEYWORDS, } from './sample.js';
 export { FrameInterpolator, EASINGS, DEFAULT_PROFILE } from './interpolate.js';
@@ -23,6 +23,7 @@ export { CHARACTERS, CHARACTER_SLUGS } from './characters/index.js';
 export { renderActorSVG, drawMouth } from './render.js';
 export { characterRoster, createCharacterPicker } from './picker.js';
 export { MotionEngine, Spring, DEFAULT_MOTION, resolveMotion, parentOf, } from './motion.js';
+export { DEFAULT_TURN3D, BROW_LINES } from './body3d.js';
 export { ActorRig, RIG_CSS, artKeyOf } from './rig.js';
-export { LocomotionDriver, GAITS, LOCO_TARGETS, WALK_PHASES, FLY_PHASES, ROLL_PHASES, WING_FOLD_SX, samplePhase, wrapPhase, canDrive, drivesGait, } from './locomotion.js';
+export { LocomotionDriver, GAITS, LOCO_TARGETS, LOCO_FALLBACK_POSES, LOCO_FALLBACK_DUR, WALK_PHASES, FLY_PHASES, ROLL_PHASES, WING_FOLD_SX, samplePhase, wrapPhase, canDrive, drivesGait, } from './locomotion.js';
 //# sourceMappingURL=index.js.map

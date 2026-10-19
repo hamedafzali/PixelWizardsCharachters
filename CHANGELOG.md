@@ -1,5 +1,58 @@
 # Changelog
 
+## 1.6.0
+
+**A three.js renderer.** `pixel-wizards-charachters/three` draws a character as
+a 3D model. It reads the same `ActorFrame`, motion settings, posture, gait
+tables and gesture plans as the SVG rig. three.js is an optional peer
+dependency, and the core package still has no runtime dependencies.
+
+- `ThreeActor` is the browser part: canvas, camera, lights and the animation
+  loop. It has the same methods as `ActorRig`.
+- `ActorModel` is the headless part. It needs no DOM or WebGL, and it runs on
+  one clock with no timers, so it can be stepped in tests or from your own
+  loop.
+- `CharacterSpec.body3d` describes a character's 3D shape as data: primitive
+  parts per layer, in the SVG's art space and around the SVG's pivots. All
+  ten characters have one, and a test checks that each mirrors its 2D layers,
+  pivots and face. A layer can also set `depth` (the skin solid's
+  half-thickness, for a part deeper than its outline suggests, like لاکی's
+  shell) and `back` (art painted on its sides and back only, like آوا's hair
+  behind her face).
+- `yaw` and gaze turn the body and head for real. The motion engine now
+  reports its attention and depth spring state (`MotionOutput.look`, `.yaw`),
+  and the 3D model switches off the 2D head slide and parallax (`MOTION_3D`).
+- New shared exports: `posturePoses` (the SVG rig now uses it too),
+  `LOCO_FALLBACK_POSES`, `LOCO_FALLBACK_DUR`, `BROW_LINES` and
+  `DEFAULT_TURN3D`. No SVG behaviour changes.
+- **The 3D model wears its 2D art.** `skinModel` rasterises each layer's SVG
+  art and inflates it into a closed solid: an ellipse in section, deep where
+  the shape is wide, its outline real geometry traced on the art's own edge.
+  Each solid sits at its layer's `body3d` depth, so the body holds together
+  from the side and the back. The 2D paint order becomes a depth-test bias
+  that applies only as much as a layer faces the camera. Sides and back
+  show the colour at the layer's outline instead of the projected front art.
+  The pure parts are exported: `silhouette`, `solidGeometry` and `paintBias`.
+  The face rig is restyled to match the drawing: flat
+  colours, the iris clipped to the eye white with a stencil, the 2D lid, shade
+  and ring, and arched brows. A character whose 2D mouth is a beak
+  (بومی, سیمرغ) gets a 3D beak: two mandibles, the lower one opening as far
+  as the 2D lens opens for each viseme, with the tongue when the 2D shows it.
+  `ThreeActor` applies it by default, and keeps the model hidden until the
+  skin is on, so the bare primitives never flash up first
+  (`skin: false` turns it off), and the headless model is unchanged.
+- The sides and back are cleaner. Stripes, tufts and eye discs that reach
+  a layer's outline are no longer dragged round the back as streaks
+  (`dropMarks`, exported). A turned surface darkens toward its silhouette, as
+  the drawing darkens toward its outline, so a turned arm stays apart from
+  the body behind it.
+- The README shows every character turning in 3D (`docs/media/`, linked from
+  GitHub, not shipped in the package).
+- `npm run demo:3d` opens `examples/three.html`, with the SVG and 3D versions
+  side by side and a picker for every character (`?c=<slug>` links to one).
+- New tests are in `test/three.test.mjs` (29 tests), and mutations M57–M78
+  prove each new guard fails when broken.
+
 ## 1.5.0
 
 **A motion engine every character shares, tuned by settings.** The new

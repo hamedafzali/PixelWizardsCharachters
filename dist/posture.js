@@ -45,4 +45,20 @@ export function resolvePosture(name, intensity, overrides) {
         out[key] = merged[key] * k;
     return out;
 }
+/**
+ * Which layer each posture channel moves, and how — the one statement of the
+ * mapping, shared by the SVG rig and the three.js model so a posture means the
+ * same pose in both. Ears mirror: positive `ears` droops both outward and down.
+ */
+export function posturePoses(p) {
+    return {
+        torso: { y: p.sink, rot: p.spine },
+        head: { y: p.headDrop, rot: p.headTilt },
+        earL: { rot: -p.ears },
+        earR: { rot: p.ears },
+        tail: { rot: p.tail },
+        farArm: { rot: p.arms },
+        nearArm: { rot: -p.arms },
+    };
+}
 //# sourceMappingURL=posture.js.map

@@ -2,6 +2,8 @@
 
 A framework-agnostic library of animated, **actable** children's characters.
 
+<p align="center"><img src="https://raw.githubusercontent.com/hamedafzali/PixelWizardsCharachters/main/docs/media/gallery.gif" alt="All ten characters turning in 3D" width="680"></p>
+
 A character is a puppet. An `ActorFrame` is one moment of performance — emotion,
 Persian lip-sync, gaze, brows, gestures and locomotion. You emit frames; the rig
 performs them. Every visible behaviour is one field on the frame, so a whole
@@ -65,8 +67,10 @@ const svg = renderActorSVG(CHARACTERS.laki, defaultFrame('laki'), 200)
 import { CHARACTERS, CHARACTER_SLUGS } from 'pixel-wizards-charachters'
 ```
 
-`roozi` · `ava` · `pashmak` · `laki` · `tondpa` · `boomi` · `khersi` · `simorgh` ·
-`charkhi` · `robo`
+<table>
+<tr><td align="center"><img src="https://raw.githubusercontent.com/hamedafzali/PixelWizardsCharachters/main/docs/media/turntable-roozi.gif" alt="روزی (roozi) turning in 3D" width="130"><br><code>roozi</code> روزی</td><td align="center"><img src="https://raw.githubusercontent.com/hamedafzali/PixelWizardsCharachters/main/docs/media/turntable-ava.gif" alt="آوا (ava) turning in 3D" width="130"><br><code>ava</code> آوا</td><td align="center"><img src="https://raw.githubusercontent.com/hamedafzali/PixelWizardsCharachters/main/docs/media/turntable-pashmak.gif" alt="پشمک (pashmak) turning in 3D" width="130"><br><code>pashmak</code> پشمک</td><td align="center"><img src="https://raw.githubusercontent.com/hamedafzali/PixelWizardsCharachters/main/docs/media/turntable-laki.gif" alt="لاکی (laki) turning in 3D" width="130"><br><code>laki</code> لاکی</td><td align="center"><img src="https://raw.githubusercontent.com/hamedafzali/PixelWizardsCharachters/main/docs/media/turntable-tondpa.gif" alt="تندپا (tondpa) turning in 3D" width="130"><br><code>tondpa</code> تندپا</td></tr>
+<tr><td align="center"><img src="https://raw.githubusercontent.com/hamedafzali/PixelWizardsCharachters/main/docs/media/turntable-boomi.gif" alt="بومی (boomi) turning in 3D" width="130"><br><code>boomi</code> بومی</td><td align="center"><img src="https://raw.githubusercontent.com/hamedafzali/PixelWizardsCharachters/main/docs/media/turntable-khersi.gif" alt="خرسی (khersi) turning in 3D" width="130"><br><code>khersi</code> خرسی</td><td align="center"><img src="https://raw.githubusercontent.com/hamedafzali/PixelWizardsCharachters/main/docs/media/turntable-simorgh.gif" alt="سیمرغ (simorgh) turning in 3D" width="130"><br><code>simorgh</code> سیمرغ</td><td align="center"><img src="https://raw.githubusercontent.com/hamedafzali/PixelWizardsCharachters/main/docs/media/turntable-charkhi.gif" alt="چرخی (charkhi) turning in 3D" width="130"><br><code>charkhi</code> چرخی</td><td align="center"><img src="https://raw.githubusercontent.com/hamedafzali/PixelWizardsCharachters/main/docs/media/turntable-robo.gif" alt="ربو (robo) turning in 3D" width="130"><br><code>robo</code> ربو</td></tr>
+</table>
 
 Five categories: animals (`roozi`, `pashmak`, `laki`, `tondpa`, `boomi`,
 `khersi`), a fantasy creature (`simorgh`), a human kid (`ava`), vehicles
@@ -275,6 +279,74 @@ rig.motion // the resolved settings
 When the character is at rest (gaze 0, idle, yaw 0) the engine adds nothing.
 Wherever the rig has to hold still, the springs land at once with no wobble:
 reduced motion, `finish()`, `pinGaitPhase()` and `scrubGesture()`.
+
+## 3D: the three.js renderer
+
+`pixel-wizards-charachters/three` draws a character as a real 3D model with
+three.js. It takes the same `ActorFrame` as the SVG rig, and posture, gaits,
+gestures, visemes and motion settings all come from the same tables, so a
+driver can switch renderers without changing anything it sends.
+
+three.js is an optional peer dependency. Only code that imports this path
+needs it:
+
+```bash
+npm install three
+```
+
+<p align="center"><img src="https://raw.githubusercontent.com/hamedafzali/PixelWizardsCharachters/main/docs/media/2d-vs-3d.png" alt="Each character as the SVG drawing (top) and turned in 3D (bottom)" width="880"></p>
+<p align="center"><sub>Top: the SVG rig. Bottom: the same spec in 3D, turned three-quarters.</sub></p>
+
+```ts
+import { CHARACTERS } from 'pixel-wizards-charachters'
+import { ThreeActor } from 'pixel-wizards-charachters/three'
+
+const actor = new ThreeActor(CHARACTERS.roozi, { size: 300 }).mount(el)
+actor.apply({ emotion: 'happy', yaw: 0.6, gaze: { x: 0.4, y: 0 } })
+actor.speak('سلام!')
+```
+
+`ThreeActor` has the same methods as `ActorRig`: `apply`, `finish`,
+`playGesture`, `speak`, `blink`, `setMotion`, `setCharacter` and `destroy`.
+Everything a character does lives in `ActorModel`, which needs no DOM or WebGL.
+You can add `model.object` to your own scene and call `model.tick(dt)` from your
+own loop.
+
+What is different in 3D:
+
+- **The turn is real.** `yaw` rotates the body, and the head turns toward the
+  gaze and tips with `gaze.y`. The engine's 2D stand-ins for a turn (the head
+  slide and the layer parallax) are switched off, and its springs drive the
+  rotation instead. Each character can set its turn ranges in
+  `body3d.turn` (default `{ body: 38, head: 18, pitch: 14 }` degrees).
+- **A character needs a `body3d`.** This is its shape as data: primitive parts
+  per layer, placed in the same 200×200 art space as the SVG and pivoting at the
+  same points. Eye position, size and colours come from the 2D spec. See
+  `src/body3d.ts`. A character without one is refused with an error that names
+  it. Every bundled character has one. A layer can set `depth` (how thick its
+  skin solid is) and `back` (extra art for its sides and back only).
+- **Gestures add to the pose.** In SVG a CSS gesture animation replaces the
+  layer's other transforms while it plays. In 3D it is composed with posture
+  and gait.
+- **It wears the 2D art.** In the browser, each layer's own SVG art is
+  rasterised and inflated into a rounded solid at that layer's `body3d` depth.
+  Face on, the 3D character looks like the drawing, gradients and all. Turned
+  or orbited, it reads as one body, with the outline's colour on its sides
+  and back. The eyes, brows and mouth stay live 3D parts, styled like the 2D face.
+  A beak mouth becomes two mandibles that open as far as the 2D beak does.
+  No setup is needed per character, because it reads the same `render()`
+  output the SVG rig paints. Pass `skin: false` to see the bare `body3d`
+  primitives, or `skin: { resolution, puff, gap }` to tune it. Headless
+  (`ActorModel` alone) keeps the primitives.
+
+Reduced motion behaves as it does in SVG. Everything lands at once, and there is
+no breathing, mood motion, gesture or blink.
+
+To see both renderers side by side, driven by one frame:
+
+```bash
+npm install && npm run demo:3d
+```
 
 ## Options
 

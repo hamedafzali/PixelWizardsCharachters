@@ -33,6 +33,86 @@ export const roozi: CharacterSpec = {
     excited: { ears: -22, tail: -34 },
     happy: { ears: -12, tail: -22 },
   },
+  // Read off the layers below: same pivots, same centres and radii, plus the
+  // depth the drawing implies. The head is a 42-radius ball at (100, 78), so
+  // face depths are where its surface is: eyes at (±17, −4) sit at z≈34, the
+  // brow line 20 higher at z≈29, and the mouth on the muzzle's front at z≈41.
+  body3d: {
+    layers: {
+      tail: {
+        pivot: [146, 146, -14],
+        parts: [
+          { shape: 'sphere', at: [163, 124, -18], size: [13, 30, 13], rot: [0, 0, 35], color: '#f08a2c' },
+          { shape: 'sphere', at: [177, 103, -16], size: [10, 13, 10], rot: [0, 0, 35], color: '#fff3e3' },
+        ],
+      },
+      farArm: {
+        pivot: [62, 126, -12],
+        parts: [
+          { shape: 'capsule', at: [56, 140, -12], size: [6.5, 18, 6.5], rot: [0, 0, 23], color: '#d0621a' },
+          { shape: 'sphere', at: [50, 156, -11], size: [7.5, 6, 7], color: '#f2c08c' },
+        ],
+      },
+      farLeg: {
+        pivot: [84, 160, -8],
+        parts: [{ shape: 'sphere', at: [80, 174, -4], size: [12, 8, 15], color: '#cf5f0e' }],
+      },
+      torso: {
+        pivot: [100, 168, 0],
+        parts: [
+          { shape: 'sphere', at: [100, 138, 0], size: [44, 38, 34], color: '#f7902f' },
+          { shape: 'sphere', at: [100, 150, 18], size: [26, 21, 16], color: '#fff3e3' },
+        ],
+      },
+      nearLeg: {
+        pivot: [116, 160, 8],
+        parts: [{ shape: 'sphere', at: [120, 174, 6], size: [12, 8, 15], color: '#f7902f' }],
+      },
+      nearArm: {
+        pivot: [138, 126, 12],
+        parts: [
+          { shape: 'capsule', at: [144, 140, 13], size: [6.5, 18, 6.5], rot: [0, 0, -23], color: '#f7902f' },
+          { shape: 'sphere', at: [150, 156, 14], size: [7.5, 6, 7], color: '#fff3e3' },
+        ],
+      },
+      earL: {
+        pivot: [76, 50, -2],
+        parts: [
+          { shape: 'cone', at: [70, 36, -4], size: [15, 40, 8], rot: [0, 0, -22], color: '#b4460f' },
+          { shape: 'cone', at: [72, 39, 2], size: [8, 26, 3], rot: [0, 0, -22], color: '#7a2a0c', noOutline: true },
+        ],
+      },
+      earR: {
+        pivot: [124, 50, -2],
+        parts: [
+          { shape: 'cone', at: [130, 36, -4], size: [15, 40, 8], rot: [0, 0, 22], color: '#b4460f' },
+          { shape: 'cone', at: [128, 39, 2], size: [8, 26, 3], rot: [0, 0, 22], color: '#7a2a0c', noOutline: true },
+        ],
+      },
+      head: {
+        pivot: [100, 112, 0],
+        parts: [
+          { shape: 'sphere', at: [100, 78, 0], size: [42, 40, 38], color: '#fb9a3e' },
+          // cheek ruffs, pointing out and down like the drawing's tufts
+          { shape: 'cone', at: [58, 88, 6], size: [9, 22, 8], rot: [0, 0, -128], color: '#fb9a3e' },
+          { shape: 'cone', at: [142, 88, 6], size: [9, 22, 8], rot: [0, 0, 128], color: '#fb9a3e' },
+          { shape: 'sphere', at: [100, 95, 28], size: [24, 16, 14], color: '#fff6ea' },
+          { shape: 'sphere', at: [100, 90, 43], size: [6, 4.6, 4], color: '#3a1206' },
+          { shape: 'sphere', at: [98, 88.6, 46.6], size: [1.8, 1.3, 0.6], color: '#ffffff', flat: true, opacity: 0.6, noOutline: true },
+          { shape: 'sphere', at: [73, 91, 27], size: [7.5, 5, 1.2], rot: [0, -42, 0], color: '#fb6f92', flat: true, opacity: 0.45, noOutline: true },
+          { shape: 'sphere', at: [127, 91, 27], size: [7.5, 5, 1.2], rot: [0, 42, 0], color: '#fb6f92', flat: true, opacity: 0.45, noOutline: true },
+        ],
+      },
+    },
+    face: {
+      layer: 'head',
+      center: [100, 78, 0],
+      eyes: { z: 33, iris: '#5a3418' },
+      brows: { y: 58, z: 29 },
+      mouth: { x: 100, y: 104, z: 40.5, color: '#4a1608' },
+    },
+    shadow: 52,
+  },
   render({ emotion, intensity }) {
     const e = eyes(83, 117, 74, 11, 'fxIris', emotion.squint * intensity, emotion.wide * intensity)
     const b = brows(83, 117, 58, emotion.brow, '#8a3a12')
@@ -151,6 +231,66 @@ export const ava: CharacterSpec = {
     excited: { arms: -18 },
     happy: { arms: -8 },
   },
+  // Read off the layers below. The head is a 45-radius ball at (100, 90), so
+  // the eyes at (±14, 0) sit at z≈38, the brows 16 higher at z≈35 and the
+  // mouth 22 lower at z≈35. The pigtails hang just behind the head's sides.
+  body3d: {
+    layers: {
+      farArm: {
+        pivot: [88, 150, -10],
+        parts: [
+          { shape: 'capsule', at: [80, 164, -10], size: [5.5, 22, 5.5], rot: [0, 0, 30], color: '#d13f83' },
+          { shape: 'sphere', at: [72, 180, -10], size: [6.5, 5.5, 6], color: '#e0b089' },
+        ],
+      },
+      torso: {
+        pivot: [100, 176, 0],
+        parts: [{ shape: 'cone', at: [100, 166, 0], size: [36, 48, 28], color: '#f866ac' }],
+      },
+      nearArm: {
+        pivot: [112, 150, 10],
+        parts: [
+          { shape: 'capsule', at: [120, 164, 10], size: [5.5, 22, 5.5], rot: [0, 0, -30], color: '#ff86c2' },
+          { shape: 'sphere', at: [128, 180, 10], size: [6.5, 5.5, 6], color: '#f4c39c' },
+        ],
+      },
+      earL: {
+        pivot: [57, 89, -6],
+        parts: [
+          { shape: 'sphere', at: [58, 89, -6], size: [13.5, 13.5, 12], color: '#52321f' },
+          { shape: 'capsule', at: [48, 132, -8], size: [8, 70, 7], color: '#4a2c1c' },
+        ],
+      },
+      earR: {
+        pivot: [143, 89, -6],
+        parts: [
+          { shape: 'sphere', at: [142, 89, -6], size: [13.5, 13.5, 12], color: '#52321f' },
+          { shape: 'capsule', at: [152, 132, -8], size: [8, 70, 7], color: '#4a2c1c' },
+        ],
+      },
+      head: {
+        pivot: [100, 140, 0],
+        // The back of her head is hair, not the face's outline colour.
+        back: `<circle cx="100" cy="88" r="47" fill="url(#avHair)"/>`,
+        parts: [
+          { shape: 'sphere', at: [100, 90, 0], size: [45, 45, 40], color: '#f9d6b8' },
+          // the hair cap, a shell over the back and top of the head
+          { shape: 'sphere', at: [100, 84, -6], size: [47, 44, 40], color: '#52321f' },
+          { shape: 'sphere', at: [72, 64, 34], size: [8, 8, 3], color: '#ffcf4d' },
+          { shape: 'sphere', at: [76, 104, 34], size: [7, 4.6, 1.2], rot: [0, -28, 0], color: '#fb7aa8', flat: true, opacity: 0.6, noOutline: true },
+          { shape: 'sphere', at: [124, 104, 34], size: [7, 4.6, 1.2], rot: [0, 28, 0], color: '#fb7aa8', flat: true, opacity: 0.6, noOutline: true },
+        ],
+      },
+    },
+    face: {
+      layer: 'head',
+      center: [100, 90, 0],
+      eyes: { z: 38, iris: '#4a2e18' },
+      brows: { y: 74, z: 35 },
+      mouth: { x: 100, y: 112, z: 35, color: '#b03a4a' },
+    },
+    shadow: 44,
+  },
   render({ emotion, intensity }) {
     const e = eyes(86, 114, 90, 10, 'avIris', emotion.squint * intensity, emotion.wide * intensity)
     const b = brows(86, 114, 74, emotion.brow, '#5b3826')
@@ -264,6 +404,59 @@ export const pashmak: CharacterSpec = {
     sleepy: { spine: 2, sink: 7, ears: 20 },
     excited: { spine: -2, ears: -24, tail: -32 },
     surprised: { spine: -3, ears: -28 },
+  },
+  // Read off the layers below. The head is a 43-radius ball at (98, 80): the
+  // eyes at (−18/+18, −4) sit at z≈34 and the brows 16 higher at z≈29; the
+  // mouth is on the muzzle's front, z≈37.
+  body3d: {
+    layers: {
+      tail: {
+        pivot: [146, 154, -14],
+        parts: [{ shape: 'sphere', at: [164, 132, -16], size: [12, 27, 12], rot: [0, 0, 40], color: '#c1cddc' }],
+      },
+      torso: {
+        pivot: [98, 176, 0],
+        parts: [
+          { shape: 'sphere', at: [98, 142, 0], size: [45, 36, 34], color: '#c1cddc' },
+          { shape: 'sphere', at: [98, 152, 18], size: [28, 20, 15], color: '#f6f9fc' },
+        ],
+      },
+      earL: {
+        pivot: [77, 45, -2],
+        parts: [
+          { shape: 'cone', at: [69, 33, -4], size: [15, 40, 8], rot: [0, 0, -22], color: '#c9d5e4' },
+          { shape: 'cone', at: [71, 36, 2], size: [8, 26, 3], rot: [0, 0, -22], color: '#f37cb9', noOutline: true },
+        ],
+      },
+      earR: {
+        pivot: [119, 45, -2],
+        parts: [
+          { shape: 'cone', at: [127, 33, -4], size: [15, 40, 8], rot: [0, 0, 22], color: '#c9d5e4' },
+          { shape: 'cone', at: [125, 36, 2], size: [8, 26, 3], rot: [0, 0, 22], color: '#f37cb9', noOutline: true },
+        ],
+      },
+      head: {
+        pivot: [98, 114, 0],
+        parts: [
+          { shape: 'sphere', at: [98, 80, 0], size: [43, 41, 38], color: '#c9d5e4' },
+          // cheek tufts, out and down like the drawing's
+          { shape: 'cone', at: [56, 88, 6], size: [9, 22, 8], rot: [0, 0, -120], color: '#c9d5e4' },
+          { shape: 'cone', at: [140, 88, 6], size: [9, 22, 8], rot: [0, 0, 120], color: '#c9d5e4' },
+          { shape: 'sphere', at: [98, 94, 26], size: [22, 15, 13], color: '#f6f9fc' },
+          { shape: 'sphere', at: [99, 92, 38], size: [6, 4, 3], color: '#ff6f9d' },
+          { shape: 'sphere', at: [74, 90, 30], size: [6.5, 4.2, 1.2], rot: [0, -38, 0], color: '#fb6f92', flat: true, opacity: 0.4, noOutline: true },
+          { shape: 'sphere', at: [122, 90, 30], size: [6.5, 4.2, 1.2], rot: [0, 38, 0], color: '#fb6f92', flat: true, opacity: 0.4, noOutline: true },
+        ],
+      },
+    },
+    face: {
+      layer: 'head',
+      center: [98, 80, 0],
+      eyes: { z: 34, iris: '#3f8f78' },
+      brows: { y: 60, z: 29 },
+      mouth: { x: 99, y: 104, z: 37, color: '#3a4a5e' },
+    },
+    shadow: 50,
   },
   render({ emotion, intensity }) {
     const e = eyes(80, 116, 76, 11, 'pkIris', emotion.squint * intensity, emotion.wide * intensity)
@@ -379,6 +572,45 @@ export const laki: CharacterSpec = {
   // mouth into the rim. Leaning the whole shell into the hand is also the
   // better read for a tortoise — it is what a tortoise would actually do.
   gestureFallback: ['nod', 'nuzzle'],
+  // Read off the layers below. The head pokes out ahead of the shell, so it is
+  // centred 14 forward: a 30-radius ball at (100, 52, 14) puts the eyes at
+  // z≈38, the brows at z≈34 and the mouth at z≈38. The back flippers (the arm
+  // slots) sit behind the shell and the front ones (the leg slots) ahead of it.
+  // The torso carrier draws nothing in 2D, so it has no parts here either.
+  body3d: {
+    layers: {
+      farArm: { pivot: [60, 150, -16], parts: [{ shape: 'sphere', at: [52, 156, -16], size: [13, 10, 10], color: '#6ad98c' }] },
+      farLeg: { pivot: [82, 160, 12], parts: [{ shape: 'sphere', at: [74, 166, 12], size: [13, 10, 10], color: '#6ad98c' }] },
+      torso: { pivot: [100, 142, 0], parts: [] },
+      nearLeg: { pivot: [118, 160, 12], parts: [{ shape: 'sphere', at: [126, 166, 12], size: [13, 10, 10], color: '#84e6a0' }] },
+      nearArm: { pivot: [140, 150, -16], parts: [{ shape: 'sphere', at: [148, 156, -16], size: [13, 10, 10], color: '#84e6a0' }] },
+      head: {
+        pivot: [100, 78, 10],
+        parts: [
+          { shape: 'sphere', at: [100, 52, 14], size: [30, 30, 26], color: '#84e6a0' },
+          { shape: 'sphere', at: [82, 58, 35], size: [5, 3.4, 1.2], rot: [0, -34, 0], color: '#fb6f92', flat: true, opacity: 0.55, noOutline: true },
+          { shape: 'sphere', at: [118, 58, 35], size: [5, 3.4, 1.2], rot: [0, 34, 0], color: '#fb6f92', flat: true, opacity: 0.55, noOutline: true },
+        ],
+      },
+      torsoFront: {
+        pivot: [100, 142, 0],
+        // A shell is a deep dome, not the shallow lens a 66-tall drawing inflates to.
+        depth: 46,
+        parts: [
+          { shape: 'sphere', at: [100, 134, 0], size: [62, 58, 46], color: '#1fa94f' },
+          { shape: 'sphere', at: [100, 128, 10], size: [48, 44, 40], color: '#5fd884' },
+        ],
+      },
+    },
+    face: {
+      layer: 'head',
+      center: [100, 52, 14],
+      eyes: { z: 38, iris: '#0e3a1f' },
+      brows: { y: 36, z: 34 },
+      mouth: { x: 100, y: 63, z: 38, color: '#0f5a29' },
+    },
+    shadow: 70,
+  },
   render({ emotion, intensity }) {
     const e = eyes(90, 110, 48, 9, 'lkIris', emotion.squint * intensity, emotion.wide * intensity)
     const b = brows(90, 110, 36, emotion.brow, '#188a3e')
@@ -470,6 +702,55 @@ export const tondpa: CharacterSpec = {
     // measured seam overlap falls to 95 against a floor of 120. Halved, and the
     // chin-up read is carried by `sink` and the ears instead.
     proud: { headDrop: -2, sink: -5, ears: -18 },
+  },
+  // Read off the layers below. The head is a 41-radius ball at (100, 86): the
+  // eyes at (±16, −4) sit at z≈34, the brows 16 higher at z≈29 and the mouth
+  // 24 lower at z≈30. The ears rise from inside the head, a little behind it.
+  body3d: {
+    layers: {
+      torso: {
+        pivot: [100, 176, 0],
+        parts: [
+          { shape: 'sphere', at: [100, 150, 0], size: [40, 34, 32], color: '#e4eaf1' },
+          { shape: 'sphere', at: [100, 158, 16], size: [24, 20, 14], color: '#fdfdff' },
+          { shape: 'sphere', at: [80, 178, 10], size: [13, 8, 12], color: '#e4eaf1' },
+          { shape: 'sphere', at: [120, 178, 10], size: [13, 8, 12], color: '#e4eaf1' },
+        ],
+      },
+      earL: {
+        pivot: [84, 58, -4],
+        parts: [
+          { shape: 'capsule', at: [84, 34, -4], size: [7, 36, 5], rot: [0, 0, -4], color: '#e4eaf1' },
+          { shape: 'capsule', at: [84, 37, 0], size: [3.5, 28, 1.5], rot: [0, 0, -4], color: '#f78cbf', noOutline: true },
+        ],
+      },
+      earR: {
+        pivot: [116, 58, -4],
+        parts: [
+          { shape: 'capsule', at: [116, 34, -4], size: [7, 36, 5], rot: [0, 0, 4], color: '#e4eaf1' },
+          { shape: 'capsule', at: [116, 37, 0], size: [3.5, 28, 1.5], rot: [0, 0, 4], color: '#f78cbf', noOutline: true },
+        ],
+      },
+      head: {
+        pivot: [100, 121, 0],
+        parts: [
+          { shape: 'sphere', at: [100, 86, 0], size: [41, 41, 37], color: '#e4eaf1' },
+          { shape: 'sphere', at: [66, 96, 6], size: [13, 13, 11], color: '#e4eaf1' },
+          { shape: 'sphere', at: [134, 96, 6], size: [13, 13, 11], color: '#e4eaf1' },
+          { shape: 'sphere', at: [100, 98, 32], size: [6, 3.5, 3], color: '#ff6f9d' },
+          { shape: 'sphere', at: [74, 98, 30], size: [6.5, 4.2, 1.2], rot: [0, -36, 0], color: '#fb6f92', flat: true, opacity: 0.6, noOutline: true },
+          { shape: 'sphere', at: [126, 98, 30], size: [6.5, 4.2, 1.2], rot: [0, 36, 0], color: '#fb6f92', flat: true, opacity: 0.6, noOutline: true },
+        ],
+      },
+    },
+    face: {
+      layer: 'head',
+      center: [100, 86, 0],
+      eyes: { z: 34, iris: '#3f4a68' },
+      brows: { y: 66, z: 29 },
+      mouth: { x: 100, y: 110, z: 30, color: '#a01a52' },
+    },
+    shadow: 48,
   },
   render({ emotion, intensity }) {
     const e = eyes(84, 116, 82, 11, 'tpIris', emotion.squint * intensity, emotion.wide * intensity)
@@ -579,6 +860,55 @@ export const boomi: CharacterSpec = {
     happy: { ears: -12 },
     thinking: { headTilt: 10, ears: 6 },
   },
+  // Read off the layers below. There is no head: the face rides the torso, a
+  // 50×58 egg at (100, 118), 42 deep. The eye discs stand on it at z≈30 and
+  // the beak at z≈41; the brows sit at the egg's top edge, where it has
+  // almost no depth left. Wings fold at the sides, the far one behind.
+  body3d: {
+    layers: {
+      farArm: {
+        pivot: [56, 108, -8],
+        parts: [{ shape: 'sphere', at: [46, 130, -8], size: [9, 26, 8], rot: [0, 0, 8], color: '#3a30b0' }],
+      },
+      farLeg: {
+        pivot: [84, 176, 4],
+        parts: [{ shape: 'capsule', at: [84, 182, 4], size: [2, 8, 2], color: '#e08a00' }],
+      },
+      torso: {
+        pivot: [100, 172, 0],
+        parts: [
+          { shape: 'sphere', at: [100, 118, 0], size: [50, 58, 42], color: '#5f68e6' },
+          { shape: 'sphere', at: [100, 130, 18], size: [31, 40, 26], color: '#d4dbf8' },
+          { shape: 'sphere', at: [80, 84, 26], size: [26, 26, 8], color: '#eef1ff' },
+          { shape: 'sphere', at: [120, 84, 26], size: [26, 26, 8], color: '#eef1ff' },
+        ],
+      },
+      nearLeg: {
+        pivot: [116, 176, 6],
+        parts: [{ shape: 'capsule', at: [116, 182, 6], size: [2, 8, 2], color: '#e08a00' }],
+      },
+      nearArm: {
+        pivot: [144, 108, 8],
+        parts: [{ shape: 'sphere', at: [154, 130, 8], size: [9, 26, 8], rot: [0, 0, -8], color: '#3a30b0' }],
+      },
+      earL: {
+        pivot: [66, 58, -4],
+        parts: [{ shape: 'cone', at: [62, 50, -4], size: [12, 37, 8], rot: [0, 0, -34], color: '#5f68e6' }],
+      },
+      earR: {
+        pivot: [134, 58, -4],
+        parts: [{ shape: 'cone', at: [138, 50, -4], size: [12, 37, 8], rot: [0, 0, 34], color: '#5f68e6' }],
+      },
+    },
+    face: {
+      layer: 'torso',
+      center: [100, 118, 0],
+      eyes: { z: 34, iris: '#8a4e14' },
+      brows: { y: 58, z: 12 },
+      mouth: { x: 100, y: 104, z: 41, color: '#f19100' },
+    },
+    shadow: 50,
+  },
   render({ emotion, intensity }) {
     const e = eyes(80, 120, 84, 15, 'bmIris', emotion.squint * intensity, emotion.wide * intensity)
     const b = brows(80, 120, 58, emotion.brow, '#4a4bb0')
@@ -679,6 +1009,54 @@ export const khersi: CharacterSpec = {
     surprised: { spine: -8, sink: -3, ears: -20, headDrop: -4 },
     thinking: { spine: 3, headTilt: 14, ears: 6 },
     love: { spine: -1, headTilt: 10, ears: -8 },
+  },
+  // Read off the layers below. The head is a 43-radius ball at (100, 86): the
+  // eyes at (±16, −6) sit at z≈35 and the brows 16 higher at z≈29; the mouth
+  // is on the muzzle's front, z≈36. The round ears sit at the head's rim.
+  body3d: {
+    layers: {
+      torso: {
+        pivot: [100, 176, 0],
+        parts: [
+          { shape: 'sphere', at: [100, 150, 0], size: [44, 36, 34], color: '#b08863' },
+          { shape: 'sphere', at: [100, 158, 18], size: [25, 22, 14], color: '#dcc7a0' },
+          { shape: 'sphere', at: [78, 178, 10], size: [13, 8, 12], color: '#b08863' },
+          { shape: 'sphere', at: [122, 178, 10], size: [13, 8, 12], color: '#b08863' },
+        ],
+      },
+      earL: {
+        pivot: [72, 57, -6],
+        parts: [
+          { shape: 'sphere', at: [66, 50, -6], size: [18, 18, 8], color: '#a6741c' },
+          { shape: 'sphere', at: [66, 50, -1], size: [10, 10, 3], color: '#d9ac74', noOutline: true },
+        ],
+      },
+      earR: {
+        pivot: [128, 57, -6],
+        parts: [
+          { shape: 'sphere', at: [134, 50, -6], size: [18, 18, 8], color: '#a6741c' },
+          { shape: 'sphere', at: [134, 50, -1], size: [10, 10, 3], color: '#d9ac74', noOutline: true },
+        ],
+      },
+      head: {
+        pivot: [100, 121, 0],
+        parts: [
+          { shape: 'sphere', at: [100, 86, 0], size: [43, 43, 38], color: '#c79f63' },
+          { shape: 'sphere', at: [100, 104, 26], size: [25, 18, 14], color: '#efe0c4' },
+          { shape: 'sphere', at: [100, 98, 38], size: [7.5, 5.4, 4], color: '#3b2314' },
+          { shape: 'sphere', at: [74, 98, 31], size: [7, 4.6, 1.2], rot: [0, -36, 0], color: '#f0a0a0', flat: true, opacity: 0.6, noOutline: true },
+          { shape: 'sphere', at: [126, 98, 31], size: [7, 4.6, 1.2], rot: [0, 36, 0], color: '#f0a0a0', flat: true, opacity: 0.6, noOutline: true },
+        ],
+      },
+    },
+    face: {
+      layer: 'head',
+      center: [100, 86, 0],
+      eyes: { z: 35, iris: '#4a2e18' },
+      brows: { y: 64, z: 29 },
+      mouth: { x: 100, y: 116, z: 36, color: '#5a3a1e' },
+    },
+    shadow: 50,
   },
   render({ emotion, intensity }) {
     const e = eyes(84, 116, 80, 10.5, 'khIris', emotion.squint * intensity, emotion.wide * intensity)
@@ -794,6 +1172,66 @@ export const simorgh: CharacterSpec = {
   // `farLeg`/`nearLeg` layer (a phoenix does not walk in this rig), so that
   // gait keeps taking the CSS body animation, unchanged from before.
   gaits: ['fly'],
+  // Read off the layers below. The head is a 42-radius ball at (100, 80): the
+  // eyes at (±20, −4) sit at z≈33, the brows 22 higher at z≈27 and the beak
+  // 20 lower at z≈34. The tail fans out behind the body and the crest
+  // feathers rise from the back of the crown.
+  body3d: {
+    layers: {
+      tail: {
+        pivot: [100, 132, -16],
+        parts: [
+          { shape: 'sphere', at: [54, 152, -18], size: [30, 12, 5], rot: [0, 0, -32], color: '#ef4444' },
+          { shape: 'sphere', at: [74, 162, -17], size: [30, 11, 5], rot: [0, 0, -16], color: '#f97316' },
+          { shape: 'sphere', at: [100, 166, -16], size: [30, 11, 5], color: '#eab308' },
+          { shape: 'sphere', at: [126, 162, -17], size: [30, 11, 5], rot: [0, 0, 16], color: '#22c55e' },
+          { shape: 'sphere', at: [146, 152, -18], size: [30, 12, 5], rot: [0, 0, 32], color: '#3b82f6' },
+        ],
+      },
+      farArm: {
+        pivot: [74, 132, -10],
+        parts: [
+          { shape: 'sphere', at: [52, 128, -10], size: [24, 13, 8], rot: [0, 0, -20], color: '#fb923c' },
+          { shape: 'sphere', at: [54, 126, -5], size: [17, 9, 3], rot: [0, 0, -20], color: '#fdba74', noOutline: true },
+        ],
+      },
+      torso: {
+        pivot: [100, 176, 0],
+        parts: [
+          { shape: 'sphere', at: [100, 140, 0], size: [40, 42, 34], color: '#f4820f' },
+          { shape: 'sphere', at: [100, 146, 18], size: [26, 30, 16], color: '#ffe8bd' },
+          { shape: 'capsule', at: [84, 186, 4], size: [2, 8, 2], color: '#d97706' },
+          { shape: 'capsule', at: [116, 186, 4], size: [2, 8, 2], color: '#d97706' },
+        ],
+      },
+      nearArm: {
+        pivot: [126, 132, 10],
+        parts: [
+          { shape: 'sphere', at: [148, 128, 10], size: [24, 13, 8], rot: [0, 0, 20], color: '#fb923c' },
+          { shape: 'sphere', at: [146, 126, 15], size: [17, 9, 3], rot: [0, 0, 20], color: '#fdba74', noOutline: true },
+        ],
+      },
+      head: {
+        pivot: [100, 112, 0],
+        parts: [
+          { shape: 'sphere', at: [100, 80, 0], size: [42, 42, 38], color: '#f9852f' },
+          { shape: 'sphere', at: [84, 30, -8], size: [7, 18, 5], rot: [0, 0, -16], color: '#ef4444' },
+          { shape: 'sphere', at: [100, 26, -8], size: [7, 20, 5], color: '#eab308' },
+          { shape: 'sphere', at: [116, 30, -8], size: [7, 18, 5], rot: [0, 0, 16], color: '#3b82f6' },
+          { shape: 'sphere', at: [72, 94, 30], size: [8, 5, 1.2], rot: [0, -40, 0], color: '#fca5a5', flat: true, opacity: 0.5, noOutline: true },
+          { shape: 'sphere', at: [128, 94, 30], size: [8, 5, 1.2], rot: [0, 40, 0], color: '#fca5a5', flat: true, opacity: 0.5, noOutline: true },
+        ],
+      },
+    },
+    face: {
+      layer: 'head',
+      center: [100, 80, 0],
+      eyes: { z: 33, iris: '#3a2410' },
+      brows: { y: 58, z: 27 },
+      mouth: { x: 100, y: 100, z: 34, color: '#e0850e' },
+    },
+    shadow: 52,
+  },
   render({ emotion, intensity }) {
     const e = eyes(80, 120, 76, 11, 'smIris', emotion.squint * intensity, emotion.wide * intensity)
     const b = brows(80, 120, 58, emotion.brow, '#b45309')
@@ -937,6 +1375,47 @@ export const charkhi: CharacterSpec = {
     },
     body: { lean: { roll: 2 } },
   },
+  // Read off the layers below. No head: the face rides the torso, a 70×50
+  // body at (100, 122), 40 deep, with the windscreen standing 24 proud of its
+  // middle. The eyes on the windscreen sit at z≈39, the brows at z≈36 and the
+  // mouth on the bumper at z≈37. The wheels face the viewer, as drawn.
+  body3d: {
+    layers: {
+      torso: {
+        pivot: [100, 148, 0],
+        parts: [
+          { shape: 'sphere', at: [100, 122, 0], size: [70, 50, 40], color: '#e64a19' },
+          { shape: 'sphere', at: [100, 108, 24], size: [58, 44, 16], color: '#d6f0fc' },
+          { shape: 'cylinder', at: [62, 172, 8], size: [19, 10, 19], rot: [90, 0, 0], color: '#262626' },
+          { shape: 'cylinder', at: [138, 172, 8], size: [19, 10, 19], rot: [90, 0, 0], color: '#262626' },
+          { shape: 'cylinder', at: [62, 172, 9], size: [9, 10.5, 9], rot: [90, 0, 0], color: '#9aa0a6', noOutline: true },
+          { shape: 'cylinder', at: [138, 172, 9], size: [9, 10.5, 9], rot: [90, 0, 0], color: '#9aa0a6', noOutline: true },
+        ],
+      },
+      earL: {
+        pivot: [58, 80, -6],
+        parts: [
+          { shape: 'capsule', at: [51, 60, -6], size: [1.5, 40, 1.5], rot: [0, 0, -19], color: '#5a5f66' },
+          { shape: 'sphere', at: [44, 40, -6], size: [5, 5, 5], color: '#e64a19' },
+        ],
+      },
+      earR: {
+        pivot: [142, 80, -6],
+        parts: [
+          { shape: 'capsule', at: [149, 60, -6], size: [1.5, 40, 1.5], rot: [0, 0, 19], color: '#5a5f66' },
+          { shape: 'sphere', at: [156, 40, -6], size: [5, 5, 5], color: '#e64a19' },
+        ],
+      },
+    },
+    face: {
+      layer: 'torso',
+      center: [100, 122, 0],
+      eyes: { z: 39, iris: '#2e4a64' },
+      brows: { y: 84, z: 36 },
+      mouth: { x: 100, y: 140, z: 37, color: '#7a1f00' },
+    },
+    shadow: 56,
+  },
   render({ emotion, intensity }) {
     const e = eyes(76, 124, 104, 13, 'chIris', emotion.squint * intensity, emotion.wide * intensity)
     const b = brows(76, 124, 84, emotion.brow, '#2a2a2a')
@@ -1021,6 +1500,71 @@ export const robo: CharacterSpec = {
     happy: { ears: -8, arms: -8 },
     thinking: { headTilt: -6, ears: 6 },
     surprised: { ears: -16, arms: -10 },
+  },
+  // Read off the layers below. The head is a rounded box, so the face is a
+  // nearly flat screen: its centre is put far behind it (z −100), which keeps
+  // the features looking straight out. The screen's front is at z≈27, so the
+  // eyes, brows and mouth sit at z 28.
+  body3d: {
+    layers: {
+      farArm: {
+        pivot: [60, 122, -10],
+        parts: [
+          { shape: 'capsule', at: [52, 137, -10], size: [5, 24, 5], rot: [0, 0, 28], color: '#6366f1' },
+          { shape: 'torus', at: [44, 160, -10], size: [6, 2.2, 200], rot: [0, 0, 10], color: '#6366f1' },
+        ],
+      },
+      torso: {
+        pivot: [100, 162, 0],
+        parts: [
+          { shape: 'box', at: [100, 136, 0], size: [40, 28, 26], color: '#818cf8' },
+          { shape: 'box', at: [100, 101, -2], size: [10, 11, 8], color: '#4338ca' },
+          { shape: 'capsule', at: [100, 171, 0], size: [11, 38, 14], rot: [0, 0, 90], color: '#312e81' },
+          { shape: 'box', at: [100, 134, 26], size: [20, 14, 1.5], color: '#312e81' },
+          { shape: 'sphere', at: [100, 134, 28], size: [8, 8, 3], color: '#22d3ee' },
+          { shape: 'sphere', at: [60, 122, 0], size: [6, 6, 6], color: '#4338ca' },
+          { shape: 'sphere', at: [140, 122, 0], size: [6, 6, 6], color: '#4338ca' },
+        ],
+      },
+      nearArm: {
+        pivot: [140, 122, 10],
+        parts: [
+          { shape: 'capsule', at: [148, 137, 10], size: [5, 24, 5], rot: [0, 0, -28], color: '#818cf8' },
+          { shape: 'torus', at: [156, 160, 10], size: [6, 2.2, 200], rot: [0, 0, 10], color: '#818cf8' },
+        ],
+      },
+      earL: {
+        pivot: [82, 36, -2],
+        parts: [
+          { shape: 'capsule', at: [79, 27, -2], size: [1.75, 15, 1.75], rot: [0, 0, -18], color: '#4338ca' },
+          { shape: 'sphere', at: [76, 16, -2], size: [5.5, 5.5, 5.5], color: '#22d3ee' },
+        ],
+      },
+      earR: {
+        pivot: [118, 36, -2],
+        parts: [
+          { shape: 'capsule', at: [121, 27, -2], size: [1.75, 15, 1.75], rot: [0, 0, 18], color: '#4338ca' },
+          { shape: 'sphere', at: [124, 16, -2], size: [5.5, 5.5, 5.5], color: '#22d3ee' },
+        ],
+      },
+      head: {
+        pivot: [100, 102, 0],
+        parts: [
+          { shape: 'box', at: [100, 69, 0], size: [50, 33, 26], color: '#818cf8' },
+          { shape: 'box', at: [100, 69, 25], size: [40, 25, 2], color: '#e0f7fa' },
+          { shape: 'sphere', at: [48, 70, 0], size: [7, 7, 7], color: '#4338ca' },
+          { shape: 'sphere', at: [152, 70, 0], size: [7, 7, 7], color: '#4338ca' },
+        ],
+      },
+    },
+    face: {
+      layer: 'head',
+      center: [100, 69, -100],
+      eyes: { z: 28, iris: '#312e81' },
+      brows: { y: 52, z: 28 },
+      mouth: { x: 100, y: 86, z: 28, color: '#3730a3' },
+    },
+    shadow: 46,
   },
   render({ emotion, intensity }) {
     const e = eyes(80, 120, 68, 11, 'rbIris', emotion.squint * intensity, emotion.wide * intensity)

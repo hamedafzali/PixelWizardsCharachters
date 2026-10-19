@@ -254,7 +254,7 @@ export class MotionEngine {
         return c || null;
     }
     tick(dt, input, snap = false) {
-        const out = { poses: {}, faceX: 0, shade: 0, blink: false };
+        const out = { poses: {}, faceX: 0, shade: 0, blink: false, look: { x: 0, y: 0 }, yaw: { body: 0, head: 0 } };
         const add = (t, p) => {
             const cur = out.poses[t] ?? {};
             out.poses[t] = {
@@ -279,6 +279,7 @@ export class MotionEngine {
         if (a) {
             const gx = step(this.headX, input.gaze.x);
             const gy = step(this.headY, input.gaze.y);
+            out.look = { x: gx, y: gy };
             const head = { x: a.turn * gx, y: a.rise * gy, rot: a.pitch * gy + a.tilt * gx };
             if (input.has('head'))
                 add('head', head);
@@ -334,6 +335,7 @@ export class MotionEngine {
             const faceParent = input.has('head') ? 'head' : 'torso';
             out.faceX = (input.has('head') ? yh : yb) * (d.face - depthOf(faceParent)) * d.travel;
             out.shade = yb;
+            out.yaw = { body: yb, head: yh };
         }
         // --- secondary -------------------------------------------------------
         // Last, because the soft layers lag everything above them — including the

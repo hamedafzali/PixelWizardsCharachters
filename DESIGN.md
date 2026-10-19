@@ -327,3 +327,138 @@ transform, and a yaw back to 0 would not restore the gradients verbatim.
 **Gradient ids are namespaced per rig.** The shading moves a radial gradient's
 `cx`. Before 1.5, two rigs of the same character on one page shared gradient
 ids, so turning one would have shaded the other.
+
+## The three.js renderer: same data, real rotation
+
+`src/three/` is a second renderer, not a second rig. `ActorModel` runs the SVG
+rig's driver loop: the frame interpolator, micro-motion, gait driver, posture
+presets, gesture planner and motion engine. Only the output changes. A pose is
+`{x, y, rot, sx, sy}` in art space, and it becomes a group's position (y
+negated), rotation about z (negated, since SVG rotates clockwise) and scale.
+Depth scale follows `sx`, so a squash keeps its volume from the side.
+
+The tree nests exactly as the SVG layers do, and it is built from
+`parentOf`, the same statement of the hierarchy the motion engine uses. Each
+group sits at its layer's pivot. That is the rule that makes posture
+portable in 2D, and it carries over unchanged: `headDrop: 5` turns the 3D head
+around the same neck point as the 2D one.
+
+The engine draws a turn in 2D with a head slide (`attention.turn`, `pitch`)
+and layer parallax (`depth.travel`). In 3D those would double the real turn.
+`MOTION_3D` zeroes them, and it is applied after every other settings level,
+so no caller can bring them back. The model then reads the engine's spring
+state (`look`, `yaw`) as rotation. The springs, follow and lag stay exactly as
+tuned.
+
+Things the SVG rig does in CSS are data here. The mood animations
+(`MOOD_POSES`) and the fallback body bob (`LOCO_FALLBACK_POSES`) are read off
+the `@keyframes`. They are sampled with `samplePhase`, which shapes each
+segment with a smoothstep instead of CSS's easing curve, the same documented
+limit `sampleAction` has.
+
+**Known gap:** a CSS gesture animation replaces the layer's inline transform,
+but a 3D gesture composes with posture and gait. Composing is what the engine's
+`basePose` already assumes, so in 3D the springs and the visible pose agree.
+
+### The skin: the drawing, inflated
+
+Primitives can stand in for a character but cannot look like one. The 2D
+art's quality is in its gradients, stripes, tufts and blush, and remaking each
+of those in 3D would mean authoring every character twice. So the 3D surface
+*is* the 2D art. `skinModel` rasterises each layer's own SVG and builds a
+closed solid from the picture's silhouette. Its half-thickness at each point
+is a quarter ellipse of the distance from the outline (an exact Euclidean
+distance transform on a half-unit grid), `puff × R` deep in the middle. A
+round outline becomes an ellipsoid, thin strokes stay thin, and there is no
+per-character input.
+
+A first version inflated each layer as a pillow and stacked the pillows by
+paint order. It matched the drawing face on, but fell apart when turned. The
+stacking pushed the head 25 units in front of the body. The pillows met in a
+lens-shaped crease, and the alpha-cut rim showed white seams from the side.
+Every choice below comes from that failure:
+
+- **The outline is geometry.** The grid is clipped along the silhouette
+  (marching triangles). Each outline vertex is moved onto the art's own
+  half-alpha line, and the art also decides which side of the outline each
+  grid point is on. The front and its mirrored back share those vertices, so
+  the solid is watertight and needs no alpha cut, so there are no seams from
+  any side. A test checks a traced circle to within 0.03 units, and that every
+  edge has its twin.
+- **It stands vertical at the rim.** The profile has no slope cap, and the
+  rim normals are horizontal, so the halves meet without a crease and the
+  silhouette from the side is a body's, not a lens's.
+- **Each solid sits at its `body3d` depth.** That is the authored truth for
+  where a part is in z. The head turns about its own middle, and side on the
+  parts keep the body's proportions.
+- **Paint order is a depth bias, not a position.** A drawing is not a
+  consistent 3D object, so face on, the solids interpenetrate where the 2D art
+  overlaps. `paintBias` works out how far each layer would have to move for
+  its paint order to hold (the torso is the anchor, as before). The shader
+  shifts only the depth test by that amount, scaled by how much the layer
+  faces the camera. Face on, the drawing's order wins. Side on and from
+  behind, the plain geometry decides. The face rig shares the head's bias, or
+  the biased head would hide its own eyes.
+- **Sides and back are fur, not smeared art.** The art is projected straight
+  through, which is exact face on but smears where the surface turns away.
+  Each layer also gets a *fur* texture: the colour on its outline, filled
+  smoothly over the layer (a relaxed membrane fill) and blurred. So a belly
+  patch or a face doesn't wrap round to the back. The front fades to fur
+  where its normal leans away from z, by as much as the layer is turned from
+  the camera. Face on, it is all art.
+- **The fur skips the marks.** A stripe, tuft or eye disc that touches the
+  outline would be dragged round the back as a streak. `dropMarks` fits a
+  smooth colour field (a quadratic in x and y, by reweighted least squares)
+  to the outline and unholds the pixels more than 45 off it. It is a field,
+  not one colour, because a body's outline runs from its dark foot to its
+  highlight: a single median marked 66% of روزی's head. Marks are a minority,
+  so a layer that would lose more than a third is left alone as two-toned
+  (سیمرغ's crest, چرخی's windscreen).
+- **The fur darkens toward the silhouette.** The drawing's edges are dark
+  in the art, so face on nothing is added. Turned, the fur takes over there,
+  and it shades by how far its normal is from the view, so a turned arm stays
+  apart from the body behind it.
+- **Colour bled past the outline**, uploaded as unpremultiplied `ImageData`,
+  so filtering and mips never mix in black.
+
+`ThreeActor` hides the model until its skin is on. Otherwise the stand-in
+primitives show while the skin builds (160 ms for روزی), then pop.
+
+Rasterising uses `willReadFrequently` canvases. GPU-backed ones made every
+readback stall, and the skin took 2.7 s instead of 160 ms.
+
+The face is the exception, because it animates. The head is rasterised
+without `.eyeG`, `.browsG` and `#mouthG`, and the 3D face rig sits on the
+inflated surface instead, oriented along its normal. It is restyled to the 2D
+face's flat colours. The iris is clipped to the white of the eye with a
+stencil, as the SVG clips it with a `clipPath`.
+
+Two characters showed where inflation alone is not enough, and each fix is a
+per-layer setting, not a special case:
+
+- **`depth`** sets the solid's half-thickness at its deepest point, and the
+  whole profile is scaled to match. Inflation guesses depth from the outline's
+  width, so a shell drawn edge on from above (لاکی) came out as a thin lens
+  side on. `depth: 46` makes it the dome it is.
+- **`back`** is art added only to the fur raster. The fur takes its colour
+  from the outline, and آوا's face meets her outline at the chin and cheeks,
+  so the back of her head was skin. A hair circle in `back` makes it hair,
+  and the front is still exactly the drawing.
+
+A beak is not a pair of lips. When the neutral `render()` reports
+`mouth.beak`, the face rig builds two cone mandibles instead of the lip
+meshes. The lower one grows down from a fixed top edge, by the same opening
+`drawMouth` uses (`1.5 + 14 × o`, zero when closed), scaled by the same width,
+so the 3D beak never opens further or narrower than the 2D one. A test parses
+the 2D path for every viseme and checks both edges and the tongue.
+
+**Known gaps:** the back and sides are the outline's colour, not a drawn back,
+so a pattern that only shows face on (stripes, a tuft) softens round the
+side. The bias is checked by screenshot, not by test, because it lives in the
+shader. Layer
+art is rendered once at neutral, which is correct today because no
+character's layer art varies with emotion (only the face does). Side on, the
+eye discs stand slightly proud of the head's near edge, and a body inflated
+from its front view is thinner side on than a sculpted one would be. چرخی's
+windscreen is on its outline, so the back of its top is white.
+

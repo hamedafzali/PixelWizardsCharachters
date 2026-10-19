@@ -1,4 +1,5 @@
-import type { EmotionName, PostureMap, PostureSpec } from './types.js'
+import type { EmotionName, LayerName, PostureMap, PostureSpec } from './types.js'
+import type { Pose } from './timing.js'
 
 /**
  * The shared posture vocabulary — the body-shape half of each emotion.
@@ -51,4 +52,21 @@ export function resolvePosture(
   const out = { ...ZERO }
   for (const key of Object.keys(ZERO) as Array<keyof PostureSpec>) out[key] = merged[key] * k
   return out
+}
+
+/**
+ * Which layer each posture channel moves, and how — the one statement of the
+ * mapping, shared by the SVG rig and the three.js model so a posture means the
+ * same pose in both. Ears mirror: positive `ears` droops both outward and down.
+ */
+export function posturePoses(p: Required<PostureSpec>): Partial<Record<LayerName, Pose>> {
+  return {
+    torso: { y: p.sink, rot: p.spine },
+    head: { y: p.headDrop, rot: p.headTilt },
+    earL: { rot: -p.ears },
+    earR: { rot: p.ears },
+    tail: { rot: p.tail },
+    farArm: { rot: p.arms },
+    nearArm: { rot: -p.arms },
+  }
 }
