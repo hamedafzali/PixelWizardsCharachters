@@ -18,6 +18,33 @@
   - the `onFallback(error)` option, called once on fallback;
   - the `fallback: false` option, which restores the throw and leaves the
     host empty.
+- **`frame.character` switches the character (PW-01).** It used to be
+  ignored, so a driver sending frames as JSON had no way to change characters.
+  `apply({ character: 'ava' })` now does what `setCharacter(CHARACTERS.ava)`
+  does, in `ActorRig`, `ActorModel` and `ThreeActor`. An unknown name is
+  reported through `onInvalidFrame` (new channel `'character'`) and the current
+  character stays. A custom spec that is not in `CHARACTERS` is still switched
+  to with `setCharacter`.
+- **Gestures play while rolling (PW-02).** All ten were refused during `roll`,
+  the only gait of چرخی and ربو. `roll` now follows the `fly` rule: everything
+  plays except `jump`, `bounce` and `clap`, which need footing.
+- **Bad numbers are reported instead of zeroed (PW-09).** `intensity: 'high'`,
+  `mouthOpen: NaN` or `gaze: 'left'` used to become 0 silently, so the
+  character went flat. `sanitizeFrame` now reports a value that is not a finite
+  number (channels `intensity`, `mouthOpen`, `browRaise`, `speed`, `yaw`,
+  `gaze`) and keeps the current value. A finite number out of range is still
+  clamped, without a report.
+- **`destroy()` cancels every timer (PW-11).** The gesture-end, blink-reopen
+  and double-blink timers ran on after it and kept the rig alive until they
+  fired.
+- **Reduced motion is followed after mount (PW-15).** Under
+  `reducedMotion: 'auto'`, `ActorRig` and `ThreeActor` used to read the OS
+  setting once. They now follow changes. New: `ActorModel.setReducedMotion(on)`.
+- **No duplicate ids (PW-16).** Two rigs of one character put identical eye
+  clip-path ids and two `id="mouthG"` in the page. A mounted rig now gives
+  every id its own suffix. **If you query the mouth group of a mounted rig,
+  use `.mouthG`**: its id is now unique per rig. Static renders keep
+  `id="mouthG"` and gain the class.
 
 **Tooling and docs**
 
@@ -31,12 +58,12 @@
   because the repo uses npm (`package-lock.json`).
 - Doc fixes:
   - the README now lists `roll` and `nuzzle`;
-  - which gestures play while rolling: none, for now;
   - what the static SVG render includes;
-  - `frame.character` does not switch the drawing;
   - the PetDriver example now defines `toArtSpace`, mirrors the pointer when
     the character faces left, and plays gestures with `playGesture`;
   - CONTRIBUTING has the current bundle sizes.
+- The mutation catalogue's M37 points at `src/locomotion.ts`, where
+  `LOCO_FALLBACK_POSES` moved in 1.6.0; it had stopped applying.
 
 ## 1.6.0
 

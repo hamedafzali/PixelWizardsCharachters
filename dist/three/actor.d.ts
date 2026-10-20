@@ -16,7 +16,7 @@ import { type SkinOptions } from './skin.js';
 export interface ThreeActorOptions extends Omit<ActorModelOptions, 'reducedMotion'> {
     /** canvas size in CSS pixels, square; default 240 */
     size?: number;
-    /** `'auto'` (default) reads `prefers-reduced-motion` at mount */
+    /** `'auto'` (default) follows `prefers-reduced-motion`, including changes after mount */
     reducedMotion?: boolean | 'auto';
     /** scene background; default transparent */
     background?: string | null;
@@ -53,6 +53,8 @@ export declare class ThreeActor {
     private early;
     /** bumped per build, so a skin still loading for a replaced model is dropped */
     private generation;
+    /** stops following the OS reduced-motion setting */
+    private unwatchReduced;
     constructor(spec: CharacterSpec, opts?: ThreeActorOptions);
     /**
      * Create the canvas inside `host` and start the loop — or, with no WebGL,

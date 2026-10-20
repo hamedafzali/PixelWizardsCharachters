@@ -327,7 +327,7 @@ test('rig: a yaw slides the layers, the face and the shading — and 0 restores 
     assert.ok(translateX(t.tx('.lyr-nearArm')) > 1)
     assert.ok(translateX(t.tx('.lyr-farArm')) < -1)
     assert.match(t.svg().querySelector('.eyeG').getAttribute('transform'), /^translate\(\d/)
-    assert.match(t.tx('#mouthG'), /^translate\(\d/)
+    assert.match(t.tx('.mouthG'), /^translate\(\d/)
     assert.notEqual(grad.getAttribute('cx'), cx0)
     t.rig.apply({ yaw: 0 })
     t.advance(4000)
@@ -336,7 +336,7 @@ test('rig: a yaw slides the layers, the face and the shading — and 0 restores 
   } finally { t.restore() }
 })
 
-test('rig: gradient ids are per rig, and every reference resolves', () => {
+test('rig: ids are per rig, and every reference resolves', () => {
   const dom = setupDom()
   try {
     const a = document.createElement('div')
@@ -344,12 +344,15 @@ test('rig: gradient ids are per rig, and every reference resolves', () => {
     dom.host.append(a, b)
     new ActorRig(CHARACTERS.roozi, { blink: false }).mount(a)
     new ActorRig(CHARACTERS.roozi, { blink: false }).mount(b)
-    const ids = [...dom.host.querySelectorAll('defs [id]')].map((e) => e.id)
-    assert.equal(new Set(ids).size, ids.length, 'two rigs of one character must not share an id')
+    // Every id, not only the gradients: the eye clips and the mouth group were
+    // duplicated too up to 1.6.0 (PW-16).
+    const ids = [...dom.host.querySelectorAll('[id]')].map((e) => e.id)
+    assert.ok(ids.some((id) => id.startsWith('cl')), 'the eye clips are in the count')
+    assert.equal(new Set(ids).size, ids.length, `two rigs of one character must not share an id: ${ids}`)
     for (const m of dom.host.innerHTML.matchAll(/url\(#([^)]+)\)/g)) {
       assert.ok(dom.host.querySelector(`[id="${m[1]}"]`), `url(#${m[1]}) points at nothing`)
     }
-    assert.ok(dom.host.querySelector('#mouthG'), '#mouthG is not a gradient and keeps its name')
+    assert.equal(dom.host.querySelectorAll('.mouthG').length, 2, 'each rig finds its mouth by class')
   } finally { dom.restore() }
 })
 

@@ -10,7 +10,8 @@
  * same calls go to an `ActorRig` in the same host.
  */
 import * as THREE from 'three';
-import { ActorRig } from '../rig.js';
+import { ActorRig, watchReducedMotion } from '../rig.js';
+import { knownCharacter } from '../validate.js';
 import { ActorModel } from './model.js';
 import { skinModel } from './skin.js';
 /** The camera frames the 200×200 art box, as the SVG viewBox does. */
@@ -32,6 +33,8 @@ export class ThreeActor {
         this.early = {};
         /** bumped per build, so a skin still loading for a replaced model is dropped */
         this.generation = 0;
+        /** stops following the OS reduced-motion setting */
+        this.unwatchReduced = null;
         this.spec = spec;
         this.opts = { size: 240, maxPixelRatio: 2, background: null, ...opts };
         // A long lens and a far camera: close to the SVG's flat projection, so the
@@ -72,6 +75,8 @@ export class ThreeActor {
         const rm = this.opts.reducedMotion ?? 'auto';
         const reduced = rm === 'auto' ? prefersReducedMotion() : rm;
         this.model = new ActorModel(this.spec, { ...this.opts, reducedMotion: reduced });
+        if (rm === 'auto')
+            this.unwatchReduced = watchReducedMotion((on) => this.model?.setReducedMotion(on));
         this.scene.add(this.model.object);
         if (Object.keys(this.early).length)
             this.model.apply(this.early);
@@ -130,6 +135,12 @@ export class ThreeActor {
         return this.svgRig?.motion ?? this.model?.motion ?? null;
     }
     apply(frame) {
+        // A switch goes through `setCharacter` here, not only in the renderer
+        // below, so the 3D model is re-skinned and `spec` stays the one a later
+        // fallback mounts. An unknown name passes through and is reported there.
+        const spec = frame.character !== this.spec.slug ? knownCharacter(frame.character) : null;
+        if (spec)
+            this.setCharacter(spec);
         if (this.svgRig)
             this.svgRig.apply(frame);
         else if (this.model)
@@ -189,6 +200,8 @@ export class ThreeActor {
     }
     /** Stop the loop, free GPU resources and remove the canvas. */
     destroy() {
+        this.unwatchReduced?.();
+        this.unwatchReduced = null;
         if (this.raf !== null)
             cancelAnimationFrame(this.raf);
         this.raf = null;

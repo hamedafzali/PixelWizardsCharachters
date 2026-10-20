@@ -1,5 +1,12 @@
+import { LOCOMOTIONS } from './types.js';
 import { GAITS } from './locomotion.js';
-const ALL_LOCO = ['idle', 'walk', 'fly'];
+const ALL_LOCO = LOCOMOTIONS;
+// Footing means standing on the ground, not travelling over it. Up to 1.6.0
+// `roll` was in neither list, so the two characters whose only gait it is
+// could not gesture while moving at all (PW-02). It now sits with `fly`: the
+// roll gait drives only `root` and `torso`, which no gesture touches, but a
+// body on moving wheels has nothing to push off for a jump or a bounce and
+// nothing to brace a two-handed clap against.
 const GROUNDED = ['idle', 'walk'];
 /** Mirror an arm action onto the opposite arm: same motion, opposite sign. */
 const mirrorRot = (a) => ({

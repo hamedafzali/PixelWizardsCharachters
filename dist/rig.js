@@ -10,7 +10,7 @@ import { FrameInterpolator } from './interpolate.js';
 import { LocomotionDriver, LOCO_TARGETS, LOCO_FALLBACK_POSES, drivesGait, wrapPhase, samplePhase, } from './locomotion.js';
 import { planGesture } from './gestures.js';
 import { VISEMES, textToVisemes } from './visemes.js';
-import { sanitizeFrame, isKnownGesture } from './validate.js';
+import { sanitizeFrame, isKnownGesture, knownCharacter } from './validate.js';
 import { MotionEngine, resolveMotion } from './motion.js';
 /**
  * CSS the rig needs.
@@ -125,17 +125,18 @@ function ensureCSS(root) {
 }
 let rigSeq = 0;
 /**
- * Give every gradient id this rig's own suffix, and every reference to it.
+ * Give every id this rig's own suffix, and every reference to it.
  *
- * Gradient ids are authored per character (`fxH`, `avS`), so two rigs showing
- * the same character put two identical ids in one document, and `url(#fxH)`
- * resolves to whichever came first — harmless while both were identical, wrong
- * the moment depth shading moves one of them. Only ids declared inside
- * `<defs>` are touched, so `#mouthG` keeps its name.
+ * Ids are authored per character (`fxH`, `avS`, `mouthG`) or derived from eye
+ * geometry (`cl84_82`), so two rigs showing the same character put two
+ * identical ids in one document, and `url(#fxH)` resolves to whichever came
+ * first — harmless while both were identical, wrong the moment depth shading
+ * moves one of them. Up to 1.6.0 only the gradients in `<defs>` were renamed,
+ * which left the eye clips and `#mouthG` duplicated (PW-16). The mouth is
+ * found by its `.mouthG` class instead.
  */
 function namespaceIds(html, suffix) {
-    const defs = /<defs>([\s\S]*?)<\/defs>/.exec(html)?.[1] ?? '';
-    for (const m of defs.matchAll(/\sid="([^"]+)"/g)) {
+    for (const m of html.matchAll(/\sid="([^"]+)"/g)) {
         const id = m[1];
         const to = `${id}-${suffix}`;
         html = html
@@ -160,7 +161,27 @@ function gestureTarget(cls) {
 function prefersReducedMotion() {
     return typeof window !== 'undefined' &&
         typeof window.matchMedia === 'function' &&
-        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        window.matchMedia(REDUCED_QUERY).matches;
+}
+const REDUCED_QUERY = '(prefers-reduced-motion: reduce)';
+/**
+ * Follow the OS setting after mount. Up to 1.6.0 it was read once, so turning
+ * reduced motion on mid-session changed nothing until a remount (PW-15). The
+ * CSS half already followed the media query live; this is for the JS half.
+ * Returns the unsubscribe, or `null` where there is no `matchMedia`.
+ */
+export function watchReducedMotion(onChange) {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function')
+        return null;
+    const mq = window.matchMedia(REDUCED_QUERY);
+    const listener = (e) => onChange(e.matches);
+    if (typeof mq.addEventListener === 'function') {
+        mq.addEventListener('change', listener);
+        return () => mq.removeEventListener('change', listener);
+    }
+    // Safari before 14 has only the older pair.
+    mq.addListener(listener);
+    return () => mq.removeListener(listener);
 }
 /**
  * A live character puppet bound to a DOM element. Render once, then feed it
@@ -183,6 +204,8 @@ export class ActorRig {
         this.layers = {};
         this.blinkTimer = null;
         this.speakTimer = null;
+        /** one-shot timers (gesture end, blink reopen, double blink); see {@link later} */
+        this.timers = new Set();
         this.lastArtKey = '';
         /** per target, per source — composed into one transform each tick */
         this.contrib = new Map();
@@ -196,6 +219,8 @@ export class ActorRig {
         this.raf = null;
         this.lastTick = 0;
         this.reduced = false;
+        /** stops following the OS reduced-motion setting; see {@link watchReducedMotion} */
+        this.unwatchReduced = null;
         /** a pinned gait phase, or null to let the cycle run; see {@link pinGaitPhase} */
         this.pinnedPhase = null;
         /** CSS gestures in flight — invisible to JS otherwise; see {@link basePose} */
@@ -260,7 +285,41 @@ export class ActorRig {
             this.scheduleBlink();
         if (!this.reduced)
             this.startLoop();
+        if (rm === 'auto')
+            this.unwatchReduced = watchReducedMotion((on) => this.setReduced(on));
         return this;
+    }
+    /**
+     * The OS setting changed while mounted. Turning reduced motion on lands
+     * everything and stops the loop and blinks, leaving the rig as it would be
+     * had it been mounted that way; turning it off starts them again.
+     */
+    setReduced(on) {
+        if (on === this.reduced || !this.host)
+            return;
+        this.reduced = on;
+        this.svg?.classList.toggle('ca-reduced', on);
+        if (on) {
+            if (this.blinkTimer)
+                clearTimeout(this.blinkTimer);
+            this.blinkTimer = null;
+            if (this.raf !== null)
+                cancelAnimationFrame(this.raf);
+            this.raf = null;
+            // What the loop wrote and nothing else will clear: a reduced-motion
+            // mount never runs micro-motion or the gait driver at all.
+            for (const bucket of this.contrib.values()) {
+                bucket.delete('micro');
+                bucket.delete('loco');
+            }
+            this.saccade = { x: 0, y: 0 };
+            this.finish();
+        }
+        else {
+            if (this.opts.blink)
+                this.scheduleBlink();
+            this.startLoop();
+        }
     }
     /**
      * One animation loop for every procedural channel. Idle micro-motion writes
@@ -328,7 +387,11 @@ export class ActorRig {
                 el.style.transform = poseToTransform(composePoses(sources.values()));
         }
     }
-    /** Swap to a different character (keeps the current frame's behaviour). */
+    /**
+     * Swap to a different character (keeps the current frame's behaviour).
+     * `apply({ character: slug })` does the same for a built-in character; this
+     * is the way to switch to a custom spec.
+     */
     setCharacter(spec) {
         this.spec = spec;
         this.engine.settings = resolveMotion(spec.motion, this.opts.motion, this.motionOverrides);
@@ -482,7 +545,7 @@ export class ActorRig {
         ensureCSS(styleRootOf(this.svg));
         this.svg.classList.add('ca-svg');
         this.svg.classList.toggle('ca-reduced', this.reduced);
-        this.mouthG = this.svg.querySelector('#mouthG');
+        this.mouthG = this.svg.querySelector('.mouthG');
         this.irises = Array.from(this.svg.querySelectorAll('.iris'));
         this.lidsLo = Array.from(this.svg.querySelectorAll('.lidLo'));
         this.eyeGs = Array.from(this.svg.querySelectorAll('.eyeG'));
@@ -609,7 +672,20 @@ export class ActorRig {
         // Before anything else: a name the library does not have would otherwise
         // reach a lookup deep in render() and throw there, losing the whole
         // performance to one bad word.
-        this.interp.target(sanitizeFrame(frame, this.frame, this.opts.onInvalidFrame));
+        let clean = sanitizeFrame(frame, this.frame, this.opts.onInvalidFrame);
+        // A frame that names another character switches to it (PW-01) — a driver
+        // that serialises frames has no other way to ask. An unknown name keeps
+        // the current character, like every other channel.
+        if (clean.character !== undefined && clean.character !== this.spec.slug) {
+            const spec = knownCharacter(clean.character);
+            if (spec)
+                this.setCharacter(spec);
+            else {
+                this.opts.onInvalidFrame?.({ channel: 'character', value: clean.character, kept: this.spec.slug });
+                clean = { ...clean, character: this.spec.slug };
+            }
+        }
+        this.interp.target(clean);
         if (this.interp.settling)
             this.settledFired = false;
         if (this.reduced || this.raf === null)
@@ -901,7 +977,7 @@ export class ActorRig {
         }
         if (!started.length)
             return;
-        window.setTimeout(() => {
+        this.later(() => {
             for (const { el, animation } of started) {
                 if (el.style.animation === animation)
                     el.style.animation = '';
@@ -1044,7 +1120,7 @@ export class ActorRig {
         this.blinkTimer = setTimeout(() => {
             this.blink();
             if (Math.random() < s.doubleChance) {
-                window.setTimeout(() => this.blink(), s.dur * 1000 + 90);
+                this.later(() => this.blink(), s.dur * 1000 + 90);
             }
             this.scheduleBlink();
         }, delay);
@@ -1054,17 +1130,34 @@ export class ActorRig {
         const dur = blinkStyle(this.frame.emotion).dur * 1000;
         for (const l of this.lids)
             l.classList.add('shut');
-        window.setTimeout(() => {
+        this.later(() => {
             for (const l of this.lids)
                 l.classList.remove('shut');
         }, dur);
     }
+    /**
+     * A one-shot timer that `destroy()` cancels. Up to 1.6.0 these three ran on
+     * after it (PW-11): harmless to the DOM, but each one kept a destroyed rig
+     * alive until it fired.
+     */
+    later(fn, ms) {
+        const id = window.setTimeout(() => {
+            this.timers.delete(id);
+            fn();
+        }, ms);
+        this.timers.add(id);
+    }
     /** Stop timers and detach. */
     destroy() {
+        this.unwatchReduced?.();
+        this.unwatchReduced = null;
         if (this.blinkTimer)
             clearTimeout(this.blinkTimer);
         if (this.speakTimer)
             clearTimeout(this.speakTimer);
+        for (const id of this.timers)
+            window.clearTimeout(id);
+        this.timers.clear();
         if (this.raf !== null)
             cancelAnimationFrame(this.raf);
         this.raf = null;

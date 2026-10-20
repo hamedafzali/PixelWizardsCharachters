@@ -13,14 +13,15 @@
 import * as THREE from 'three'
 import type { ActorFrame, CharacterSpec, Gesture } from '../types.js'
 import type { MotionOverrides, MotionSettings } from '../motion.js'
-import { ActorRig } from '../rig.js'
+import { ActorRig, watchReducedMotion } from '../rig.js'
+import { knownCharacter } from '../validate.js'
 import { ActorModel, type ActorModelOptions } from './model.js'
 import { skinModel, type SkinOptions } from './skin.js'
 
 export interface ThreeActorOptions extends Omit<ActorModelOptions, 'reducedMotion'> {
   /** canvas size in CSS pixels, square; default 240 */
   size?: number
-  /** `'auto'` (default) reads `prefers-reduced-motion` at mount */
+  /** `'auto'` (default) follows `prefers-reduced-motion`, including changes after mount */
   reducedMotion?: boolean | 'auto'
   /** scene background; default transparent */
   background?: string | null
@@ -65,6 +66,8 @@ export class ThreeActor {
   private early: Partial<ActorFrame> = {}
   /** bumped per build, so a skin still loading for a replaced model is dropped */
   private generation = 0
+  /** stops following the OS reduced-motion setting */
+  private unwatchReduced: (() => void) | null = null
 
   constructor(spec: CharacterSpec, opts: ThreeActorOptions = {}) {
     this.spec = spec
@@ -108,6 +111,7 @@ export class ThreeActor {
     const rm = this.opts.reducedMotion ?? 'auto'
     const reduced = rm === 'auto' ? prefersReducedMotion() : rm
     this.model = new ActorModel(this.spec, { ...this.opts, reducedMotion: reduced })
+    if (rm === 'auto') this.unwatchReduced = watchReducedMotion((on) => this.model?.setReducedMotion(on))
     this.scene.add(this.model.object)
     if (Object.keys(this.early).length) this.model.apply(this.early)
     this.early = {}
@@ -172,6 +176,11 @@ export class ThreeActor {
   }
 
   apply(frame: Partial<ActorFrame>): void {
+    // A switch goes through `setCharacter` here, not only in the renderer
+    // below, so the 3D model is re-skinned and `spec` stays the one a later
+    // fallback mounts. An unknown name passes through and is reported there.
+    const spec = frame.character !== this.spec.slug ? knownCharacter(frame.character) : null
+    if (spec) this.setCharacter(spec)
     if (this.svgRig) this.svgRig.apply(frame)
     else if (this.model) this.model.apply(frame)
     else Object.assign(this.early, frame)
@@ -235,6 +244,8 @@ export class ThreeActor {
 
   /** Stop the loop, free GPU resources and remove the canvas. */
   destroy(): void {
+    this.unwatchReduced?.()
+    this.unwatchReduced = null
     if (this.raf !== null) cancelAnimationFrame(this.raf)
     this.raf = null
     this.generation++

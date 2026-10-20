@@ -166,7 +166,8 @@ export function renderActorSVG(
 
   const body =
     `${shadow}<g class="rig-root"><g class="rig-body"><g class="rig-mood">${inner}</g></g></g>`
-  const mounted = body.replace('<g id="mouthG"></g>', `<g id="mouthG">${mouthMarkup}</g>`)
+  // The class is what a mounted rig finds it by: there the id is made unique.
+  const mounted = body.replace('<g id="mouthG"></g>', `<g id="mouthG" class="mouthG">${mouthMarkup}</g>`)
   const flip = frame.facing === 'left' ? ' transform="scale(-1,1) translate(-200,0)"' : ''
   return (
     `<svg width="${size}" height="${size}" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" ` +

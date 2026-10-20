@@ -389,7 +389,7 @@ export default [
   {
     id: 'M37',
     note: 'LOCO_FALLBACK_POSES loses a distinct keyframe (25% collapses onto 0%), so a reduced-motion scrub stops moving between phases',
-    file: 'src/rig.ts',
+    file: 'src/locomotion.ts',
     tests: REDUCED,
     mutate: replace(
       "{ at: 0.25, pose: { y: -4, rot: 0 } },",

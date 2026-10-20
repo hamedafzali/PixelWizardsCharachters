@@ -85,7 +85,7 @@ each category needs from the rig, and what — so far — it hasn't.
 
 ```ts
 interface ActorFrame {
-  character: string          // slug, e.g. "roozi" — informational; see below
+  character: string          // slug, e.g. "roozi" — switches character; see below
   emotion: EmotionName
   intensity: number          // 0..1 — scales brows, squint/widen and body tempo
   viseme: VisemeName         // the mouth shape; 'rest' when not speaking
@@ -107,9 +107,16 @@ the current one, so you only send what changes:
 rig.apply({ emotion: 'sad' })
 ```
 
-`character` does not switch the drawing: the rig keeps the spec it was built
-with. Change characters with `rig.setCharacter(CHARACTERS.ava)`, or the
-`character` prop in React.
+A frame that names a different built-in character switches to it, so
+`rig.apply({ character: 'ava' })` and `rig.setCharacter(CHARACTERS.ava)` do the
+same thing. An unknown name is reported through `onInvalidFrame` and the
+current character stays. A custom `CharacterSpec` that is not in `CHARACTERS`
+can only be switched to with `setCharacter`. In React, use the `character`
+prop.
+
+Numbers are checked too: a value that is not a finite number (`intensity:
+'high'`, `mouthOpen: NaN`) is reported and the current value kept. A finite
+number outside its range is clamped.
 
 **Emotions** — `neutral` `happy` `excited` `thinking` `encouraging` `sad`
 `surprised` `sleepy` `love` `confused` `proud` `shy`
@@ -138,8 +145,7 @@ one of two ways:
   `onGestureBlocked` callback tells you why.
 
 `jump`, `bounce` and `clap` need footing (`idle` or `walk`); everything else
-also plays while flying. No gesture plays during `roll` yet. To check before
-offering a button:
+also plays while flying or rolling. To check before offering a button:
 
 ```ts
 import { planGesture, GESTURE_DURING } from 'pixel-wizards-charachters'
@@ -417,12 +423,15 @@ React `setState`. It fires once, when every channel has arrived.
 
 ## Accessibility: reduced motion
 
-`ActorRig` reads `prefers-reduced-motion` once, in `mount()`. `RigOptions.reducedMotion`
+`ActorRig` and `ThreeActor` follow `prefers-reduced-motion`, including a change
+made while they are mounted: turning it on lands everything at once and stops
+the loop and blinks, and turning it off starts them again. `RigOptions.reducedMotion`
 (`'auto'` | `boolean`, default `'auto'`) overrides it — `true`/`false` force the
 rig into or out of reduced motion regardless of the OS, for a consumer app's
 own accessibility setting or for a test that wants reduced motion without
-depending on the environment. Changing the option on an already-mounted rig
-has no effect, the same as the OS query always had none.
+depending on the environment. The option itself is read in `mount()`; changing
+it on an already-mounted rig has no effect. `ActorModel` on its own has
+`setReducedMotion(on)`.
 
 | under reduced motion | behaviour |
 | --- | --- |

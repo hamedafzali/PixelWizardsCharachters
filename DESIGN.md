@@ -27,7 +27,7 @@ this is a rendering upgrade only.
              ├ .lyr-nearLeg .lyr-nearArm
              └ .lyr-head          neck pivot
                 ├ .lyr-earL .lyr-earR
-                └ … head art, .browsG, #mouthG …
+                └ … head art, .browsG, .mouthG …
 ```
 
 Three transform carriers, not one, so locomotion / gesture / idle-mood compose

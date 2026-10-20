@@ -92,9 +92,10 @@ export interface RigOptions {
      * a consuming app's own accessibility setting, or for a test/demo that wants
      * to show reduced motion without depending on the environment's OS state.
      *
-     * Read once, in {@link ActorRig.mount}, the same as the OS query always was:
-     * changing this option on an already-mounted rig has no effect. See the
-     * README's accessibility section for what "reduced" means per feature.
+     * Read in {@link ActorRig.mount}: changing this option on an already-mounted
+     * rig has no effect. Under `'auto'` the rig keeps following the OS setting
+     * after mount. See the README's accessibility section for what "reduced"
+     * means per feature.
      */
     reducedMotion?: boolean | 'auto';
     /**
@@ -106,6 +107,13 @@ export interface RigOptions {
      */
     motion?: MotionOverrides;
 }
+/**
+ * Follow the OS setting after mount. Up to 1.6.0 it was read once, so turning
+ * reduced motion on mid-session changed nothing until a remount (PW-15). The
+ * CSS half already followed the media query live; this is for the JS half.
+ * Returns the unsubscribe, or `null` where there is no `matchMedia`.
+ */
+export declare function watchReducedMotion(onChange: (reduced: boolean) => void): (() => void) | null;
 /**
  * A live character puppet bound to a DOM element. Render once, then feed it
  * {@link ActorFrame}s (from an AI, a timeline, or UI controls) and it mutates
@@ -129,6 +137,8 @@ export declare class ActorRig {
     private layers;
     private blinkTimer;
     private speakTimer;
+    /** one-shot timers (gesture end, blink reopen, double blink); see {@link later} */
+    private timers;
     private lastArtKey;
     /** per target, per source — composed into one transform each tick */
     private contrib;
@@ -144,6 +154,8 @@ export declare class ActorRig {
     private raf;
     private lastTick;
     private reduced;
+    /** stops following the OS reduced-motion setting; see {@link watchReducedMotion} */
+    private unwatchReduced;
     /** a pinned gait phase, or null to let the cycle run; see {@link pinGaitPhase} */
     private pinnedPhase;
     private motionOverrides;
@@ -178,6 +190,12 @@ export declare class ActorRig {
     /** Mount into a host element and start the idle + blink loops. */
     mount(host: HTMLElement): this;
     /**
+     * The OS setting changed while mounted. Turning reduced motion on lands
+     * everything and stops the loop and blinks, leaving the rig as it would be
+     * had it been mounted that way; turning it off starts them again.
+     */
+    private setReduced;
+    /**
      * One animation loop for every procedural channel. Idle micro-motion writes
      * its contribution, then every dirty target is recomposed and written once —
      * so breathing and posture stack instead of overwriting each other.
@@ -191,7 +209,11 @@ export declare class ActorRig {
     private targetEl;
     /** Compose every target's sources and write the result. */
     private flushTransforms;
-    /** Swap to a different character (keeps the current frame's behaviour). */
+    /**
+     * Swap to a different character (keeps the current frame's behaviour).
+     * `apply({ character: slug })` does the same for a built-in character; this
+     * is the way to switch to a custom spec.
+     */
     setCharacter(spec: CharacterSpec): void;
     /**
      * Run the motion engine and stage its output as each target's `motion`
@@ -429,6 +451,12 @@ export declare class ActorRig {
     private scheduleBlink;
     /** One blink, held for as long as the current emotion's lids are heavy. */
     blink(): void;
+    /**
+     * A one-shot timer that `destroy()` cancels. Up to 1.6.0 these three ran on
+     * after it (PW-11): harmless to the DOM, but each one kept a destroyed rig
+     * alive until it fired.
+     */
+    private later;
     /** Stop timers and detach. */
     destroy(): void;
 }

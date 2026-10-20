@@ -1,4 +1,4 @@
-import type { Gesture, Locomotion } from './types.js';
+import { type Gesture, type Locomotion } from './types.js';
 import type { TimedAction } from './timing.js';
 import { type GaitName, type LocoTarget } from './locomotion.js';
 /**

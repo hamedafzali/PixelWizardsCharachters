@@ -29,7 +29,7 @@ import {
 } from '../locomotion.js'
 import { planGesture, type GesturePlan } from '../gestures.js'
 import { VISEMES, textToVisemes } from '../visemes.js'
-import { sanitizeFrame, isKnownGesture, type OnInvalidFrame } from '../validate.js'
+import { sanitizeFrame, isKnownGesture, knownCharacter, type OnInvalidFrame } from '../validate.js'
 import { MotionEngine, resolveMotion, type MotionOutput, type MotionOverrides, type MotionSettings, type MotionTarget } from '../motion.js'
 import { BROW_LINES, DEFAULT_TURN3D, type Turn3D } from '../body3d.js'
 import { buildModel, type BuiltModel } from './build.js'
@@ -180,6 +180,13 @@ export class ActorModel {
     return !!this.opts.reducedMotion
   }
 
+  /** Switch reduced motion after construction; turning it on lands everything now. */
+  setReducedMotion(on: boolean): void {
+    if (on === this.reduced) return
+    this.opts = { ...this.opts, reducedMotion: on }
+    if (on) this.finish()
+  }
+
   /** The motion-engine settings in effect, including the 3D overrides. */
   get motion(): MotionSettings {
     return this.engine.settings
@@ -207,7 +214,18 @@ export class ActorModel {
    * under reduced motion everything does.
    */
   apply(frame: Partial<ActorFrame>): void {
-    this.interp.target(sanitizeFrame(frame, this.frame, this.opts.onInvalidFrame))
+    let clean = sanitizeFrame(frame, this.frame, this.opts.onInvalidFrame)
+    // Same rule as `ActorRig.apply`: a known character switches, an unknown
+    // one is reported and the current one kept.
+    if (clean.character !== undefined && clean.character !== this.spec.slug) {
+      const spec = knownCharacter(clean.character)
+      if (spec) this.setCharacter(spec)
+      else {
+        this.opts.onInvalidFrame?.({ channel: 'character', value: clean.character, kept: this.spec.slug })
+        clean = { ...clean, character: this.spec.slug }
+      }
+    }
+    this.interp.target(clean)
     if (this.interp.settling) this.settledFired = false
     if (this.reduced) this.interp.finish()
     this.frame = this.interp.current

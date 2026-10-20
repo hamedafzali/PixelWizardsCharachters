@@ -90,6 +90,8 @@ export declare class ActorModel {
     get goal(): ActorFrame;
     get settling(): boolean;
     get reduced(): boolean;
+    /** Switch reduced motion after construction; turning it on lands everything now. */
+    setReducedMotion(on: boolean): void;
     /** The motion-engine settings in effect, including the 3D overrides. */
     get motion(): MotionSettings;
     private resolve;

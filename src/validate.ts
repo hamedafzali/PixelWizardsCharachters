@@ -26,7 +26,7 @@
  * caller installed one, and a driver that wants to be strict can throw from
  * inside it.
  *
- * Five channels are validated. Three of them (`emotion`, `viseme`, `gesture`)
+ * Five named channels are validated. Three of them (`emotion`, `viseme`, `gesture`)
  * are table lookups whose result is dereferenced immediately, and used to
  * throw. The other two (`locomotion`, `facing`) never threw and are here for
  * the opposite reason: an unknown value was **accepted, stored, and then
@@ -35,16 +35,25 @@
  * a line. They have no registry to interrogate, so `types.ts` exports the value
  * lists the unions are derived from, and they are checked against those.
  *
- * The numeric channels were measured for the same failure — `intensity:
- * 'high'`, `mouthOpen: null`, `gaze: null`, `speed: 'fast'` — and none of them
- * put a `NaN` into the DOM, so none of them are checked here.
+ * The numeric channels never threw either, and up to 1.6.0 they were not
+ * checked: `intensity: 'high'` or `mouthOpen: NaN` reached the interpolator,
+ * which turned anything non-finite into 0, so the character went flat and no
+ * one was told (PW-09). They are checked now, by the same policy as the names:
+ * a value that is not a finite number is reported and the current one kept. A
+ * finite number outside its range is not an error — the interpolator clamps it,
+ * as documented on `ActorFrame`.
+ *
+ * `character` is checked by the renderers rather than here, through
+ * {@link knownCharacter}: a rig may be showing a custom spec that is in no
+ * registry, and only the rig knows its own slug.
  */
 
 import { EMOTIONS } from './emotions.js'
 import { VISEMES } from './visemes.js'
 import { GESTURES } from './gestures.js'
+import { CHARACTERS } from './characters/index.js'
 import { LOCOMOTIONS, FACINGS } from './types.js'
-import type { ActorFrame } from './types.js'
+import type { ActorFrame, CharacterSpec } from './types.js'
 
 /**
  * Own-key test that does not go through the prototype chain.
@@ -70,6 +79,29 @@ export function isKnownGesture(g: unknown): boolean {
   return has(GESTURES, g)
 }
 
+/**
+ * The built-in character a frame's `character` names, or `null`.
+ *
+ * Shared by `ActorRig` and `ActorModel`, which both switch characters when a
+ * frame names a different one (PW-01), so the two cannot disagree about which
+ * names exist.
+ */
+export function knownCharacter(name: unknown): CharacterSpec | null {
+  return has(CHARACTERS, name) ? CHARACTERS[name as string]! : null
+}
+
+const finite = (v: unknown): boolean => typeof v === 'number' && Number.isFinite(v)
+
+/** The scalar numeric channels, and what a frame with nothing to keep falls back to. */
+const NUMBERS = { intensity: 0.7, mouthOpen: 0, browRaise: 0, speed: 1, yaw: 0 } as const
+
+/** A gaze is an object whose present axes are finite; either axis may be left out. */
+function validGaze(g: unknown): boolean {
+  if (typeof g !== 'object' || g === null) return false
+  const { x, y } = g as { x?: unknown; y?: unknown }
+  return (x === undefined || finite(x)) && (y === undefined || finite(y))
+}
+
 /** Membership in a list, for the two channels that have no registry. */
 function oneOf(values: readonly string[], name: unknown): boolean {
   return typeof name === 'string' && values.includes(name)
@@ -77,7 +109,9 @@ function oneOf(values: readonly string[], name: unknown): boolean {
 
 /** One channel of one frame that named something the library does not have. */
 export interface FrameIssue {
-  channel: 'emotion' | 'viseme' | 'gesture' | 'locomotion' | 'facing'
+  channel:
+    | 'emotion' | 'viseme' | 'gesture' | 'locomotion' | 'facing' | 'character'
+    | 'intensity' | 'mouthOpen' | 'browRaise' | 'speed' | 'yaw' | 'gaze'
   /** exactly what the caller passed, untouched — including its type */
   value: unknown
   /** what the rig used instead */
@@ -93,7 +127,7 @@ export interface FrameIssue {
 export type OnInvalidFrame = (issue: FrameIssue) => void
 
 /**
- * Return `frame` with any unknown emotion / viseme / gesture replaced.
+ * Return `frame` with any unknown name or non-numeric number replaced.
  *
  * The input is never mutated, and a clean frame is returned **by identity** —
  * `speak()` applies one frame per viseme, so the common path allocates nothing.
@@ -128,6 +162,14 @@ export function sanitizeFrame<T extends Partial<ActorFrame>>(
   }
   if (frame.facing !== undefined && !oneOf(FACINGS, frame.facing)) {
     fix('facing', frame.facing, current?.facing ?? 'right')
+  }
+  for (const c of Object.keys(NUMBERS) as (keyof typeof NUMBERS)[]) {
+    if (frame[c] !== undefined && !finite(frame[c])) fix(c, frame[c], current?.[c] ?? NUMBERS[c])
+  }
+  // `null` never meant anything for gaze, but it was always ignored rather
+  // than failing, so it stays a quiet no-op instead of becoming a report.
+  if (frame.gaze !== undefined && frame.gaze !== null && !validGaze(frame.gaze)) {
+    fix('gaze', frame.gaze, current?.gaze ?? { x: 0, y: 0 })
   }
 
   return out ?? frame
