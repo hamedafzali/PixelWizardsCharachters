@@ -77,13 +77,26 @@ test('static renderActorSVG output is valid SVG markup', async ({ page }) => {
   for (const { slug, error } of parsed) expect(error, slug).toBeNull()
 })
 
+/** Whether this engine, here, can create the WebGL2 context three.js needs. */
+async function hasWebGL2(page) {
+  await ready(page)
+  return page.evaluate(() => !!document.createElement('canvas').getContext('webgl2'))
+}
+
 test('the three.js example renders a canvas without errors', async ({ page, browserName }) => {
+  // Headless engines on a GPU-less CI runner may have no WebGL at all (Firefox
+  // on Linux, for one). That case is PW-14's, tested below, not this one's.
+  test.skip(!(await hasWebGL2(page)), `${browserName} has no WebGL2 here`)
+
   const errors = await open(page, '/examples/three.html')
-  await page.waitForSelector('#three canvas', { timeout: 15_000 })
+  // Fail on the page's own error as soon as it happens, not on a selector
+  // timeout that hides it.
+  await Promise.race([
+    page.waitForSelector('#three canvas', { timeout: 15_000 }),
+    new Promise((_, reject) => page.once('pageerror', reject)),
+  ])
   // Let the skin rasterise and a few frames run.
   await page.waitForTimeout(1500)
-  // WebGL support in headless engines varies; a context failure is reported
-  // as an error rather than skipped, so it is visible per engine.
   expect(errors, `${browserName} page errors`).toEqual([])
 })
 
@@ -108,4 +121,17 @@ test.fail('PW-03: a rig in a second document (iframe) gets the rig stylesheet', 
     return [...doc.querySelectorAll('style')].map((s) => s.textContent).join('\n')
   })
   expect(css).toContain('.shut')
+})
+
+test.fail('PW-14: with no WebGL, the three.js example fails without an uncaught error', async ({ page }) => {
+  // Every engine, every machine: refuse WebGL contexts before the page runs.
+  await page.addInitScript(() => {
+    const get = HTMLCanvasElement.prototype.getContext
+    HTMLCanvasElement.prototype.getContext = function (type, ...rest) {
+      return /webgl/.test(type) ? null : get.call(this, type, ...rest)
+    }
+  })
+  const errors = await open(page, '/examples/three.html')
+  await page.waitForTimeout(1500)
+  expect(errors).toEqual([])
 })
