@@ -38,8 +38,28 @@ const server = createServer(async (req, res) => {
   }
 })
 
+// A port somebody chose (PORT=…, or the browser tests) is a contract: if it is
+// taken, say so and stop. The default one just moves to the next free port,
+// so a studio left running in another terminal does not block a new one.
+const explicit = Boolean(process.env.PORT)
+const TRIES = 10
+let tried = 0
+
+server.on('error', (err) => {
+  if (err.code !== 'EADDRINUSE') throw err
+  const busy = port + tried
+  if (!explicit && ++tried < TRIES) {
+    server.listen(port + tried)
+    return
+  }
+  console.error(explicit
+    ? `\n  Port ${busy} is already in use. Stop whatever holds it, or pick another: PORT=${busy + 1} npm run …\n`
+    : `\n  Ports ${port}–${busy} are all in use. Pick a free one: PORT=… npm run …\n`)
+  process.exit(1)
+})
+
 server.listen(port, () => {
-  const url = `http://localhost:${port}${entry}`
+  const url = `http://localhost:${server.address().port}${entry}`
   console.log(`\n  🎭  PixelWizardsCharachters studio → ${url}\n  (Ctrl+C to stop)\n`)
   // Headless runs (the browser smoke tests) start this server too, and must
   // not pop a window on the developer's desktop.
