@@ -61,6 +61,10 @@ import { renderActorSVG, CHARACTERS, defaultFrame } from 'pixel-wizards-characht
 const svg = renderActorSVG(CHARACTERS.laki, defaultFrame('laki'), 200)
 ```
 
+The static render is a still of the frame's `emotion`, mouth (`viseme`,
+`mouthOpen`) and `facing`. Gaze, brows, `yaw`, locomotion and gestures are
+live-rig channels and do not appear in it.
+
 ## The characters
 
 ```ts
@@ -81,14 +85,14 @@ each category needs from the rig, and what — so far — it hasn't.
 
 ```ts
 interface ActorFrame {
-  character: string          // slug, e.g. "roozi"
+  character: string          // slug, e.g. "roozi" — informational; see below
   emotion: EmotionName
   intensity: number          // 0..1 — scales brows, squint/widen and body tempo
   viseme: VisemeName         // the mouth shape; 'rest' when not speaking
   mouthOpen: number          // 0..1 — overrides the viseme's openness when > 0
   gaze: { x: number; y: number } // each -1..1, (0,0) = looking at the child
   browRaise: number          // 0..1 — independent brow lift
-  locomotion: 'idle' | 'walk' | 'fly'
+  locomotion: 'idle' | 'walk' | 'fly' | 'roll'
   speed: number              // ~0.5..2 motion tempo multiplier
   facing: 'left' | 'right'
   gesture: Gesture | null    // one-shot action
@@ -103,11 +107,15 @@ the current one, so you only send what changes:
 rig.apply({ emotion: 'sad' })
 ```
 
+`character` does not switch the drawing: the rig keeps the spec it was built
+with. Change characters with `rig.setCharacter(CHARACTERS.ava)`, or the
+`character` prop in React.
+
 **Emotions** — `neutral` `happy` `excited` `thinking` `encouraging` `sad`
 `surprised` `sleepy` `love` `confused` `proud` `shy`
 
 **Gestures** — `wave` `jump` `spin` `nod` `shake` `shrug` `point` `clap`
-`bounce`
+`bounce` `nuzzle`
 
 Each emotion poses the whole body, not just the face — spine, head tilt, ear
 droop, tail carriage — so it reads at thumbnail size. Blink rate, gaze bias and
@@ -129,8 +137,9 @@ one of two ways:
 - **It refuses.** You cannot jump while flying. Nothing plays, and the optional
   `onGestureBlocked` callback tells you why.
 
-`jump`, `bounce` and `clap` need footing; everything else plays in any
-locomotion state. To check before offering a button:
+`jump`, `bounce` and `clap` need footing (`idle` or `walk`); everything else
+also plays while flying. No gesture plays during `roll` yet. To check before
+offering a button:
 
 ```ts
 import { planGesture, GESTURE_DURING } from 'pixel-wizards-charachters'
@@ -143,18 +152,32 @@ how long it stays and how far it has travelled, so it needs somewhere to
 accumulate — which is what `PetDriver` is.
 
 ```ts
-import { PetDriver, CHARACTERS } from 'pixel-wizards-charachters'
+import { ActorRig, PetDriver, CHARACTERS, defaultFrame } from 'pixel-wizards-charachters'
 
+const rig = new ActorRig(CHARACTERS.roozi).mount(el)
 const pet = new PetDriver(CHARACTERS.roozi)
+let frame = defaultFrame('roozi')
 
-el.addEventListener('pointermove', (e) => pet.stroke(...toArtSpace(e)))
+// Pointer → the 200×200 art space PetDriver works in. Mirror x when the
+// character faces left: the art is flipped, its zones are not.
+function toArtSpace(e: PointerEvent, facing: 'left' | 'right'): [number, number] {
+  const r = el.querySelector('svg')!.getBoundingClientRect()
+  const x = ((e.clientX - r.left) / r.width) * 200
+  const y = ((e.clientY - r.top) / r.height) * 200
+  return [facing === 'left' ? 200 - x : x, y]
+}
+
+el.addEventListener('pointermove', (e) => pet.stroke(...toArtSpace(e, frame.facing)))
 el.addEventListener('pointerleave', () => pet.release())
 
 // once per frame, merged onto the frame you were sending anyway:
 const out = pet.tick(dt)
 if (out.emotion) frame = { ...frame, emotion: out.emotion, intensity: out.intensity }
 if (out.gaze) frame = { ...frame, gaze: out.gaze }
-if (out.gesture) frame = { ...frame, gesture: out.gesture }
+rig.apply(frame)
+// A gesture is a one-shot: play it, rather than keeping it in `frame`, where
+// every later apply() would start it again.
+if (out.gesture) rig.playGesture(out.gesture)
 ```
 
 The driver owns the zone under the hand, the affection accumulated and its

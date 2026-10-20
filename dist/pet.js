@@ -87,15 +87,18 @@ const DELIGHT = 0.8;
  * ```ts
  * const pet = new PetDriver(CHARACTERS.roozi)
  * el.addEventListener('pointermove', (e) => {
- *   const p = toArtSpace(e)      // app's own hit-testing
- *   pet.stroke(p.x, p.y)
+ *   // app's own hit-testing, into the 200×200 art space; mirror x when the
+ *   // character faces left (the art flips, the zones do not)
+ *   const [x, y] = toArtSpace(e, frame.facing)
+ *   pet.stroke(x, y)
  * })
  * el.addEventListener('pointerleave', () => pet.release())
  * // per frame:
- * const out = pet.tick(dt, frame)
+ * const out = pet.tick(dt)
  * if (out.emotion) frame = { ...frame, emotion: out.emotion, intensity: out.intensity }
  * if (out.gaze) frame = { ...frame, gaze: out.gaze }
- * if (out.gesture) frame = { ...frame, gesture: out.gesture }
+ * rig.apply(frame)
+ * if (out.gesture) rig.playGesture(out.gesture) // one-shot; not kept in `frame`
  * ```
  */
 export class PetDriver {

@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # The development toolchain. jsdom 29 needs Node ^22.13 or >=24, so the test
+  # suite runs here only; older Nodes are covered by `consumer` below.
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22.x, 24.x]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      # Builds, then fails if the committed dist/ differs from the build.
+      - run: npm run check:dist
+      - run: node --test "test/*.test.mjs"
+      - run: npm run check:pack
+
+  # What a consumer on the oldest `engines` Node runs: the built entry points,
+  # imported as ESM, with no DOM and no dev tooling.
+  consumer:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [18.x, 20.x]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      # For the `three` peer the /three entry imports. Dev dependencies that
+      # want a newer Node only warn here; nothing of theirs runs.
+      - run: npm ci
+      - run: npm run check:consumer
+
+  # Real engines: CSS animation, layout and WebGL, which jsdom does not have.
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14

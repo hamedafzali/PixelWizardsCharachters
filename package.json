@@ -39,10 +39,14 @@
   },
   "files": [
     "dist",
+    "src",
     "README.md",
     "CHANGELOG.md"
   ],
   "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
@@ -51,6 +55,10 @@
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "npm run build",
     "test": "npm run build && node --test \"test/*.test.mjs\"",
+    "test:e2e": "npm run build && playwright test",
+    "check:dist": "node scripts/check-dist.mjs",
+    "check:pack": "node scripts/check-pack.mjs",
+    "check:consumer": "node scripts/check-consumer.mjs",
     "sheet": "npm run build && node tools/sheet.mjs",
     "mutate": "node tools/mutate.mjs",
     "baseline": "npm run build && node tools/baseline.mjs",
@@ -92,6 +100,7 @@
     }
   },
   "devDependencies": {
+    "@playwright/test": "1.62.1",
     "@types/react": "^18.3.0",
     "@types/three": "^0.170.0",
     "jsdom": "^29.1.1",
@@ -99,6 +108,5 @@
     "react-dom": "^18.3.1",
     "three": "^0.170.0",
     "typescript": "^5.5.0"
-  },
-  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+  }
 }
