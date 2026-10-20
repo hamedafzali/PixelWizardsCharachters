@@ -2,7 +2,24 @@
 
 ## Unreleased
 
-**Tooling and docs only. The library's behaviour has not changed.**
+**Fixes**
+
+- **Rig styles reach every document and shadow root (PW-03).** The rig
+  stylesheet and the gesture keyframes used to be injected into the first
+  document only. A rig in an iframe, a popup or any shadow root silently
+  stopped blinking, folding its wings and gesturing. Injection is now tracked
+  per document and per shadow root, and a removed `<style>` is injected again
+  on the next render. `ensureAction` takes a shadow root as well as a document.
+- **`ThreeActor` falls back to SVG without WebGL (PW-14).** `mount` used to
+  throw `Error creating WebGL context.` with the model half-built. It now
+  mounts the SVG `ActorRig` in the same host and sends every call to it.
+  This adds:
+  - `actor.backend`, which reports `'webgl'` or `'svg'`;
+  - the `onFallback(error)` option, called once on fallback;
+  - the `fallback: false` option, which restores the throw and leaves the
+    host empty.
+
+**Tooling and docs**
 
 - CI on every pull request. It runs typecheck, the test suite on Node 22 and
   24, a check that the committed `dist/` matches a fresh build, and a check of

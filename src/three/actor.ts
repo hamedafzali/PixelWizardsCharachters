@@ -5,12 +5,15 @@
  *
  * The API mirrors `ActorRig` — `mount`, `apply`, `finish`, `playGesture`,
  * `speak`, `blink`, `setMotion`, `setCharacter`, `destroy` — so a driver can
- * switch renderers without learning a second vocabulary.
+ * switch renderers without learning a second vocabulary. That is also what
+ * makes the no-WebGL fallback possible: when no context can be created, the
+ * same calls go to an `ActorRig` in the same host.
  */
 
 import * as THREE from 'three'
 import type { ActorFrame, CharacterSpec, Gesture } from '../types.js'
 import type { MotionOverrides, MotionSettings } from '../motion.js'
+import { ActorRig } from '../rig.js'
 import { ActorModel, type ActorModelOptions } from './model.js'
 import { skinModel, type SkinOptions } from './skin.js'
 
@@ -28,6 +31,15 @@ export interface ThreeActorOptions extends Omit<ActorModelOptions, 'reducedMotio
    * Default on; `false` shows the bare `body3d` primitives.
    */
   skin?: boolean | SkinOptions
+  /**
+   * When no WebGL context can be created (old devices, a blocked GPU, headless
+   * browsers), mount the SVG `ActorRig` in the same host instead, and send
+   * every call to it. Default on. `false` makes `mount` throw the context
+   * error, with nothing left in the host, for an app with its own fallback.
+   */
+  fallback?: boolean
+  /** Called once, with the context error, when `mount` falls back to the SVG rig. */
+  onFallback?: (error: unknown) => void
 }
 
 /** The camera frames the 200×200 art box, as the SVG viewBox does. */
@@ -41,10 +53,12 @@ export class ThreeActor {
   private spec: CharacterSpec
   private opts: ThreeActorOptions
   private model: ActorModel | null = null
-  private renderer: THREE.WebGLRenderer | null = null
+  private webgl: THREE.WebGLRenderer | null = null
   private scene = new THREE.Scene()
   private camera: THREE.PerspectiveCamera
   private host: HTMLElement | null = null
+  /** the SVG stand-in, when mount found no WebGL; see {@link ThreeActorOptions.fallback} */
+  private svgRig: ActorRig | null = null
   private raf: number | null = null
   private last = 0
   /** applied before mount, replayed once the model exists */
@@ -74,8 +88,22 @@ export class ThreeActor {
     this.scene.add(rim)
   }
 
-  /** Create the canvas inside `host` and start the loop. */
+  /**
+   * Create the canvas inside `host` and start the loop — or, with no WebGL,
+   * mount the SVG rig there instead (see {@link ThreeActorOptions.fallback}).
+   */
   mount(host: HTMLElement): this {
+    // The renderer first: it is the part that can fail, and a failure must
+    // leave nothing half-built behind.
+    let r: THREE.WebGLRenderer
+    try {
+      // The stencil is how the face clips each iris to the white of its eye.
+      r = new THREE.WebGLRenderer({ antialias: true, stencil: true, alpha: this.opts.background == null })
+    } catch (error) {
+      if (this.opts.fallback === false) throw error
+      return this.mountFallback(host, error)
+    }
+
     this.host = host
     const rm = this.opts.reducedMotion ?? 'auto'
     const reduced = rm === 'auto' ? prefersReducedMotion() : rm
@@ -85,8 +113,6 @@ export class ThreeActor {
     this.early = {}
     this.dress()
 
-    // The stencil is how the face clips each iris to the white of its eye.
-    const r = new THREE.WebGLRenderer({ antialias: true, stencil: true, alpha: this.opts.background == null })
     r.setPixelRatio(Math.min(this.opts.maxPixelRatio ?? 2, globalThis.devicePixelRatio || 1))
     const size = this.opts.size ?? 240
     r.setSize(size, size)
@@ -95,64 +121,90 @@ export class ThreeActor {
     r.domElement.classList.add('ca-three')
     r.domElement.style.display = 'block'
     host.appendChild(r.domElement)
-    this.renderer = r
+    this.webgl = r
 
     this.last = performance.now()
     const step = (now: number): void => {
       const dt = Math.min(now - this.last, 100) / 1000
       this.last = now
       this.model?.tick(dt)
-      this.renderer?.render(this.scene, this.camera)
+      this.webgl?.render(this.scene, this.camera)
       this.raf = requestAnimationFrame(step)
     }
     this.raf = requestAnimationFrame(step)
     return this
   }
 
-  /** The model, once mounted: joints, face and the current frame. */
+  /** No WebGL: the SVG rig takes the host, the options they share and the frame so far. */
+  private mountFallback(host: HTMLElement, error: unknown): this {
+    if (this.raf !== null) cancelAnimationFrame(this.raf)
+    this.raf = null
+    const { skin: _skin, background: _bg, maxPixelRatio: _dpr, random: _random,
+      fallback: _fallback, onFallback, ...shared } = this.opts
+    this.host = host
+    this.svgRig = new ActorRig(this.spec, shared).mount(host)
+    if (Object.keys(this.early).length) this.svgRig.apply(this.early)
+    this.early = {}
+    onFallback?.(error)
+    return this
+  }
+
+  /** What is drawing: `'webgl'`, `'svg'` (the no-WebGL fallback), or `null` before mount. */
+  get backend(): 'webgl' | 'svg' | null {
+    return this.webgl ? 'webgl' : this.svgRig ? 'svg' : null
+  }
+
+  /** The model, once mounted: joints, face and the current frame. `null` under the SVG fallback. */
   get actor(): ActorModel | null {
     return this.model
   }
 
   get goal(): ActorFrame | null {
-    return this.model?.goal ?? null
+    return this.svgRig?.goal ?? this.model?.goal ?? null
   }
 
   get settling(): boolean {
-    return this.model?.settling ?? false
+    return this.svgRig?.settling ?? this.model?.settling ?? false
   }
 
   get motion(): MotionSettings | null {
-    return this.model?.motion ?? null
+    return this.svgRig?.motion ?? this.model?.motion ?? null
   }
 
   apply(frame: Partial<ActorFrame>): void {
-    if (this.model) this.model.apply(frame)
+    if (this.svgRig) this.svgRig.apply(frame)
+    else if (this.model) this.model.apply(frame)
     else Object.assign(this.early, frame)
   }
 
   finish(): void {
+    this.svgRig?.finish()
     this.model?.finish()
   }
 
   playGesture(g: Gesture): void {
+    this.svgRig?.playGesture(g)
     this.model?.playGesture(g)
   }
 
   speak(text: string, perViseme = 85): void {
+    this.svgRig?.speak(text, perViseme)
     this.model?.speak(text, perViseme)
   }
 
   blink(): void {
+    this.svgRig?.blink()
     this.model?.blink()
   }
 
   setMotion(overrides?: MotionOverrides): void {
+    this.svgRig?.setMotion(overrides)
     this.model?.setMotion(overrides)
   }
 
   setCharacter(spec: CharacterSpec): void {
     this.spec = spec
+    this.svgRig?.setCharacter(spec)
     this.model?.setCharacter(spec)
     this.dress()
   }
@@ -175,10 +227,10 @@ export class ThreeActor {
       })
   }
 
-  /** Resize the canvas, in CSS pixels. */
+  /** Resize the canvas, in CSS pixels. The SVG fallback keeps its mount size. */
   resize(size: number): void {
     this.opts.size = size
-    this.renderer?.setSize(size, size)
+    this.webgl?.setSize(size, size)
   }
 
   /** Stop the loop, free GPU resources and remove the canvas. */
@@ -188,11 +240,13 @@ export class ThreeActor {
     this.generation++
     this.model?.dispose()
     this.model = null
-    if (this.renderer) {
-      this.renderer.dispose()
-      this.renderer.domElement.remove()
-      this.renderer = null
+    if (this.webgl) {
+      this.webgl.dispose()
+      this.webgl.domElement.remove()
+      this.webgl = null
     }
+    this.svgRig?.destroy()
+    this.svgRig = null
     this.host = null
   }
 }
