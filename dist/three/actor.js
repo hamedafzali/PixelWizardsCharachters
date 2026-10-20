@@ -5,9 +5,12 @@
  *
  * The API mirrors `ActorRig` — `mount`, `apply`, `finish`, `playGesture`,
  * `speak`, `blink`, `setMotion`, `setCharacter`, `destroy` — so a driver can
- * switch renderers without learning a second vocabulary.
+ * switch renderers without learning a second vocabulary. That is also what
+ * makes the no-WebGL fallback possible: when no context can be created, the
+ * same calls go to an `ActorRig` in the same host.
  */
 import * as THREE from 'three';
+import { ActorRig } from '../rig.js';
 import { ActorModel } from './model.js';
 import { skinModel } from './skin.js';
 /** The camera frames the 200×200 art box, as the SVG viewBox does. */
@@ -18,9 +21,11 @@ function prefersReducedMotion() {
 export class ThreeActor {
     constructor(spec, opts = {}) {
         this.model = null;
-        this.renderer = null;
+        this.webgl = null;
         this.scene = new THREE.Scene();
         this.host = null;
+        /** the SVG stand-in, when mount found no WebGL; see {@link ThreeActorOptions.fallback} */
+        this.svgRig = null;
         this.raf = null;
         this.last = 0;
         /** applied before mount, replayed once the model exists */
@@ -46,8 +51,23 @@ export class ThreeActor {
         rim.position.set(200, 120, -220);
         this.scene.add(rim);
     }
-    /** Create the canvas inside `host` and start the loop. */
+    /**
+     * Create the canvas inside `host` and start the loop — or, with no WebGL,
+     * mount the SVG rig there instead (see {@link ThreeActorOptions.fallback}).
+     */
     mount(host) {
+        // The renderer first: it is the part that can fail, and a failure must
+        // leave nothing half-built behind.
+        let r;
+        try {
+            // The stencil is how the face clips each iris to the white of its eye.
+            r = new THREE.WebGLRenderer({ antialias: true, stencil: true, alpha: this.opts.background == null });
+        }
+        catch (error) {
+            if (this.opts.fallback === false)
+                throw error;
+            return this.mountFallback(host, error);
+        }
         this.host = host;
         const rm = this.opts.reducedMotion ?? 'auto';
         const reduced = rm === 'auto' ? prefersReducedMotion() : rm;
@@ -57,8 +77,6 @@ export class ThreeActor {
             this.model.apply(this.early);
         this.early = {};
         this.dress();
-        // The stencil is how the face clips each iris to the white of its eye.
-        const r = new THREE.WebGLRenderer({ antialias: true, stencil: true, alpha: this.opts.background == null });
         r.setPixelRatio(Math.min(this.opts.maxPixelRatio ?? 2, globalThis.devicePixelRatio || 1));
         const size = this.opts.size ?? 240;
         r.setSize(size, size);
@@ -68,54 +86,80 @@ export class ThreeActor {
         r.domElement.classList.add('ca-three');
         r.domElement.style.display = 'block';
         host.appendChild(r.domElement);
-        this.renderer = r;
+        this.webgl = r;
         this.last = performance.now();
         const step = (now) => {
             const dt = Math.min(now - this.last, 100) / 1000;
             this.last = now;
             this.model?.tick(dt);
-            this.renderer?.render(this.scene, this.camera);
+            this.webgl?.render(this.scene, this.camera);
             this.raf = requestAnimationFrame(step);
         };
         this.raf = requestAnimationFrame(step);
         return this;
     }
-    /** The model, once mounted: joints, face and the current frame. */
+    /** No WebGL: the SVG rig takes the host, the options they share and the frame so far. */
+    mountFallback(host, error) {
+        if (this.raf !== null)
+            cancelAnimationFrame(this.raf);
+        this.raf = null;
+        const { skin: _skin, background: _bg, maxPixelRatio: _dpr, random: _random, fallback: _fallback, onFallback, ...shared } = this.opts;
+        this.host = host;
+        this.svgRig = new ActorRig(this.spec, shared).mount(host);
+        if (Object.keys(this.early).length)
+            this.svgRig.apply(this.early);
+        this.early = {};
+        onFallback?.(error);
+        return this;
+    }
+    /** What is drawing: `'webgl'`, `'svg'` (the no-WebGL fallback), or `null` before mount. */
+    get backend() {
+        return this.webgl ? 'webgl' : this.svgRig ? 'svg' : null;
+    }
+    /** The model, once mounted: joints, face and the current frame. `null` under the SVG fallback. */
     get actor() {
         return this.model;
     }
     get goal() {
-        return this.model?.goal ?? null;
+        return this.svgRig?.goal ?? this.model?.goal ?? null;
     }
     get settling() {
-        return this.model?.settling ?? false;
+        return this.svgRig?.settling ?? this.model?.settling ?? false;
     }
     get motion() {
-        return this.model?.motion ?? null;
+        return this.svgRig?.motion ?? this.model?.motion ?? null;
     }
     apply(frame) {
-        if (this.model)
+        if (this.svgRig)
+            this.svgRig.apply(frame);
+        else if (this.model)
             this.model.apply(frame);
         else
             Object.assign(this.early, frame);
     }
     finish() {
+        this.svgRig?.finish();
         this.model?.finish();
     }
     playGesture(g) {
+        this.svgRig?.playGesture(g);
         this.model?.playGesture(g);
     }
     speak(text, perViseme = 85) {
+        this.svgRig?.speak(text, perViseme);
         this.model?.speak(text, perViseme);
     }
     blink() {
+        this.svgRig?.blink();
         this.model?.blink();
     }
     setMotion(overrides) {
+        this.svgRig?.setMotion(overrides);
         this.model?.setMotion(overrides);
     }
     setCharacter(spec) {
         this.spec = spec;
+        this.svgRig?.setCharacter(spec);
         this.model?.setCharacter(spec);
         this.dress();
     }
@@ -138,10 +182,10 @@ export class ThreeActor {
                 object.visible = true;
         });
     }
-    /** Resize the canvas, in CSS pixels. */
+    /** Resize the canvas, in CSS pixels. The SVG fallback keeps its mount size. */
     resize(size) {
         this.opts.size = size;
-        this.renderer?.setSize(size, size);
+        this.webgl?.setSize(size, size);
     }
     /** Stop the loop, free GPU resources and remove the canvas. */
     destroy() {
@@ -151,11 +195,13 @@ export class ThreeActor {
         this.generation++;
         this.model?.dispose();
         this.model = null;
-        if (this.renderer) {
-            this.renderer.dispose();
-            this.renderer.domElement.remove();
-            this.renderer = null;
+        if (this.webgl) {
+            this.webgl.dispose();
+            this.webgl.domElement.remove();
+            this.webgl = null;
         }
+        this.svgRig?.destroy();
+        this.svgRig = null;
         this.host = null;
     }
 }

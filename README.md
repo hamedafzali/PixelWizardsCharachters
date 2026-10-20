@@ -331,6 +331,13 @@ actor.speak('سلام!')
 
 `ThreeActor` has the same methods as `ActorRig`: `apply`, `finish`,
 `playGesture`, `speak`, `blink`, `setMotion`, `setCharacter` and `destroy`.
+
+**No WebGL, no crash.** Where no WebGL context can be created (older devices,
+a blocked GPU, headless browsers), `mount` puts the SVG `ActorRig` in the same
+host instead, and every call goes to it. `actor.backend` says which one is
+drawing (`'webgl'` or `'svg'`), and `onFallback(error)` is called once if it
+falls back. Pass `fallback: false` to have `mount` throw instead, with nothing
+left in the host, if your app has its own fallback.
 Everything a character does lives in `ActorModel`, which needs no DOM or WebGL.
 You can add `model.object` to your own scene and call `model.tick(dt)` from your
 own loop.

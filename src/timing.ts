@@ -199,22 +199,49 @@ export function buildAction(name: string, a: TimedAction): { css: string; animat
   }
 }
 
-/**
- * Compile-and-inject, memoised by rule name. Actions are static per gesture, so
- * the first play pays the cost and every later one is a class-free
- * `style.animation` assignment.
- */
-const injected = new Map<string, string>()
+/** Where a `<style>` has to live to reach an element: its document, or the shadow root it is in. */
+export type StyleRoot = Document | ShadowRoot
 
-/** `buildAction(name, a)`, injected as a `<style>` once per `name` and cached; returns the `animation` shorthand to assign. */
-export function ensureAction(doc: Document, name: string, a: TimedAction): string {
-  const cached = injected.get(name)
-  if (cached !== undefined) return cached
-  const { css, animation } = buildAction(name, a)
+/**
+ * The {@link StyleRoot} for `node`. Each document has its own stylesheets, and
+ * a shadow root sees none of its document's — `@keyframes` included — so rules
+ * are injected, and their injection remembered, per root. A node not attached
+ * anywhere yet falls back to its own document.
+ */
+export function styleRootOf(node: Node): StyleRoot {
+  const root = node.getRootNode()
+  // nodeType, not instanceof: an iframe's Document is another realm's class.
+  if (root.nodeType === 9) return root as Document
+  if (root.nodeType === 11 && 'host' in root) return root as ShadowRoot
+  return node.ownerDocument as Document
+}
+
+/** A `<style>` appended to `root`: a document's head, or the shadow root itself. */
+export function appendStyle(root: StyleRoot, css: string, attr: string, value = ''): HTMLStyleElement {
+  const isDoc = root.nodeType === 9
+  const doc = (isDoc ? root : root.ownerDocument) as Document
   const style = doc.createElement('style')
-  style.setAttribute('data-pixel-wizards-action', name)
+  style.setAttribute(attr, value)
   style.textContent = css
-  doc.head.appendChild(style)
-  injected.set(name, animation)
+  ;(isDoc ? (doc.head ?? doc.documentElement) : root).appendChild(style)
+  return style
+}
+
+/**
+ * Compile-and-inject, memoised by rule name per {@link StyleRoot}. Actions are
+ * static per gesture, so the first play in a root pays the cost and every
+ * later one is a class-free `style.animation` assignment. A rule whose
+ * `<style>` was removed from the root (HMR, a head reset) is injected again.
+ */
+const injected = new WeakMap<StyleRoot, Map<string, { animation: string; style: HTMLStyleElement }>>()
+
+/** `buildAction(name, a)`, injected into `root` as a `<style>` once per `name`; returns the `animation` shorthand to assign. */
+export function ensureAction(root: StyleRoot, name: string, a: TimedAction): string {
+  let names = injected.get(root)
+  if (!names) injected.set(root, (names = new Map()))
+  const hit = names.get(name)
+  if (hit && hit.style.getRootNode() === root) return hit.animation
+  const { css, animation } = buildAction(name, a)
+  names.set(name, { animation, style: appendStyle(root, css, 'data-pixel-wizards-action', name) })
   return animation
 }

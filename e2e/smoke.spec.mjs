@@ -85,7 +85,7 @@ async function hasWebGL2(page) {
 
 test('the three.js example renders a canvas without errors', async ({ page, browserName }) => {
   // Headless engines on a GPU-less CI runner may have no WebGL at all (Firefox
-  // on Linux, for one). That case is PW-14's, tested below, not this one's.
+  // on Linux, for one). That case is the SVG fallback's, tested below.
   test.skip(!(await hasWebGL2(page)), `${browserName} has no WebGL2 here`)
 
   const errors = await open(page, '/examples/three.html')
@@ -100,11 +100,7 @@ test('the three.js example renders a canvas without errors', async ({ page, brow
   expect(errors, `${browserName} page errors`).toEqual([])
 })
 
-// ---------------------------------------------------------------- known issues
-// Expected to fail until fixed; `test.fail` flips to an error once they pass,
-// so the fix cannot land without this marker being removed.
-
-test.fail('PW-03: a rig in a second document (iframe) gets the rig stylesheet', async ({ page }) => {
+test('a rig in a second document (iframe) gets the rig stylesheet', async ({ page }) => {
   await ready(page)
   const css = await page.evaluate(async () => {
     const { ActorRig, CHARACTERS } = window.pw
@@ -123,7 +119,28 @@ test.fail('PW-03: a rig in a second document (iframe) gets the rig stylesheet', 
   expect(css).toContain('.shut')
 })
 
-test.fail('PW-14: with no WebGL, the three.js example fails without an uncaught error', async ({ page }) => {
+test('a rig in a shadow root gets its styles there, and a gesture animates', async ({ page }) => {
+  await ready(page)
+  const result = await page.evaluate(() => {
+    const { ActorRig, CHARACTERS } = window.pw
+    const outer = document.createElement('div')
+    document.body.append(outer)
+    const shadow = outer.attachShadow({ mode: 'open' })
+    const host = document.createElement('div')
+    shadow.append(host)
+    const rig = new ActorRig(CHARACTERS.roozi).mount(host)
+    rig.playGesture('jump')
+    const body = host.querySelector('.rig-body')
+    return {
+      css: [...shadow.querySelectorAll('style')].map((s) => s.textContent).join('\n'),
+      running: body.getAnimations().length,
+    }
+  })
+  expect(result.css).toContain('.shut')
+  expect(result.running, 'jump keyframes resolve inside the shadow root').toBeGreaterThan(0)
+})
+
+test('with no WebGL, the three.js example falls back to the SVG rig', async ({ page }) => {
   // Every engine, every machine: refuse WebGL contexts before the page runs.
   await page.addInitScript(() => {
     const get = HTMLCanvasElement.prototype.getContext
@@ -132,6 +149,7 @@ test.fail('PW-14: with no WebGL, the three.js example fails without an uncaught 
     }
   })
   const errors = await open(page, '/examples/three.html')
-  await page.waitForTimeout(1500)
+  await page.waitForSelector('#three svg.ca-svg', { state: 'attached', timeout: 15_000 })
+  expect(await page.locator('#three canvas').count()).toBe(0)
   expect(errors).toEqual([])
 })

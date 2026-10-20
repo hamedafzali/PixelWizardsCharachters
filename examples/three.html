@@ -64,7 +64,8 @@ const both = (f) => { rig.apply(f); actor.apply(f) }
 
 // Orbit by dragging: turns the 3D view's object, not the frame, so it is a
 // camera aid and never reaches the character's own channels.
-{
+// No canvas when there is no WebGL: the actor fell back to the SVG rig.
+if (actor.backend === 'webgl') {
   const el = document.querySelector('#three canvas')
   let drag = null, spin = 0
   el.addEventListener('pointerdown', (e) => { drag = e.clientX; el.setPointerCapture(e.pointerId) })

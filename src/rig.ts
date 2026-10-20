@@ -4,7 +4,7 @@ import { renderActorSVG, drawMouth } from './render.js'
 import { resolveEmotion } from './emotions.js'
 import { eyeWidenScale, eyeWidenTransform, eyeLidRy } from './draw.js'
 import { resolvePosture, posturePoses } from './posture.js'
-import { ensureAction, composePoses, poseToTransform, type Pose, type TimedAction } from './timing.js'
+import { ensureAction, appendStyle, styleRootOf, composePoses, poseToTransform, type Pose, type StyleRoot, type TimedAction } from './timing.js'
 import { sampleAction } from './sample.js'
 import { IdleMicroMotion, blinkStyle, type MicroConfig } from './micro.js'
 import { FrameInterpolator, type InterpolationProfile } from './interpolate.js'
@@ -124,14 +124,12 @@ export function artKeyOf(f: ActorFrame): string {
   return `${f.character}|${f.emotion}|${f.facing}`
 }
 
-let cssInjected = false
-function ensureCSS(doc: Document): void {
-  if (cssInjected) return
-  const style = doc.createElement('style')
-  style.setAttribute('data-pixel-wizards-charachters', '')
-  style.textContent = RIG_CSS
-  doc.head.appendChild(style)
-  cssInjected = true
+/** {@link RIG_CSS}'s `<style>` per root — per document and per shadow root, not once per page. */
+const rigCSS = new WeakMap<StyleRoot, HTMLStyleElement>()
+function ensureCSS(root: StyleRoot): void {
+  // Still in place? A removed <style> (HMR, a head reset) is injected again.
+  if (rigCSS.get(root)?.getRootNode() === root) return
+  rigCSS.set(root, appendStyle(root, RIG_CSS, 'data-pixel-wizards-charachters'))
 }
 
 export interface RigOptions {
@@ -365,7 +363,6 @@ export class ActorRig {
 
   /** Mount into a host element and start the idle + blink loops. */
   mount(host: HTMLElement): this {
-    ensureCSS(host.ownerDocument)
     this.host = host
     const rm = this.opts.reducedMotion ?? 'auto'
     this.reduced = rm === 'auto' ? prefersReducedMotion() : rm
@@ -585,6 +582,9 @@ export class ActorRig {
       renderActorSVG(this.spec, this.frame, this.opts.size, this.opts.emotions), this.uid)
     this.svg = this.host.querySelector('svg')
     if (!this.svg) return
+    // Again on every render: a host mounted while detached and attached into a
+    // shadow root later only gets the rules there from here.
+    ensureCSS(styleRootOf(this.svg))
     this.svg.classList.add('ca-svg')
     this.svg.classList.toggle('ca-reduced', this.reduced)
     this.mouthG = this.svg.querySelector('#mouthG')
@@ -986,7 +986,7 @@ export class ActorRig {
       const el = svg.querySelector<SVGElement>(`.${part.layer}`)
       if (!el) continue
       const name = `caG_${g}_${part.layer}${suffix}`
-      const animation = ensureAction(svg.ownerDocument, name, part.action)
+      const animation = ensureAction(styleRootOf(svg), name, part.action)
       // Restart even if the same gesture is still playing.
       el.style.animation = 'none'
       void el.getBoundingClientRect()
@@ -1091,7 +1091,7 @@ export class ActorRig {
       }
       const name = `caG_${g}_${part.layer}${suffix}`
       el.style.transform = ''
-      el.style.animation = ensureAction(svg.ownerDocument, name, part.action)
+      el.style.animation = ensureAction(styleRootOf(svg), name, part.action)
       el.style.animationDelay = `${-clamped * part.action.dur}s`
       el.style.animationPlayState = 'paused'
     }

@@ -76,6 +76,17 @@ export declare function buildAction(name: string, a: TimedAction): {
     css: string;
     animation: string;
 };
-/** `buildAction(name, a)`, injected as a `<style>` once per `name` and cached; returns the `animation` shorthand to assign. */
-export declare function ensureAction(doc: Document, name: string, a: TimedAction): string;
+/** Where a `<style>` has to live to reach an element: its document, or the shadow root it is in. */
+export type StyleRoot = Document | ShadowRoot;
+/**
+ * The {@link StyleRoot} for `node`. Each document has its own stylesheets, and
+ * a shadow root sees none of its document's — `@keyframes` included — so rules
+ * are injected, and their injection remembered, per root. A node not attached
+ * anywhere yet falls back to its own document.
+ */
+export declare function styleRootOf(node: Node): StyleRoot;
+/** A `<style>` appended to `root`: a document's head, or the shadow root itself. */
+export declare function appendStyle(root: StyleRoot, css: string, attr: string, value?: string): HTMLStyleElement;
+/** `buildAction(name, a)`, injected into `root` as a `<style>` once per `name`; returns the `animation` shorthand to assign. */
+export declare function ensureAction(root: StyleRoot, name: string, a: TimedAction): string;
 //# sourceMappingURL=timing.d.ts.map
