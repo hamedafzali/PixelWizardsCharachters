@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>e2e fixture</title>
+<style>body { margin: 0; display: flex; flex-wrap: wrap; gap: 8px; background: #fff; }</style>
+</head>
+<body>
+<!--
+  A blank page that loads the built package and hands it to the test, so each
+  spec mounts exactly what it means to check — the studio is too stateful to
+  assert against.
+-->
+<script type="module">
+  import * as pw from '../dist/index.js'
+  window.pw = pw
+</script>
+</body>
+</html>

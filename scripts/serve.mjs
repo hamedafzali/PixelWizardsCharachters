@@ -41,6 +41,9 @@ const server = createServer(async (req, res) => {
 server.listen(port, () => {
   const url = `http://localhost:${port}${entry}`
   console.log(`\n  🎭  PixelWizardsCharachters studio → ${url}\n  (Ctrl+C to stop)\n`)
+  // Headless runs (the browser smoke tests) start this server too, and must
+  // not pop a window on the developer's desktop.
+  if (process.env.NO_OPEN) return
   const opener = process.platform === 'darwin' ? 'open'
     : process.platform === 'win32' ? 'cmd' : 'xdg-open'
   const args = process.platform === 'win32' ? ['/c', 'start', '', url] : [url]

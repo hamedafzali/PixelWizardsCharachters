@@ -1,13 +1,26 @@
 # Contributing
 
+Development needs Node 22.13+ or 24+ (jsdom 29, which the tests use). The
+published package itself supports Node 18+ (`engines`); CI checks that with
+`check:consumer` on Node 18 and 20.
+
 ```
 npm install
-npm test          # builds, then runs test/*.test.mjs against dist/
-npm run sheet     # regenerates the contact sheets into out/ (gitignored)
-npm run baseline  # shows what moved against tools/baselines/geometry.json
-npm run mutate    # breaks the library on purpose, checks the guards notice
-npm run demo      # builds, then serves example/studio on a local port
+npm test               # builds, then runs test/*.test.mjs against dist/
+npm run test:e2e       # builds, then smoke-tests the rig in Chromium, Firefox and WebKit
+npm run typecheck
+npm run check:dist     # builds, then fails if the committed dist/ differs
+npm run check:pack     # what `npm publish` would ship: entries, leaks, size budget
+npm run check:consumer # imports the built entries with no DOM (any Node 18+)
+npm run sheet          # regenerates the contact sheets into out/ (gitignored)
+npm run baseline       # shows what moved against tools/baselines/geometry.json
+npm run mutate         # breaks the library on purpose, checks the guards notice
+npm run demo           # builds, then serves examples/studio on a local port
 ```
+
+`test:e2e` needs the browsers once: `npx playwright install chromium firefox webkit`.
+`dist/` is committed, so rebuild and commit it with any change to `src/`;
+CI's `check:dist` fails the PR otherwise.
 
 ## Verifying the verification
 
@@ -365,20 +378,22 @@ once a second case confirms it.
 
 ### Bundle splitting: not built
 
-Measured, not assumed: the packed tarball is 130KB (`npm pack --dry-run`),
-of which `dist/characters/index.js` — the single object literal holding all
-nine `CharacterSpec`s — gzips to about 15KB, roughly 1.5KB marginal per
+Measured, not assumed (1.6.0, ten characters; sizes are of the unminified
+`dist/` files, comments included, `gzip -9`): the packed tarball is about
+330KB (`npm pack --dry-run`), of which about 93KB is the `src/` the source
+maps point to. `dist/characters/index.js` — the single object literal holding
+all ten `CharacterSpec`s — gzips to about 23.6KB, roughly 2.4KB marginal per
 character. The rig engine a consumer pulls in regardless of roster size
-(`rig.js` and its transitive deps) gzips to about 13KB on its own, a fixed
-cost unrelated to how many characters exist.
+(`rig.js` and its transitive deps) gzips to about 49KB, a fixed cost unrelated
+to how many characters exist. A minifying bundler ships less of both.
 
 The specific limitation: `CHARACTERS` is assembled as one `const` from all
-nine character modules in a single file. Standard bundler tree-shaking
+ten character modules in a single file. Standard bundler tree-shaking
 (webpack/esbuild/rollup) does not eliminate unused *properties* of an object
 literal, even for a statically-known access like `CHARACTERS.laki` — the
 whole object is one escaping binding, so an app that renders exactly one
-character still pays for all nine character art strings. That per-character
-cost (~1.5KB gzip) is added permanently, for every consumer, with every
+character still pays for all ten character art strings. That per-character
+cost (~2.4KB gzip) is added permanently, for every consumer, with every
 future roster addition, whether or not they use it.
 
 This is co-dependent with the picker: `characterRoster()` and
@@ -405,5 +420,5 @@ Three ways to split the data, if it comes to that:
 
 **Revisit trigger**: the roster roughly doubling (~18-20 characters, where
 the marginal cost compounds to something actually worth avoiding), or an
-actual reported bundle-size complaint from a consumer. 15KB gzip for the
+actual reported bundle-size complaint from a consumer. ~24KB gzip for the
 entire current roster is not a real problem yet.

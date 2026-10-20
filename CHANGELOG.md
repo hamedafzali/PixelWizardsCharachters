@@ -1,5 +1,26 @@
 # Changelog
 
+## Unreleased
+
+**Tooling and docs only. The library's behaviour has not changed.**
+
+- CI on every pull request. It runs typecheck, the test suite on Node 22 and
+  24, a check that the committed `dist/` matches a fresh build, and a check of
+  what would be published. It also imports the package on Node 18 and 20, and
+  runs browser smoke tests in Chromium, Firefox and WebKit.
+- The package now ships `src/`, so the source maps resolve to real files.
+  That makes it about 93KB larger packed.
+- `engines` is now `node >=18`. The yarn `packageManager` field is gone,
+  because the repo uses npm (`package-lock.json`).
+- Doc fixes:
+  - the README now lists `roll` and `nuzzle`;
+  - which gestures play while rolling: none, for now;
+  - what the static SVG render includes;
+  - `frame.character` does not switch the drawing;
+  - the PetDriver example now defines `toArtSpace`, mirrors the pointer when
+    the character faces left, and plays gestures with `playGesture`;
+  - CONTRIBUTING has the current bundle sizes.
+
 ## 1.6.0
 
 **A three.js renderer.** `pixel-wizards-charachters/three` draws a character as
