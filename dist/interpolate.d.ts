@@ -47,6 +47,13 @@ export type InterpolationProfile = Partial<Record<ChannelName, ChannelSpec>>;
  */
 export declare const DEFAULT_PROFILE: Required<Record<ChannelName, ChannelSpec>>;
 /**
+ * A whole frame held to the ranges the interpolator enforces, so a static
+ * render shows what a rig given the same frame lands on.
+ *
+ * @internal
+ */
+export declare function clampFrame(f: ActorFrame): ActorFrame;
+/**
  * Holds a current frame and eases it toward a goal.
  *
  * **Retargeting**: when a new goal arrives mid-transition, each affected

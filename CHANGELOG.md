@@ -13,18 +13,35 @@
   `null` in between, or call `playGesture`, which plays every time. **If you
   re-sent the same gesture on its own to play it again, send `null` first or
   use `playGesture`.**
+- **`renderActorSVG` shows the frame's live channels at rest (PW-08).** It
+  used to draw the art and nothing the rig writes onto it, so a server render
+  looked straight ahead, brows level and spine upright whatever the frame
+  said, and the page jumped when the client rig took over. It now bakes in
+  gaze (the irises, and the head turning after them), `browRaise`, `yaw` (the
+  2.5D slide and the shading), the emotion's posture and a locomotion's lean:
+  the SVG matches the rig settled on the same frame, checked hook by hook for
+  every character. Out-of-range numbers are held to the rig's ranges too.
+  Blinks, breathing, the gait cycle, gestures and the idle loop stay
+  rig-only. **Snapshots of static renders change** for any frame with a
+  non-neutral emotion, gaze, brows, yaw or locomotion.
 
 **Added**
 
 - `playGesture(g, { onEnd })` on `ActorRig`, `ActorModel` and `ThreeActor`.
   `onEnd` is called once with `'done'`, `'blocked'`, `'skipped'` or
   `'interrupted'`. New types `GestureEnd` and `PlayGestureOptions`.
+- `renderActorSVG(spec, frame, size, emotions, { motion })`: the rig's
+  `motion` option, so a static render matches a rig tuned with it. New type
+  `RenderOptions`.
 
 **Fixes**
 
 - Restarting a gesture while it played no longer stops the restart early. The
   first run's end timer used to clear the animation partway through the
   second.
+- A frame applied before `mount()` now shows on mount. Its posture used to
+  stick to the body group for good, and its brows, squint and mood waited for
+  the next change.
 
 ## 1.7.1
 

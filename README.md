@@ -58,12 +58,21 @@ rig.speak('پشمک اینجاست')
 ```ts
 import { renderActorSVG, CHARACTERS, defaultFrame } from 'pixel-wizards-charachters'
 
-const svg = renderActorSVG(CHARACTERS.laki, defaultFrame('laki'), 200)
+const svg = renderActorSVG(CHARACTERS.laki, { ...defaultFrame('laki'), emotion: 'sad', gaze: { x: 0.6, y: 0 } }, 200)
 ```
 
-The static render is a still of the frame's `emotion`, mouth (`viseme`,
-`mouthOpen`) and `facing`. Gaze, brows, `yaw`, locomotion and gestures are
-live-rig channels and do not appear in it.
+The static render is what a mounted rig shows once it settles on the same
+frame: emotion and posture, mouth, `facing`, gaze (the eyes, and the head
+turning after them), `browRaise`, `yaw`, and a locomotion's lean. What only
+exists over time is left out: blinks, breathing, the gait cycle, gestures and
+the emotion's idle loop.
+
+If the rig that takes over on the client has a `motion` option, pass the same
+one so the two match:
+
+```ts
+renderActorSVG(spec, frame, 200, undefined, { motion: { depth: { travel: 9 } } })
+```
 
 ## The characters
 

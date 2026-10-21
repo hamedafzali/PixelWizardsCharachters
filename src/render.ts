@@ -2,6 +2,11 @@ import type { ActorFrame, CharacterSpec, VisemeSpec, EmotionOverrides, RigLayer,
 import { resolveEmotion } from './emotions.js'
 import { VISEMES } from './visemes.js'
 import { sanitizeFrame } from './validate.js'
+import { clampFrame } from './interpolate.js'
+import { eyeWidenScale, eyeWidenTransform } from './draw.js'
+import { poseToTransform } from './timing.js'
+import { resolveMotion, type MotionOverrides, type MotionTarget } from './motion.js'
+import { restState, type RestState } from './rest.js'
 
 /**
  * Build the mouth `<path>`/`<g>` markup for a viseme + explicit openness. The
@@ -74,11 +79,31 @@ export function drawMouth(
   return parts.join('')
 }
 
+/**
+ * The pivots of the two outer transform carriers. The rig sets them in its
+ * stylesheet; a static SVG has no stylesheet, so it carries them inline
+ * wherever it bakes a transform onto either.
+ *
+ * @internal
+ */
+export const CARRIER_ORIGIN = { root: '100px 190px', body: '100px 188px' } as const
+
+/** A layer's baked transform, or '' for none. */
+type PoseOf = (t: MotionTarget) => string
+
+const noPose: PoseOf = () => ''
+
+/** A `style` attribute from declarations, or '' when there are none. */
+function styleAttr(...decls: string[]): string {
+  const d = decls.filter(Boolean)
+  return d.length ? ` style="${d.join(';')}"` : ''
+}
+
 /** One layer group, carrying its own pivot so transforms on it turn correctly. */
-function layerG(cls: string, layer: RigLayer | undefined, inner = ''): string {
+function layerG(cls: string, layer: RigLayer | undefined, inner = '', pose = ''): string {
   if (!layer && !inner) return ''
   const o = layer?.origin
-  const style = o ? ` style="transform-origin:${o[0]}px ${o[1]}px"` : ''
+  const style = styleAttr(o ? `transform-origin:${o[0]}px ${o[1]}px` : '', pose)
   // `inner` paints *behind* this layer's own art. The only caller that passes it
   // is the head, whose ears must sit behind the skull exactly as they did in the
   // original flat art — painting them after put the base of every ear triangle
@@ -93,20 +118,20 @@ function layerG(cls: string, layer: RigLayer | undefined, inner = ''): string {
  * reads correctly while every limb stays independently rotatable. The head is a
  * *child* of the torso — bow the spine and the head follows, as it should.
  */
-function buildLayers(l: RigLayers): string {
+function buildLayers(l: RigLayers, pose: PoseOf = noPose): string {
   // Ears sit behind the head art and ride it: tilt the head, the ears go too.
-  const ears = layerG('lyr-earL', l.earL) + layerG('lyr-earR', l.earR)
+  const ears = layerG('lyr-earL', l.earL, '', pose('earL')) + layerG('lyr-earR', l.earR, '', pose('earR'))
   // A character with no visible neck declares no head layer, and its face rides
   // the torso. The ears must then hang off the torso directly — wrapping them in
   // an implicit `.lyr-head` would resurrect the layer with *no* origin, so it
   // would pivot about its own bounding-box centre and posture's headDrop would
   // land on it after all. That is exactly the improvised pivot the no-head rule
   // exists to prevent.
-  const head = l.head ? layerG('lyr-head', l.head, ears) : ears
+  const head = l.head ? layerG('lyr-head', l.head, ears, pose('head')) : ears
   const torsoInner =
-    layerG('lyr-tail', l.tail) +
-    layerG('lyr-farArm', l.farArm) +
-    layerG('lyr-farLeg', l.farLeg)
+    layerG('lyr-tail', l.tail, '', pose('tail')) +
+    layerG('lyr-farArm', l.farArm, '', pose('farArm')) +
+    layerG('lyr-farLeg', l.farLeg, '', pose('farLeg'))
   // `torsoFront` is torso art that must occlude the head: a shell rim, a collar,
   // a scarf. It is *inside* `.lyr-torso`, so it leans with the spine and stays
   // registered with the rest of the body — an outer sibling would slide off the
@@ -114,23 +139,31 @@ function buildLayers(l: RigLayers): string {
   // *behind* the body without inverting the order for every other character,
   // which needs the head in front.
   const torsoAfter =
-    layerG('lyr-nearLeg', l.nearLeg) +
-    layerG('lyr-nearArm', l.nearArm) +
+    layerG('lyr-nearLeg', l.nearLeg, '', pose('nearLeg')) +
+    layerG('lyr-nearArm', l.nearArm, '', pose('nearArm')) +
     head +
-    layerG('lyr-torsoFront', l.torsoFront)
+    layerG('lyr-torsoFront', l.torsoFront, '', pose('torsoFront'))
   const o = l.torso?.origin
-  const torsoStyle = o ? ` style="transform-origin:${o[0]}px ${o[1]}px"` : ''
+  const torsoStyle = styleAttr(o ? `transform-origin:${o[0]}px ${o[1]}px` : '', pose('torso'))
   const torso =
     `<g class="lyr-torso"${torsoStyle}>` +
     `${torsoInner}${l.torso?.art ?? ''}${torsoAfter}` +
     `</g>`
-  return layerG('lyr-accBack', l.accBack) + torso + layerG('lyr-accFront', l.accFront)
+  return layerG('lyr-accBack', l.accBack, '', pose('accBack')) + torso + layerG('lyr-accFront', l.accFront, '', pose('accFront'))
+}
+
+/** Options for {@link renderActorSVG}. */
+export interface RenderOptions {
+  /**
+   * Motion-engine settings, layered over the character's own — pass the rig's
+   * `motion` option so a server render matches the client rig that takes over.
+   */
+  motion?: MotionOverrides
 }
 
 /**
  * Render a complete, self-contained `<svg>` for one frame. This is the pure /
- * stateless path — handy for SSR, thumbnails and tests. The interactive
- * {@link ActorRig} renders once with this then mutates in place.
+ * stateless path — handy for SSR, thumbnails and tests.
  *
  * The art space is 200×200; pass `size` for the pixel box.
  *
@@ -140,6 +173,12 @@ function buildLayers(l: RigLayers): string {
  * instead of overwriting one shared `transform`, and they are emitted for
  * layered and unlayered characters alike.
  *
+ * The frame's live channels are baked in at rest — gaze (the irises, and the
+ * head turning after them), `browRaise`, `yaw`, the emotion's posture and a
+ * locomotion's lean — so the SVG matches what a mounted {@link ActorRig} shows
+ * once it settles on the same frame. What only exists over time is not: blinks,
+ * breathing, the gait cycle, gestures and the emotion's idle loop.
+ *
  * `emotions` (optional) tunes the emotion presets per character — an editor can
  * override any channel of any emotion.
  */
@@ -148,32 +187,130 @@ export function renderActorSVG(
   frame: ActorFrame,
   size = 120,
   emotions?: EmotionOverrides,
+  opts: RenderOptions = {},
+): string {
+  return buildSVG(spec, frame, size, emotions, opts.motion ?? {})
+}
+
+/**
+ * The bare art, every live channel at its neutral value — what {@link ActorRig}
+ * mounts and then drives. Baking the rest pose in there would leave stale
+ * transforms on hooks the rig only writes while they move.
+ *
+ * @internal
+ */
+export function renderArtSVG(
+  spec: CharacterSpec,
+  frame: ActorFrame,
+  size = 120,
+  emotions?: EmotionOverrides,
+): string {
+  return buildSVG(spec, frame, size, emotions, null)
+}
+
+function buildSVG(
+  spec: CharacterSpec,
+  frame: ActorFrame,
+  size: number,
+  emotions: EmotionOverrides | undefined,
+  motion: MotionOverrides | null,
 ): string {
   // The static path has no previous frame to keep, so an unknown name lands on
   // the documented default. There is no hook here either: this function is a
   // pure string builder that a server may call thousands of times, and a
   // callback parameter would be observability nobody asked for. Callers that
   // want to know can validate first — `sanitizeFrame` is exported.
-  frame = sanitizeFrame(frame)
+  frame = clampFrame(sanitizeFrame(frame))
   const emotion = resolveEmotion(frame.emotion, emotions)
   const { grads, art, layers, mouth } = spec.render({ emotion, intensity: frame.intensity })
+  if (!layers && !art) return ''
   const viseme = VISEMES[frame.viseme]
   const mouthMarkup = drawMouth(mouth, viseme, frame.mouthOpen)
 
-  const shadow = layers ? layerG('lyr-shadow', layers.shadow) : ''
-  const inner = layers ? buildLayers(layers) : art
-  if (!layers && !art) return ''
+  const settings = motion && resolveMotion(spec.motion, motion)
+  const rest = settings && restState(frame, {
+    has: (l) => !!layers?.[l],
+    eyeRadius: spec.eyes.r,
+    motion: settings,
+    posture: spec.posture,
+    emotions,
+  })
+  const pose: PoseOf = (t) => {
+    const p = rest?.poses[t]
+    const tf = p ? poseToTransform(p) : 'none'
+    return tf === 'none' ? '' : `transform:${tf}`
+  }
 
-  const body =
-    `${shadow}<g class="rig-root"><g class="rig-body"><g class="rig-mood">${inner}</g></g></g>`
+  const shadow = layers ? layerG('lyr-shadow', layers.shadow, '', pose('shadow')) : ''
+  const inner = layers ? buildLayers(layers, pose) : art
+  let body =
+    `${shadow}<g class="rig-root"${carrier('root', pose)}><g class="rig-body"${carrier('body', pose)}>` +
+    `<g class="rig-mood">${inner}</g></g></g>`
+  let defs = grads
   // The class is what a mounted rig finds it by: there the id is made unique.
-  const mounted = body.replace('<g id="mouthG"></g>', `<g id="mouthG" class="mouthG">${mouthMarkup}</g>`)
+  let mouthAttr = ' class="mouthG"'
+  if (rest) {
+    body = bakeFace(body, rest, emotion.wide * Math.max(0, Math.min(1, frame.intensity)))
+    defs = bakeShade(grads, rest.shade * (settings.depth ? settings.depth.shade : 0))
+    if (rest.faceX) mouthAttr += styleAttr(`transform:translate(${rest.faceX.toFixed(3)}px,0px)`)
+  }
+  const mounted = body.replace('<g id="mouthG"></g>', `<g id="mouthG"${mouthAttr}>${mouthMarkup}</g>`)
   const flip = frame.facing === 'left' ? ' transform="scale(-1,1) translate(-200,0)"' : ''
   return (
     `<svg width="${size}" height="${size}" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" ` +
     `style="--lidfill:${spec.lidColor}" data-character="${spec.slug}">` +
-    `<defs>${grads}</defs>` +
+    `<defs>${defs}</defs>` +
     `<g class="rig-flip"${flip}>${mounted}</g>` +
     `</svg>`
   )
+}
+
+/** A posed outer carrier's style, its pivot with it. */
+function carrier(t: 'root' | 'body', pose: PoseOf): string {
+  const tf = pose(t)
+  return tf ? styleAttr(`transform-origin:${CARRIER_ORIGIN[t]}`, tf) : ''
+}
+
+/**
+ * The face's hooks, as the rig writes them: the irises look, the brows lift,
+ * and when the head turns the eyes and brows slide across it with the mouth.
+ * `wide` is the eye widen already scaled by intensity, which the slide has to
+ * be composed with.
+ */
+function bakeFace(svg: string, rest: RestState, wide: number): string {
+  const { iris, browY, faceX } = rest
+  if (iris.x || iris.y) {
+    svg = svg.split('<g class="iris"').join(`<g class="iris" style="transform:translate(${iris.x}px,${iris.y}px)"`)
+  }
+  if (browY || faceX) {
+    const slide = faceX ? `translateX(${faceX.toFixed(3)}px) ` : ''
+    svg = svg.split('<g class="browsG"').join(`<g class="browsG" style="transform:${slide}translateY(${browY}px)"`)
+  }
+  if (faceX) {
+    const s = eyeWidenScale(wide)
+    svg = svg.replace(
+      /<g class="eyeG" data-cx="([^"]*)" data-cy="([^"]*)"(?: transform="[^"]*")?>/g,
+      (tag, cx: string, cy: string) => {
+        const x = Number(cx)
+        const y = Number(cy)
+        if (!Number.isFinite(x) || !Number.isFinite(y)) return tag
+        return `<g class="eyeG" data-cx="${cx}" data-cy="${cy}" transform="translate(${faceX.toFixed(3)} 0) ${eyeWidenTransform(x, y, s)}">`
+      })
+  }
+  return svg
+}
+
+/**
+ * Slide each radial gradient's highlight against the turn by `v` percent, as
+ * the rig does: only a percentage (or default 50%) centre moves.
+ */
+function bakeShade(defs: string, amount: number): string {
+  const v = Math.round(amount * 100) / 100
+  if (v === 0) return defs
+  return defs.replace(/<radialGradient\b[^>]*>/g, (tag) => {
+    const m = /\scx="([^"]*)"/.exec(tag)
+    if (!m) return tag.replace('<radialGradient', `<radialGradient cx="${(50 - v).toFixed(2)}%"`)
+    const pct = /^(-?[\d.]+)%$/.exec(m[1] ?? '')
+    return pct ? tag.replace(m[0], ` cx="${(Number(pct[1]) - v).toFixed(2)}%"`) : tag
+  })
 }

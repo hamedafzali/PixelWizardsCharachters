@@ -29,6 +29,7 @@ export type { FrameIssue, OnInvalidFrame } from './validate.js';
 export { eyes, brows, eyeWidenScale, eyeWidenTransform, eyeLidRy } from './draw.js';
 export { CHARACTERS, CHARACTER_SLUGS } from './characters/index.js';
 export { renderActorSVG, drawMouth } from './render.js';
+export type { RenderOptions } from './render.js';
 export { characterRoster, createCharacterPicker } from './picker.js';
 export type { RosterEntry, RosterOptions, PickerOptions, CharacterPickerHandle } from './picker.js';
 export { MotionEngine, Spring, DEFAULT_MOTION, resolveMotion, parentOf, } from './motion.js';

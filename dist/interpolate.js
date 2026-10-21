@@ -61,6 +61,22 @@ function clampChannel(c, v) {
         return v;
     return Math.min(range[1], Math.max(range[0], v));
 }
+/**
+ * A whole frame held to the ranges the interpolator enforces, so a static
+ * render shows what a rig given the same frame lands on.
+ *
+ * @internal
+ */
+export function clampFrame(f) {
+    return {
+        ...f,
+        intensity: clampChannel('intensity', f.intensity),
+        mouthOpen: clampChannel('mouthOpen', f.mouthOpen),
+        browRaise: clampChannel('browRaise', f.browRaise),
+        yaw: clampChannel('yaw', f.yaw ?? 0),
+        gaze: { x: clampChannel('gazeX', f.gaze.x), y: clampChannel('gazeY', f.gaze.y) },
+    };
+}
 function easingOf(spec) {
     const e = spec.easing ?? 'linear';
     return typeof e === 'function' ? e : EASINGS[e];
