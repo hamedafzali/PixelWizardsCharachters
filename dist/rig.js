@@ -194,6 +194,14 @@ export class ActorRig {
         this.host = null;
         this.svg = null;
         this.mouthG = null;
+        /**
+         * The mouth anchor from the last full render, and the markup last written
+         * into `mouthG`. The anchor used to come from a fresh `spec.render()` — the
+         * whole art string — on every tick (PW-06); it belongs to the drawn art, so
+         * it is read again only when the art is.
+         */
+        this.mouth = null;
+        this.mouthMarkup = null;
         this.irises = [];
         this.browsG = null;
         this.lids = [];
@@ -536,6 +544,7 @@ export class ActorRig {
     render() {
         if (!this.host)
             return;
+        this.mouth = this.mouthMarkup = null;
         this.host.innerHTML = namespaceIds(renderActorSVG(this.spec, this.frame, this.opts.size, this.opts.emotions), this.uid);
         this.svg = this.host.querySelector('svg');
         if (!this.svg)
@@ -716,11 +725,16 @@ export class ActorRig {
     updateMouth() {
         if (!this.mouthG)
             return;
-        const spec = this.spec.render({
+        this.mouth ?? (this.mouth = this.spec.render({
             emotion: resolveEmotion(this.frame.emotion, this.opts.emotions),
             intensity: this.frame.intensity,
-        });
-        this.mouthG.innerHTML = drawMouth(spec.mouth, VISEMES[this.frame.viseme], this.frame.mouthOpen);
+        }).mouth);
+        const markup = drawMouth(this.mouth, VISEMES[this.frame.viseme], this.frame.mouthOpen);
+        // Most ticks move nothing in the mouth; rewriting it anyway reparsed it.
+        if (markup === this.mouthMarkup)
+            return;
+        this.mouthMarkup = markup;
+        this.mouthG.innerHTML = markup;
     }
     /**
      * Where the eyes point, from three sources that stack:

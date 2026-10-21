@@ -79,6 +79,23 @@ export const PET_REACH = 54
  * v1.3.0 and now exposes all three zones.)
  */
 export function petZones(spec: CharacterSpec): PetZone[] {
+  return zonesOf(spec).map((z) => ({ ...z }))
+}
+
+/**
+ * Zones per spec. Deriving them renders the whole character, and `zoneAt` runs
+ * on every pointer move of a stroke (PW-06); the geometry they come from is
+ * fixed per spec, so once is enough. {@link petZones} hands out copies, so a
+ * caller cannot edit the cached ones.
+ */
+const zoneCache = new WeakMap<CharacterSpec, readonly PetZone[]>()
+function zonesOf(spec: CharacterSpec): readonly PetZone[] {
+  let zones = zoneCache.get(spec)
+  if (!zones) zoneCache.set(spec, zones = deriveZones(spec))
+  return zones
+}
+
+function deriveZones(spec: CharacterSpec): PetZone[] {
   const zones: PetZone[] = [{
     name: 'head',
     cx: (spec.eyes.x[0] + spec.eyes.x[1]) / 2,
@@ -99,7 +116,7 @@ export function petZones(spec: CharacterSpec): PetZone[] {
 export function zoneAt(spec: CharacterSpec, x: number, y: number): PetZoneName | null {
   let best: PetZoneName | null = null
   let bestD = PET_REACH
-  for (const z of petZones(spec)) {
+  for (const z of zonesOf(spec)) {
     const d = Math.hypot(x - z.cx, y - z.cy)
     if (d < bestD) { bestD = d; best = z.name }
   }

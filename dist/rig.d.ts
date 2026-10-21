@@ -127,6 +127,14 @@ export declare class ActorRig {
     private host;
     private svg;
     private mouthG;
+    /**
+     * The mouth anchor from the last full render, and the markup last written
+     * into `mouthG`. The anchor used to come from a fresh `spec.render()` — the
+     * whole art string — on every tick (PW-06); it belongs to the drawn art, so
+     * it is read again only when the art is.
+     */
+    private mouth;
+    private mouthMarkup;
     private irises;
     private browsG;
     private lids;
