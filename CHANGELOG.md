@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+**Fixes**
+
+- **No full re-render per tick or per stroke (PW-06).** `ActorRig` called
+  `spec.render()`, which builds the whole art string, on every animation tick
+  just to read the mouth anchor. `PetDriver` did the same on every stroke to
+  read two layer origins. The mouth anchor is now read when the art is drawn,
+  and the pet zones once per spec. The mouth's DOM is also rewritten only when
+  its markup changes. `petZones` still returns a fresh array.
+
 ## 1.7.0
 
 **Fixes**
