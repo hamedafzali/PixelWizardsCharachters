@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { ActorRig, CHARACTERS, defaultFrame, renderActorSVG } from '../dist/index.js'
-import { setupDom } from './helpers/dom.mjs'
+import { setupDom, hooks } from './helpers/dom.mjs'
 
 /**
  * A static render shows what a mounted rig shows once it settles on the same
@@ -23,34 +23,6 @@ const FRAMES = {
   everything: { emotion: 'shy', intensity: 0.8, yaw: -1, gaze: { x: -1, y: 0.5 }, browRaise: -0.5, facing: 'left' },
   wideAndTurned: { emotion: 'surprised', intensity: 1, yaw: 0.8 },
   walking: { locomotion: 'walk', emotion: 'excited' },
-}
-
-const SELECTORS = [
-  '.rig-root', '.rig-body',
-  ...['shadow', 'accBack', 'tail', 'farArm', 'farLeg', 'torso', 'nearLeg', 'nearArm',
-    'earL', 'earR', 'head', 'torsoFront', 'accFront'].map((l) => `.lyr-${l}`),
-  '.iris', '.browsG', '.mouthG',
-]
-
-/** An identity transform, however it is spelled, reads as ''. */
-function norm(tf) {
-  const t = (tf ?? '').trim()
-  if (t === 'none') return ''
-  if (/^translate\(0px,\s*0px\)$/.test(t) || /^translateY\(0px\)$/.test(t)) return ''
-  // The rig always writes the widen transform; a static eye at scale 1 has none.
-  if (/^translate\([\d.-]+ [\d.-]+\) scale\(1\.0000\) translate\([\d.-]+ [\d.-]+\)$/.test(t)) return ''
-  return t
-}
-
-/** Every hook's transform, and every radial gradient's centre. */
-function hooks(root) {
-  const out = {}
-  for (const sel of SELECTORS) {
-    root.querySelectorAll(sel).forEach((el, i) => { out[`${sel}#${i}`] = norm(el.style.transform) })
-  }
-  root.querySelectorAll('.eyeG').forEach((el, i) => { out[`.eyeG#${i}`] = norm(el.getAttribute('transform')) })
-  root.querySelectorAll('defs radialGradient').forEach((el, i) => { out[`radialGradient#${i}`] = el.getAttribute('cx') ?? '' })
-  return out
 }
 
 function compare(slug, frame, motion) {
