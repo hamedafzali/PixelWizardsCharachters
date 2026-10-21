@@ -152,9 +152,13 @@ export class ThreeActor {
         this.svgRig?.finish();
         this.model?.finish();
     }
-    playGesture(g) {
-        this.svgRig?.playGesture(g);
-        this.model?.playGesture(g);
+    playGesture(g, opts = {}) {
+        if (this.svgRig)
+            this.svgRig.playGesture(g, opts);
+        else if (this.model)
+            this.model.playGesture(g, opts);
+        else
+            opts.onEnd?.('skipped');
     }
     speak(text, perViseme = 85) {
         this.svgRig?.speak(text, perViseme);

@@ -7,7 +7,7 @@
  * performs them: emotion, Persian-viseme lip-sync, gaze, brows, gestures and
  * locomotion. See the README for the full contract.
  */
-export type { ActorFrame, EmotionName, VisemeName, Locomotion, Gesture, Facing, BrowKey, EmotionSpec, EmotionOverrides, VisemeSpec, CharacterSpec, LayerName, RigLayer, RigLayers, PostureSpec, PostureMap, } from './types.js';
+export type { ActorFrame, EmotionName, VisemeName, Locomotion, Gesture, GestureEnd, PlayGestureOptions, Facing, BrowKey, EmotionSpec, EmotionOverrides, VisemeSpec, CharacterSpec, LayerName, RigLayer, RigLayers, PostureSpec, PostureMap, } from './types.js';
 export { defaultFrame, LAYER_ORDER, LOCOMOTIONS, FACINGS } from './types.js';
 export { EMOTIONS, EMOTION_LABELS, resolveEmotion } from './emotions.js';
 export { POSTURES, resolvePosture, posturePoses } from './posture.js';

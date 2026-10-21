@@ -1,4 +1,4 @@
-import type { ActorFrame, CharacterSpec, Gesture, EmotionOverrides } from './types.js';
+import type { ActorFrame, CharacterSpec, Gesture, PlayGestureOptions, EmotionOverrides } from './types.js';
 import { type MicroConfig } from './micro.js';
 import { type InterpolationProfile } from './interpolate.js';
 import { type GesturePlan } from './gestures.js';
@@ -159,6 +159,15 @@ export declare class ActorRig {
     private settledFired;
     /** the gesture currently playing, so a re-sync doesn't restart it */
     private lastGesture;
+    /**
+     * The gesture the driver last sent, as opposed to what the channel holds.
+     * The channel clears itself when a gesture ends; a driver that keeps the
+     * gesture in its own frame sends it again, and comparing against the
+     * cleared channel replayed it on every apply (PW-05).
+     */
+    private sentGesture;
+    /** the run in flight per gesture, so a restart can tell its timer apart */
+    private playing;
     private raf;
     private lastTick;
     private reduced;
@@ -311,6 +320,8 @@ export declare class ActorRig {
      * silently never arriving.
      */
     apply(frame: Partial<ActorFrame>): void;
+    /** Target a sanitized frame. The rig's own channel writes come in here, not through {@link apply}. */
+    private commit;
     /** Push the current (already eased) frame into the DOM. */
     private syncFrame;
     private updateMouth;
@@ -396,7 +407,7 @@ export declare class ActorRig {
      * would only be an invisible hold — the same reason `apply()` snaps every
      * other channel there rather than leaving it to travel unseen.
      */
-    playGesture(g: Gesture): void;
+    playGesture(g: Gesture, opts?: PlayGestureOptions): void;
     /**
      * How this gesture would play right now — which layers, or why not.
      *

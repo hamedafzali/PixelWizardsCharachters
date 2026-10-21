@@ -14,6 +14,8 @@ export type {
   VisemeName,
   Locomotion,
   Gesture,
+  GestureEnd,
+  PlayGestureOptions,
   Facing,
   BrowKey,
   EmotionSpec,

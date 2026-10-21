@@ -1,5 +1,31 @@
 # Changelog
 
+## Unreleased
+
+**Changed**
+
+- **A gesture in the frame starts when the driver's value changes (PW-05).**
+  The gesture channel clears itself when a gesture ends, and a new gesture
+  started whenever the channel changed. So a driver that kept
+  `gesture: 'wave'` in the frame it sent every tick waved again after every
+  wave. `ActorRig` and `ActorModel` now compare against the value the driver
+  last sent: the wave plays once. To repeat a gesture through the frame, send
+  `null` in between, or call `playGesture`, which plays every time. **If you
+  re-sent the same gesture on its own to play it again, send `null` first or
+  use `playGesture`.**
+
+**Added**
+
+- `playGesture(g, { onEnd })` on `ActorRig`, `ActorModel` and `ThreeActor`.
+  `onEnd` is called once with `'done'`, `'blocked'`, `'skipped'` or
+  `'interrupted'`. New types `GestureEnd` and `PlayGestureOptions`.
+
+**Fixes**
+
+- Restarting a gesture while it played no longer stops the restart early. The
+  first run's end timer used to clear the animation partway through the
+  second.
+
 ## 1.7.1
 
 **Fixes**

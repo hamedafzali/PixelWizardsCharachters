@@ -224,6 +224,15 @@ export class ActorRig {
         this.settledFired = true;
         /** the gesture currently playing, so a re-sync doesn't restart it */
         this.lastGesture = null;
+        /**
+         * The gesture the driver last sent, as opposed to what the channel holds.
+         * The channel clears itself when a gesture ends; a driver that keeps the
+         * gesture in its own frame sends it again, and comparing against the
+         * cleared channel replayed it on every apply (PW-05).
+         */
+        this.sentGesture = null;
+        /** the run in flight per gesture, so a restart can tell its timer apart */
+        this.playing = new Map();
         this.raf = null;
         this.lastTick = 0;
         this.reduced = false;
@@ -694,6 +703,21 @@ export class ActorRig {
                 clean = { ...clean, character: this.spec.slug };
             }
         }
+        // A gesture starts when the driver's value changes, not each time it
+        // arrives (PW-05): `{ gesture: 'wave' }` kept in every frame waves once.
+        // To repeat one, send `null` in between or call playGesture().
+        if (clean.gesture !== undefined) {
+            if (clean.gesture === this.sentGesture) {
+                const { gesture: _, ...rest } = clean;
+                clean = rest;
+            }
+            else
+                this.sentGesture = clean.gesture;
+        }
+        this.commit(clean);
+    }
+    /** Target a sanitized frame. The rig's own channel writes come in here, not through {@link apply}. */
+    commit(clean) {
         this.interp.target(clean);
         if (this.interp.settling)
             this.settledFired = false;
@@ -949,24 +973,25 @@ export class ActorRig {
      * would only be an invisible hold — the same reason `apply()` snaps every
      * other channel there rather than leaving it to travel unseen.
      */
-    playGesture(g) {
+    playGesture(g, opts = {}) {
+        const { onEnd } = opts;
         if (!this.svg)
-            return;
+            return onEnd?.('skipped');
         const svg = this.svg;
         const plan = this.planFor(g);
         if (plan === null)
-            return;
+            return onEnd?.('skipped');
         if (plan.mode === 'blocked') {
             // Refused, not deferred — but the channel must still clear, or the frame
             // holds a gesture that will never play and the next apply() of the same
             // gesture would be a no-op change.
             this.clearGesture(g);
             this.opts.onGestureBlocked?.(g, plan.reason);
-            return;
+            return onEnd?.('blocked');
         }
         if (this.reduced) {
             this.clearGesture(g);
-            return;
+            return onEnd?.('skipped');
         }
         const suffix = plan.mode === 'fallback' ? '_fb' : '';
         const started = [];
@@ -989,14 +1014,30 @@ export class ActorRig {
                 this.cssGestures.push({ target, action: part.action, start: this.lastTick });
             }
         }
-        if (!started.length)
-            return;
+        if (!started.length) {
+            this.clearGesture(g);
+            return onEnd?.('skipped');
+        }
+        const run = { onEnd };
+        const prev = this.playing.get(g);
+        this.playing.set(g, run);
+        prev?.onEnd?.('interrupted');
         this.later(() => {
+            // Restarted since: the newer run owns these layers and the clear. This
+            // timer used to strip the restarted animation partway through.
+            if (this.playing.get(g) !== run)
+                return;
+            this.playing.delete(g);
+            let mine = false;
             for (const { el, animation } of started) {
-                if (el.style.animation === animation)
-                    el.style.animation = '';
+                if (el.style.animation !== animation)
+                    continue;
+                el.style.animation = '';
+                mine = true;
             }
             this.clearGesture(g);
+            // Every part taken over by another gesture means this one was cut off.
+            onEnd?.(mine ? 'done' : 'interrupted');
         }, dur * 1000);
     }
     /**
@@ -1094,7 +1135,7 @@ export class ActorRig {
      */
     clearGesture(g) {
         if (this.interp.goal.gesture === g)
-            this.apply({ gesture: null });
+            this.commit({ gesture: null });
     }
     /**
      * Speak a Persian string: drive the mouth through its viseme sequence, then
@@ -1179,7 +1220,8 @@ export class ActorRig {
         this.cssGestures = [];
         this.scrubbing.clear();
         this.grads = [];
-        this.lastGesture = null;
+        this.lastGesture = this.sentGesture = null;
+        this.playing.clear();
         if (this.host)
             this.host.innerHTML = '';
         this.host = this.svg = this.mouthG = this.browsG = null;

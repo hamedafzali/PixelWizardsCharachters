@@ -199,7 +199,7 @@ export interface PetOutput {
  * if (out.emotion) frame = { ...frame, emotion: out.emotion, intensity: out.intensity }
  * if (out.gaze) frame = { ...frame, gaze: out.gaze }
  * rig.apply(frame)
- * if (out.gesture) rig.playGesture(out.gesture) // one-shot; not kept in `frame`
+ * if (out.gesture) rig.playGesture(out.gesture) // plays a repeat too; a frame would not
  * ```
  */
 export class PetDriver {

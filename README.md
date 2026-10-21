@@ -136,6 +136,22 @@ rig.playGesture('clap')
 rig.apply({ gesture: 'clap' })
 ```
 
+Through the frame, a gesture starts when the value you send **changes**. A
+driver that sends its whole frame every tick, `gesture: 'clap'` included,
+claps once, not after every clap. To repeat the same gesture, send `null` in
+between or call `playGesture`, which plays every time it is called. A frame
+that leaves `gesture` out changes nothing.
+
+`playGesture` takes an `onEnd` callback, called once however the gesture ends:
+
+```ts
+rig.playGesture('wave', { onEnd: (how) => { /* 'done' | 'blocked' | 'skipped' | 'interrupted' */ } })
+```
+
+`blocked` and `skipped` (an unknown name, reduced motion, nothing to move) are
+reported right away. `interrupted` means a restart, another gesture taking its
+parts, or a character switch cut it short. A destroyed rig calls nothing.
+
 Not every gesture fits every situation, and the library resolves that for you in
 one of two ways:
 
@@ -181,8 +197,8 @@ const out = pet.tick(dt)
 if (out.emotion) frame = { ...frame, emotion: out.emotion, intensity: out.intensity }
 if (out.gaze) frame = { ...frame, gaze: out.gaze }
 rig.apply(frame)
-// A gesture is a one-shot: play it, rather than keeping it in `frame`, where
-// every later apply() would start it again.
+// playGesture plays it every time. Through the frame, the same gesture twice
+// in a row would play once.
 if (out.gesture) rig.playGesture(out.gesture)
 ```
 
