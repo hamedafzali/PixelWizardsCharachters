@@ -13,18 +13,56 @@
   `null` in between, or call `playGesture`, which plays every time. **If you
   re-sent the same gesture on its own to play it again, send `null` first or
   use `playGesture`.**
+- **`renderActorSVG` shows the frame's live channels at rest (PW-08).** It
+  used to draw the art and nothing the rig writes onto it, so a server render
+  looked straight ahead, brows level and spine upright whatever the frame
+  said, and the page jumped when the client rig took over. It now bakes in
+  gaze (the irises, and the head turning after them), `browRaise`, `yaw` (the
+  2.5D slide and the shading), the emotion's posture and a locomotion's lean:
+  the SVG matches the rig settled on the same frame, checked hook by hook for
+  every character. Out-of-range numbers are held to the rig's ranges too.
+  Blinks, breathing, the gait cycle, gestures and the idle loop stay
+  rig-only. **Snapshots of static renders change** for any frame with a
+  non-neutral emotion, gaze, brows, yaw or locomotion.
+- **`<CharacterActor>` server-renders the character (PW-07).** It used to
+  render an empty `<div>` until the rig mounted, so a server-rendered page
+  showed nothing there and then the character popped in. It now holds the
+  static SVG of its `frame` until then, which the rig matches when it takes
+  over, and the rig mounts already on that frame instead of easing in from
+  neutral. `ssr={false}` restores the empty `<div>`. **Markup snapshots of the
+  component change.**
+- **`<CharacterActor>` callback props are live (PW-07).** `onFrame` used to be
+  the function from the first render, kept until the character, size or
+  `blink` changed.
 
 **Added**
 
 - `playGesture(g, { onEnd })` on `ActorRig`, `ActorModel` and `ThreeActor`.
   `onEnd` is called once with `'done'`, `'blocked'`, `'skipped'` or
   `'interrupted'`. New types `GestureEnd` and `PlayGestureOptions`.
+- `renderActorSVG(spec, frame, size, emotions, { motion })`: the rig's
+  `motion` option, so a static render matches a rig tuned with it. New type
+  `RenderOptions`.
+- `<CharacterActor>` takes every `ActorRig` option as a prop: `onSettled`,
+  `onGestureBlocked`, `onInvalidFrame`, `reducedMotion`, `motion`, `micro` and
+  `interpolation`, as well as the existing ones. `emotions` and `motion`
+  change live, and the rest rebuild the rig onto the current frame. `rigRef`
+  also takes a callback ref.
+- `useActor()` in `pixel-wizards-charachters/react`: a handle with `rigRef` to
+  pass to `<CharacterActor>`, the mounted `rig`, and `apply`, `speak`,
+  `playGesture` (with `onEnd`), `blink` and `finish`, which go to whichever
+  rig is mounted. New type `ActorHandle`.
+- `<CharacterActor>` with an unknown `character` logs a console warning once
+  per name, outside production builds. It used to render nothing silently.
 
 **Fixes**
 
 - Restarting a gesture while it played no longer stops the restart early. The
   first run's end timer used to clear the animation partway through the
   second.
+- A frame applied before `mount()` now shows on mount. Its posture used to
+  stick to the body group for good, and its brows, squint and mood waited for
+  the next change.
 
 ## 1.7.1
 

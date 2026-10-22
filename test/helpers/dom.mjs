@@ -72,3 +72,34 @@ export function readDom(host) {
     flying: svg.classList.contains('loco-fly'),
   }
 }
+
+const SELECTORS = [
+  '.rig-root', '.rig-body',
+  ...['shadow', 'accBack', 'tail', 'farArm', 'farLeg', 'torso', 'nearLeg', 'nearArm',
+    'earL', 'earR', 'head', 'torsoFront', 'accFront'].map((l) => `.lyr-${l}`),
+  '.iris', '.browsG', '.mouthG',
+]
+
+/** An identity transform, however it is spelled, reads as ''. */
+function norm(tf) {
+  const t = (tf ?? '').trim()
+  if (t === 'none') return ''
+  if (/^translate\(0px,\s*0px\)$/.test(t) || /^translateY\(0px\)$/.test(t)) return ''
+  // The rig always writes the widen transform; a static eye at scale 1 has none.
+  if (/^translate\([\d.-]+ [\d.-]+\) scale\(1\.0000\) translate\([\d.-]+ [\d.-]+\)$/.test(t)) return ''
+  return t
+}
+
+/**
+ * Every hook's transform, and every radial gradient's centre: what a static
+ * render and a settled rig are compared on (PW-08).
+ */
+export function hooks(root) {
+  const out = {}
+  for (const sel of SELECTORS) {
+    root.querySelectorAll(sel).forEach((el, i) => { out[`${sel}#${i}`] = norm(el.style.transform) })
+  }
+  root.querySelectorAll('.eyeG').forEach((el, i) => { out[`.eyeG#${i}`] = norm(el.getAttribute('transform')) })
+  root.querySelectorAll('defs radialGradient').forEach((el, i) => { out[`radialGradient#${i}`] = el.getAttribute('cx') ?? '' })
+  return out
+}

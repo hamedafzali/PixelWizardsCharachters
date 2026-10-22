@@ -79,7 +79,10 @@ test('no drawn eye geometry depends on intensity — only the eyeG transform doe
   // The whole point: if widen were baked into the sclera/iris radii, a live
   // intensity change would leave the eye stuck at its last rendered size,
   // because emotion (not intensity) is what triggers the re-render.
-  const strip = (s) => s.replace(/ transform="[^"]*"/g, '').replace(/ ry="[\d.]+" fill="var\(--lidfill\)"/g, '')
+  // Posture is baked into a static render as the layers' style transforms
+  // (PW-08), and it scales with intensity too; it is a pose, not geometry.
+  const strip = (s) => s.replace(/ transform="[^"]*"/g, '').replace(/;?transform:[^;"]*/g, '')
+    .replace(/ style=""/g, '').replace(/ ry="[\d.]+" fill="var\(--lidfill\)"/g, '')
   const low = renderActorSVG(CHARACTERS.roozi, frame({ emotion: 'surprised', intensity: 0 }), 200)
   const high = renderActorSVG(CHARACTERS.roozi, frame({ emotion: 'surprised', intensity: 1 }), 200)
   assert.notEqual(low, high, 'the two renders should differ *somewhere*')

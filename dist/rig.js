@@ -1,8 +1,9 @@
 import { defaultFrame } from './types.js';
-import { renderActorSVG, drawMouth } from './render.js';
+import { renderArtSVG, drawMouth, CARRIER_ORIGIN } from './render.js';
 import { resolveEmotion } from './emotions.js';
 import { eyeWidenScale, eyeWidenTransform, eyeLidRy } from './draw.js';
 import { resolvePosture, posturePoses } from './posture.js';
+import { lookTarget } from './rest.js';
 import { ensureAction, appendStyle, styleRootOf, composePoses, poseToTransform } from './timing.js';
 import { sampleAction } from './sample.js';
 import { IdleMicroMotion, blinkStyle } from './micro.js';
@@ -30,8 +31,8 @@ import { MotionEngine, resolveMotion } from './motion.js';
  */
 export const RIG_CSS = `
 .ca-svg{display:block}
-.ca-svg .rig-root{transform-origin:100px 190px;will-change:transform}
-.ca-svg .rig-body{transform-origin:100px 188px;will-change:transform}
+.ca-svg .rig-root{transform-origin:${CARRIER_ORIGIN.root};will-change:transform}
+.ca-svg .rig-body{transform-origin:${CARRIER_ORIGIN.body};will-change:transform}
 .ca-svg .rig-mood{transform-origin:100px 150px;will-change:transform}
 .ca-svg .iris{transition:transform .18s cubic-bezier(.3,.7,.3,1)}
 .ca-svg .browsG{transition:transform .16s ease}
@@ -297,7 +298,14 @@ export class ActorRig {
         this.host = host;
         const rm = this.opts.reducedMotion ?? 'auto';
         this.reduced = rm === 'auto' ? prefersReducedMotion() : rm;
+        // Contributions staged before there were layers to route them to are
+        // wrong: a posture applied before mount went to `.rig-body`, the no-torso
+        // fallback, and stayed there.
+        this.contrib.clear();
         this.render();
+        // The art is bare; a frame applied before mount lands on it now, not at
+        // the next change.
+        this.paint();
         if (this.opts.blink && !this.reduced)
             this.scheduleBlink();
         if (!this.reduced)
@@ -488,13 +496,7 @@ export class ActorRig {
     }
     /** Where the eyes are told to look: frame gaze plus emotion bias, no saccade. */
     intentGaze() {
-        const bias = resolveEmotion(this.frame.emotion, this.opts.emotions).gaze;
-        const k = this.frame.intensity;
-        const clamp = (v) => (v < -1 ? -1 : v > 1 ? 1 : v);
-        return {
-            x: clamp(this.frame.gaze.x + (bias?.x ?? 0) * k),
-            y: clamp(this.frame.gaze.y + (bias?.y ?? 0) * k),
-        };
+        return lookTarget(this.frame, this.opts.emotions);
     }
     /** Tag the layers the secondary springs own, so their CSS transition is off. */
     markSpringLayers() {
@@ -554,7 +556,7 @@ export class ActorRig {
         if (!this.host)
             return;
         this.mouth = this.mouthMarkup = null;
-        this.host.innerHTML = namespaceIds(renderActorSVG(this.spec, this.frame, this.opts.size, this.opts.emotions), this.uid);
+        this.host.innerHTML = namespaceIds(renderArtSVG(this.spec, this.frame, this.opts.size, this.opts.emotions), this.uid);
         this.svg = this.host.querySelector('svg');
         if (!this.svg)
             return;
@@ -728,6 +730,17 @@ export class ActorRig {
     }
     /** Push the current (already eased) frame into the DOM. */
     syncFrame() {
+        this.paint();
+        this.opts.onFrame?.(this.frame);
+        // Armed by apply(), so arrival fires exactly once per transition — and an
+        // apply() that changes nothing never arms it at all.
+        if (!this.interp.settling && !this.settledFired) {
+            this.settledFired = true;
+            this.opts.onSettled?.(this.frame);
+        }
+    }
+    /** Write every live channel of the current frame onto the art. */
+    paint() {
         const key = this.artKey(this.frame);
         if (key !== this.lastArtKey)
             this.render();
@@ -738,13 +751,6 @@ export class ActorRig {
         this.updatePosture();
         this.updateMotion();
         this.settleMotionIfStill();
-        this.opts.onFrame?.(this.frame);
-        // Armed by apply(), so arrival fires exactly once per transition — and an
-        // apply() that changes nothing never arms it at all.
-        if (!this.interp.settling && !this.settledFired) {
-            this.settledFired = true;
-            this.opts.onSettled?.(this.frame);
-        }
     }
     updateMouth() {
         if (!this.mouthG)
@@ -775,13 +781,9 @@ export class ActorRig {
      */
     updateGaze() {
         const { r } = this.spec.eyes;
-        const bias = resolveEmotion(this.frame.emotion, this.opts.emotions).gaze;
-        const k = this.frame.intensity;
-        const clamp = (v) => (v < -1 ? -1 : v > 1 ? 1 : v);
-        const gx = clamp(this.frame.gaze.x + (bias?.x ?? 0) * k + this.saccade.x);
-        const gy = clamp(this.frame.gaze.y + (bias?.y ?? 0) * k + this.saccade.y);
-        const dx = gx * r * 0.5;
-        const dy = gy * r * 0.5;
+        const g = lookTarget(this.frame, this.opts.emotions, this.saccade);
+        const dx = g.x * r * 0.5;
+        const dy = g.y * r * 0.5;
         for (const iris of this.irises)
             iris.style.transform = `translate(${dx}px,${dy}px)`;
     }
