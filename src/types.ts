@@ -47,6 +47,26 @@ export type Gesture =
   | 'wave' | 'jump' | 'spin'
   | 'nod' | 'shake' | 'shrug' | 'point' | 'clap' | 'bounce'
   | 'nuzzle'
+
+/**
+ * How one `playGesture` call ended, as its `onEnd` reports it:
+ *
+ * - `done` — it played to the end;
+ * - `blocked` — this situation refuses it (see `onGestureBlocked`);
+ * - `skipped` — nothing played: an unknown name, reduced motion, nothing on
+ *   this character to move, or no rig mounted yet;
+ * - `interrupted` — cut short by a restart of the same gesture, another
+ *   gesture taking its parts, or a character switch.
+ */
+export type GestureEnd = 'done' | 'blocked' | 'skipped' | 'interrupted'
+
+export interface PlayGestureOptions {
+  /**
+   * Called once when the gesture ends, however it ends. Right away when it
+   * cannot start; never if the rig is destroyed first.
+   */
+  onEnd?: (how: GestureEnd) => void
+}
 export type Facing = typeof FACINGS[number]
 
 /** One moment of performance. This is the AI ⇄ rig contract. */

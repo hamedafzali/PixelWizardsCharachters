@@ -9,7 +9,7 @@
  * makes the no-WebGL fallback possible: when no context can be created, the
  * same calls go to an `ActorRig` in the same host.
  */
-import type { ActorFrame, CharacterSpec, Gesture } from '../types.js';
+import type { ActorFrame, CharacterSpec, Gesture, PlayGestureOptions } from '../types.js';
 import type { MotionOverrides, MotionSettings } from '../motion.js';
 import { ActorModel, type ActorModelOptions } from './model.js';
 import { type SkinOptions } from './skin.js';
@@ -72,7 +72,7 @@ export declare class ThreeActor {
     get motion(): MotionSettings | null;
     apply(frame: Partial<ActorFrame>): void;
     finish(): void;
-    playGesture(g: Gesture): void;
+    playGesture(g: Gesture, opts?: PlayGestureOptions): void;
     speak(text: string, perViseme?: number): void;
     blink(): void;
     setMotion(overrides?: MotionOverrides): void;

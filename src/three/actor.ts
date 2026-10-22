@@ -11,7 +11,7 @@
  */
 
 import * as THREE from 'three'
-import type { ActorFrame, CharacterSpec, Gesture } from '../types.js'
+import type { ActorFrame, CharacterSpec, Gesture, PlayGestureOptions } from '../types.js'
 import type { MotionOverrides, MotionSettings } from '../motion.js'
 import { ActorRig, watchReducedMotion } from '../rig.js'
 import { knownCharacter } from '../validate.js'
@@ -191,9 +191,10 @@ export class ThreeActor {
     this.model?.finish()
   }
 
-  playGesture(g: Gesture): void {
-    this.svgRig?.playGesture(g)
-    this.model?.playGesture(g)
+  playGesture(g: Gesture, opts: PlayGestureOptions = {}): void {
+    if (this.svgRig) this.svgRig.playGesture(g, opts)
+    else if (this.model) this.model.playGesture(g, opts)
+    else opts.onEnd?.('skipped')
   }
 
   speak(text: string, perViseme = 85): void {

@@ -79,6 +79,10 @@ export class ActorModel {
         this.saccade = { x: 0, y: 0 };
         this.gestures = [];
         this.lastGesture = null;
+        /** the gesture the driver last sent; see `ActorRig.apply` (PW-05) */
+        this.sentGesture = null;
+        /** `onEnd` per gesture in flight */
+        this.ends = new Map();
         this.settledFired = true;
         this.clock = 0;
         this.moodKey = '';
@@ -169,6 +173,20 @@ export class ActorModel {
                 clean = { ...clean, character: this.spec.slug };
             }
         }
+        // Same rule as `ActorRig.apply`: a gesture starts when the driver's value
+        // changes, not each time it arrives (PW-05).
+        if (clean.gesture !== undefined) {
+            if (clean.gesture === this.sentGesture) {
+                const { gesture: _, ...rest } = clean;
+                clean = rest;
+            }
+            else
+                this.sentGesture = clean.gesture;
+        }
+        this.commit(clean);
+    }
+    /** Target a sanitized frame. The model's own channel writes come in here, not through `apply`. */
+    commit(clean) {
         this.interp.target(clean);
         if (this.interp.settling)
             this.settledFired = false;
@@ -197,6 +215,7 @@ export class ActorModel {
         parent?.add(this.built.object);
         this.contrib.clear();
         this.gestures = [];
+        this.endGone('interrupted');
         this.engine.settings = this.resolve();
         this.apply({ character: spec.slug });
         this.finish();
@@ -300,25 +319,47 @@ export class ActorModel {
         this.set('mood', 'mood', m.once && u >= 1 ? {} : samplePhase(m.keys, u));
     }
     /** Start a one-shot gesture, planned exactly as the SVG rig plans it. */
-    playGesture(g) {
+    playGesture(g, opts = {}) {
+        const { onEnd } = opts;
         const plan = this.planFor(g);
         if (plan === null)
-            return;
+            return onEnd?.('skipped');
         if (plan.mode === 'blocked') {
             this.clearGesture(g);
             this.opts.onGestureBlocked?.(g, plan.reason);
-            return;
+            return onEnd?.('blocked');
         }
         if (this.reduced) {
             this.clearGesture(g);
-            return;
+            return onEnd?.('skipped');
         }
-        for (const part of plan.parts) {
-            const target = gestureTarget(part.layer);
-            if (!target)
-                continue;
+        const parts = plan.parts.flatMap((p) => {
+            const target = gestureTarget(p.layer);
+            return target ? [{ target, action: p.action }] : [];
+        });
+        if (!parts.length) {
+            this.clearGesture(g);
+            return onEnd?.('skipped');
+        }
+        // A restart cuts the run in flight short, the same as in the SVG rig.
+        this.gestures = this.gestures.filter((a) => a.gesture !== g);
+        this.endGone('interrupted');
+        for (const { target, action } of parts) {
             this.gestures = this.gestures.filter((a) => a.target !== target);
-            this.gestures.push({ gesture: g, target, action: part.action, t: 0 });
+            this.gestures.push({ gesture: g, target, action, t: 0 });
+        }
+        // ...and so does taking over every part of another gesture.
+        this.endGone('interrupted');
+        if (onEnd)
+            this.ends.set(g, onEnd);
+    }
+    /** Report `how` to every `onEnd` whose gesture has no part left playing. */
+    endGone(how) {
+        for (const [g, onEnd] of this.ends) {
+            if (this.gestures.some((a) => a.gesture === g))
+                continue;
+            this.ends.delete(g);
+            onEnd(how);
         }
     }
     /** How this gesture would play right now. */
@@ -351,10 +392,11 @@ export class ActorModel {
         for (const g of done)
             if (!this.gestures.some((a) => a.gesture === g))
                 this.clearGesture(g);
+        this.endGone('done');
     }
     clearGesture(g) {
         if (this.interp.goal.gesture === g)
-            this.apply({ gesture: null });
+            this.commit({ gesture: null });
     }
     // ---------------------------------------------------------- face timing ---
     nextBlinkGap() {
@@ -457,6 +499,7 @@ export class ActorModel {
         }
         if (this.reduced) {
             this.gestures = [];
+            this.endGone('interrupted');
             this.shut = 0;
             this.lid = 0;
             this.saccade = { x: 0, y: 0 };
@@ -561,6 +604,7 @@ export class ActorModel {
     /** Free the geometry and materials and detach the tree. */
     dispose() {
         this.gestures = [];
+        this.ends.clear();
         this.speech = null;
         this.contrib.clear();
         this.built.dispose();

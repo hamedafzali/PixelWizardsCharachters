@@ -31,17 +31,39 @@ import { CharacterActor } from 'pixel-wizards-charachters/react'
 />
 ```
 
-For speech and gestures, grab the rig — these mutate the DOM directly and never
-trigger a React re-render:
+Every `ActorRig` option is a prop: `onFrame`, `onSettled`, `onGestureBlocked`,
+`onInvalidFrame`, `reducedMotion`, `motion`, `micro`, `interpolation`, as well as
+`emotions`, `size` and `blink`. Callbacks, `emotions` and `motion` change live;
+pass a new function and the next frame calls it. `character`, `size`, `blink`,
+`reducedMotion`, `micro` and `interpolation` rebuild the rig, which carries on
+with the current `frame`. `micro` and `interpolation` are compared by value.
+`emotions` and `motion` are compared by identity, so memoize them.
+
+For speech and gestures, use `useActor()`. Its calls mutate the DOM directly and
+never trigger a React re-render:
 
 ```tsx
-const rig = useRef<ActorRig | null>(null)
+import { CharacterActor, useActor } from 'pixel-wizards-charachters/react'
 
-<CharacterActor character="roozi" frame={frame} rigRef={rig} />
+const actor = useActor()
 
-rig.current?.speak('سلام دوست من')
-rig.current?.playGesture('wave')
+<CharacterActor character="roozi" frame={frame} rigRef={actor.rigRef} />
+
+actor.speak('سلام دوست من')
+actor.playGesture('wave', { onEnd: (how) => console.log(how) }) // 'done', 'interrupted', …
 ```
+
+`actor.rig` is the mounted `ActorRig` (or `null`), and the component re-renders
+when it changes. `rigRef` also still takes a plain ref object or a callback ref.
+
+**Server rendering.** Until the rig mounts — on the server, and on the client's
+first paint — `<CharacterActor>` holds the static SVG of its `frame` (see
+[Static SVG](#static-svg-ssr-thumbnails-tests)). A settled rig matches that
+render part for part, so hydration is clean and the hand-over does not jump.
+`ssr={false}` renders an empty `<div>` there instead.
+
+An unknown `character` renders nothing, and outside production builds it logs a
+console warning once per name.
 
 ### Vanilla DOM
 
@@ -58,12 +80,21 @@ rig.speak('پشمک اینجاست')
 ```ts
 import { renderActorSVG, CHARACTERS, defaultFrame } from 'pixel-wizards-charachters'
 
-const svg = renderActorSVG(CHARACTERS.laki, defaultFrame('laki'), 200)
+const svg = renderActorSVG(CHARACTERS.laki, { ...defaultFrame('laki'), emotion: 'sad', gaze: { x: 0.6, y: 0 } }, 200)
 ```
 
-The static render is a still of the frame's `emotion`, mouth (`viseme`,
-`mouthOpen`) and `facing`. Gaze, brows, `yaw`, locomotion and gestures are
-live-rig channels and do not appear in it.
+The static render is what a mounted rig shows once it settles on the same
+frame: emotion and posture, mouth, `facing`, gaze (the eyes, and the head
+turning after them), `browRaise`, `yaw`, and a locomotion's lean. What only
+exists over time is left out: blinks, breathing, the gait cycle, gestures and
+the emotion's idle loop.
+
+If the rig that takes over on the client has a `motion` option, pass the same
+one so the two match:
+
+```ts
+renderActorSVG(spec, frame, 200, undefined, { motion: { depth: { travel: 9 } } })
+```
 
 ## The characters
 
@@ -136,6 +167,22 @@ rig.playGesture('clap')
 rig.apply({ gesture: 'clap' })
 ```
 
+Through the frame, a gesture starts when the value you send **changes**. A
+driver that sends its whole frame every tick, `gesture: 'clap'` included,
+claps once, not after every clap. To repeat the same gesture, send `null` in
+between or call `playGesture`, which plays every time it is called. A frame
+that leaves `gesture` out changes nothing.
+
+`playGesture` takes an `onEnd` callback, called once however the gesture ends:
+
+```ts
+rig.playGesture('wave', { onEnd: (how) => { /* 'done' | 'blocked' | 'skipped' | 'interrupted' */ } })
+```
+
+`blocked` and `skipped` (an unknown name, reduced motion, nothing to move) are
+reported right away. `interrupted` means a restart, another gesture taking its
+parts, or a character switch cut it short. A destroyed rig calls nothing.
+
 Not every gesture fits every situation, and the library resolves that for you in
 one of two ways:
 
@@ -181,8 +228,8 @@ const out = pet.tick(dt)
 if (out.emotion) frame = { ...frame, emotion: out.emotion, intensity: out.intensity }
 if (out.gaze) frame = { ...frame, gaze: out.gaze }
 rig.apply(frame)
-// A gesture is a one-shot: play it, rather than keeping it in `frame`, where
-// every later apply() would start it again.
+// playGesture plays it every time. Through the frame, the same gesture twice
+// in a row would play once.
 if (out.gesture) rig.playGesture(out.gesture)
 ```
 

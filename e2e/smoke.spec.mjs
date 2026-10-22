@@ -153,3 +153,57 @@ test('with no WebGL, the three.js example falls back to the SVG rig', async ({ p
   expect(await page.locator('#three canvas').count()).toBe(0)
   expect(errors).toEqual([])
 })
+
+test('a static render lands every part where the settled rig puts it', async ({ page }) => {
+  // jsdom can compare the transforms the two write, but not where they put the
+  // art: the outer carriers pivot about an origin the rig's stylesheet sets,
+  // and a standalone SVG has no stylesheet (PW-08). So compare boxes.
+  const errors = await ready(page)
+  const frames = [
+    { emotion: 'sad', intensity: 1 },
+    { emotion: 'shy', intensity: 0.8, yaw: -1, gaze: { x: -1, y: 0.5 }, browRaise: 0.5, facing: 'left' },
+    { emotion: 'excited', locomotion: 'walk', gaze: { x: 0.7, y: -0.3 } },
+  ]
+  const worst = await page.evaluate((frames) => {
+    const { ActorRig, CHARACTERS, CHARACTER_SLUGS, renderActorSVG, defaultFrame } = window.pw
+    const sel = ['.rig-body', '.lyr-torso', '.lyr-head', '.lyr-earL', '.lyr-earR', '.lyr-tail',
+      '.lyr-farArm', '.lyr-nearArm', '.iris', '.browsG', '.mouthG', '.eyeG']
+    const boxes = (host) => {
+      const svg = host.querySelector('svg').getBoundingClientRect()
+      const out = {}
+      for (const s of sel) {
+        host.querySelectorAll(s).forEach((el, i) => {
+          const r = el.getBoundingClientRect()
+          out[`${s}#${i}`] = [r.left - svg.left, r.top - svg.top, r.width, r.height]
+        })
+      }
+      return out
+    }
+    let worst = { d: 0, at: '' }
+    for (const slug of CHARACTER_SLUGS) {
+      for (const [n, f] of frames.entries()) {
+        const live = document.createElement('div')
+        const still = document.createElement('div')
+        document.body.append(live, still)
+        // Locomotion: the rig's gait is time-based; reduced motion holds it.
+        const rig = new ActorRig(CHARACTERS[slug], { size: 200, blink: false, reducedMotion: true }).mount(live)
+        rig.apply(f)
+        rig.finish()
+        still.innerHTML = renderActorSVG(CHARACTERS[slug], { ...defaultFrame(slug), ...f }, 200)
+        const a = boxes(live)
+        const b = boxes(still)
+        for (const k of Object.keys(a)) {
+          if (!b[k]) return { d: Infinity, at: `${slug} frame ${n}: ${k} missing from the static render` }
+          const d = Math.max(...a[k].map((v, i) => Math.abs(v - b[k][i])))
+          if (d > worst.d) worst = { d, at: `${slug} frame ${n}: ${k}` }
+        }
+        rig.destroy()
+        live.remove()
+        still.remove()
+      }
+    }
+    return worst
+  }, frames)
+  expect(worst.d, `largest box difference, at ${worst.at}`).toBeLessThan(0.5)
+  expect(errors).toEqual([])
+})

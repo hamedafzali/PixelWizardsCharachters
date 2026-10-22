@@ -13,7 +13,7 @@
  * as rotation instead.
  */
 import * as THREE from 'three';
-import type { ActorFrame, CharacterSpec, EmotionName, Gesture, EmotionOverrides } from '../types.js';
+import type { ActorFrame, CharacterSpec, EmotionName, Gesture, PlayGestureOptions, EmotionOverrides } from '../types.js';
 import { type MicroConfig } from '../micro.js';
 import { type InterpolationProfile } from '../interpolate.js';
 import { type PhaseKey } from '../locomotion.js';
@@ -66,6 +66,10 @@ export declare class ActorModel {
     private saccade;
     private gestures;
     private lastGesture;
+    /** the gesture the driver last sent; see `ActorRig.apply` (PW-05) */
+    private sentGesture;
+    /** `onEnd` per gesture in flight */
+    private ends;
     private settledFired;
     private clock;
     private moodKey;
@@ -105,6 +109,8 @@ export declare class ActorModel {
      * under reduced motion everything does.
      */
     apply(frame: Partial<ActorFrame>): void;
+    /** Target a sanitized frame. The model's own channel writes come in here, not through `apply`. */
+    private commit;
     /** Land every channel and every spring on its goal now. */
     finish(): void;
     /** Swap to a different character: a new body, the same frame and clock. */
@@ -123,7 +129,9 @@ export declare class ActorModel {
     private tickLocomotion;
     private tickMood;
     /** Start a one-shot gesture, planned exactly as the SVG rig plans it. */
-    playGesture(g: Gesture): void;
+    playGesture(g: Gesture, opts?: PlayGestureOptions): void;
+    /** Report `how` to every `onEnd` whose gesture has no part left playing. */
+    private endGone;
     /** How this gesture would play right now. */
     planFor(g: Gesture): GesturePlan | null;
     private tickGestures;

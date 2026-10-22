@@ -1,9 +1,12 @@
-import type { ActorFrame, CharacterSpec, Gesture, EmotionOverrides, LayerName } from './types.js'
+import type {
+  ActorFrame, CharacterSpec, Gesture, GestureEnd, PlayGestureOptions, EmotionOverrides, LayerName,
+} from './types.js'
 import { defaultFrame } from './types.js'
-import { renderActorSVG, drawMouth } from './render.js'
+import { renderArtSVG, drawMouth, CARRIER_ORIGIN } from './render.js'
 import { resolveEmotion } from './emotions.js'
 import { eyeWidenScale, eyeWidenTransform, eyeLidRy } from './draw.js'
 import { resolvePosture, posturePoses } from './posture.js'
+import { lookTarget } from './rest.js'
 import { ensureAction, appendStyle, styleRootOf, composePoses, poseToTransform, type Pose, type StyleRoot, type TimedAction } from './timing.js'
 import { sampleAction } from './sample.js'
 import { IdleMicroMotion, blinkStyle, type MicroConfig } from './micro.js'
@@ -35,8 +38,8 @@ import { MotionEngine, resolveMotion, type MotionOverrides, type MotionSettings,
  */
 export const RIG_CSS = `
 .ca-svg{display:block}
-.ca-svg .rig-root{transform-origin:100px 190px;will-change:transform}
-.ca-svg .rig-body{transform-origin:100px 188px;will-change:transform}
+.ca-svg .rig-root{transform-origin:${CARRIER_ORIGIN.root};will-change:transform}
+.ca-svg .rig-body{transform-origin:${CARRIER_ORIGIN.body};will-change:transform}
 .ca-svg .rig-mood{transform-origin:100px 150px;will-change:transform}
 .ca-svg .iris{transition:transform .18s cubic-bezier(.3,.7,.3,1)}
 .ca-svg .browsG{transition:transform .16s ease}
@@ -327,6 +330,15 @@ export class ActorRig {
   private settledFired = true
   /** the gesture currently playing, so a re-sync doesn't restart it */
   private lastGesture: Gesture | null = null
+  /**
+   * The gesture the driver last sent, as opposed to what the channel holds.
+   * The channel clears itself when a gesture ends; a driver that keeps the
+   * gesture in its own frame sends it again, and comparing against the
+   * cleared channel replayed it on every apply (PW-05).
+   */
+  private sentGesture: Gesture | null = null
+  /** the run in flight per gesture, so a restart can tell its timer apart */
+  private playing = new Map<Gesture, { onEnd?: (how: GestureEnd) => void }>()
   private raf: number | null = null
   private lastTick = 0
   private reduced = false
@@ -401,7 +413,14 @@ export class ActorRig {
     this.host = host
     const rm = this.opts.reducedMotion ?? 'auto'
     this.reduced = rm === 'auto' ? prefersReducedMotion() : rm
+    // Contributions staged before there were layers to route them to are
+    // wrong: a posture applied before mount went to `.rig-body`, the no-torso
+    // fallback, and stayed there.
+    this.contrib.clear()
     this.render()
+    // The art is bare; a frame applied before mount lands on it now, not at
+    // the next change.
+    this.paint()
     if (this.opts.blink && !this.reduced) this.scheduleBlink()
     if (!this.reduced) this.startLoop()
     if (rm === 'auto') this.unwatchReduced = watchReducedMotion((on) => this.setReduced(on))
@@ -582,13 +601,7 @@ export class ActorRig {
 
   /** Where the eyes are told to look: frame gaze plus emotion bias, no saccade. */
   private intentGaze(): { x: number; y: number } {
-    const bias = resolveEmotion(this.frame.emotion, this.opts.emotions).gaze
-    const k = this.frame.intensity
-    const clamp = (v: number) => (v < -1 ? -1 : v > 1 ? 1 : v)
-    return {
-      x: clamp(this.frame.gaze.x + (bias?.x ?? 0) * k),
-      y: clamp(this.frame.gaze.y + (bias?.y ?? 0) * k),
-    }
+    return lookTarget(this.frame, this.opts.emotions)
   }
 
   /** Tag the layers the secondary springs own, so their CSS transition is off. */
@@ -648,7 +661,7 @@ export class ActorRig {
     if (!this.host) return
     this.mouth = this.mouthMarkup = null
     this.host.innerHTML = namespaceIds(
-      renderActorSVG(this.spec, this.frame, this.opts.size, this.opts.emotions), this.uid)
+      renderArtSVG(this.spec, this.frame, this.opts.size, this.opts.emotions), this.uid)
     this.svg = this.host.querySelector('svg')
     if (!this.svg) return
     // Again on every render: a host mounted while detached and attached into a
@@ -794,6 +807,20 @@ export class ActorRig {
         clean = { ...clean, character: this.spec.slug }
       }
     }
+    // A gesture starts when the driver's value changes, not each time it
+    // arrives (PW-05): `{ gesture: 'wave' }` kept in every frame waves once.
+    // To repeat one, send `null` in between or call playGesture().
+    if (clean.gesture !== undefined) {
+      if (clean.gesture === this.sentGesture) {
+        const { gesture: _, ...rest } = clean
+        clean = rest
+      } else this.sentGesture = clean.gesture
+    }
+    this.commit(clean)
+  }
+
+  /** Target a sanitized frame. The rig's own channel writes come in here, not through {@link apply}. */
+  private commit(clean: Partial<ActorFrame>): void {
     this.interp.target(clean)
     if (this.interp.settling) this.settledFired = false
     if (this.reduced || this.raf === null) this.interp.finish()
@@ -803,6 +830,18 @@ export class ActorRig {
 
   /** Push the current (already eased) frame into the DOM. */
   private syncFrame(): void {
+    this.paint()
+    this.opts.onFrame?.(this.frame)
+    // Armed by apply(), so arrival fires exactly once per transition — and an
+    // apply() that changes nothing never arms it at all.
+    if (!this.interp.settling && !this.settledFired) {
+      this.settledFired = true
+      this.opts.onSettled?.(this.frame)
+    }
+  }
+
+  /** Write every live channel of the current frame onto the art. */
+  private paint(): void {
     const key = this.artKey(this.frame)
     if (key !== this.lastArtKey) this.render()
     this.updateMouth()
@@ -812,13 +851,6 @@ export class ActorRig {
     this.updatePosture()
     this.updateMotion()
     this.settleMotionIfStill()
-    this.opts.onFrame?.(this.frame)
-    // Armed by apply(), so arrival fires exactly once per transition — and an
-    // apply() that changes nothing never arms it at all.
-    if (!this.interp.settling && !this.settledFired) {
-      this.settledFired = true
-      this.opts.onSettled?.(this.frame)
-    }
   }
 
   private updateMouth(): void {
@@ -849,13 +881,9 @@ export class ActorRig {
    */
   private updateGaze(): void {
     const { r } = this.spec.eyes
-    const bias = resolveEmotion(this.frame.emotion, this.opts.emotions).gaze
-    const k = this.frame.intensity
-    const clamp = (v: number) => (v < -1 ? -1 : v > 1 ? 1 : v)
-    const gx = clamp(this.frame.gaze.x + (bias?.x ?? 0) * k + this.saccade.x)
-    const gy = clamp(this.frame.gaze.y + (bias?.y ?? 0) * k + this.saccade.y)
-    const dx = gx * r * 0.5
-    const dy = gy * r * 0.5
+    const g = lookTarget(this.frame, this.opts.emotions, this.saccade)
+    const dx = g.x * r * 0.5
+    const dy = g.y * r * 0.5
     for (const iris of this.irises) iris.style.transform = `translate(${dx}px,${dy}px)`
   }
 
@@ -1046,22 +1074,23 @@ export class ActorRig {
    * would only be an invisible hold — the same reason `apply()` snaps every
    * other channel there rather than leaving it to travel unseen.
    */
-  playGesture(g: Gesture): void {
-    if (!this.svg) return
+  playGesture(g: Gesture, opts: PlayGestureOptions = {}): void {
+    const { onEnd } = opts
+    if (!this.svg) return onEnd?.('skipped')
     const svg = this.svg
     const plan = this.planFor(g)
-    if (plan === null) return
+    if (plan === null) return onEnd?.('skipped')
     if (plan.mode === 'blocked') {
       // Refused, not deferred — but the channel must still clear, or the frame
       // holds a gesture that will never play and the next apply() of the same
       // gesture would be a no-op change.
       this.clearGesture(g)
       this.opts.onGestureBlocked?.(g, plan.reason)
-      return
+      return onEnd?.('blocked')
     }
     if (this.reduced) {
       this.clearGesture(g)
-      return
+      return onEnd?.('skipped')
     }
 
     const suffix = plan.mode === 'fallback' ? '_fb' : ''
@@ -1084,13 +1113,29 @@ export class ActorRig {
         this.cssGestures.push({ target, action: part.action, start: this.lastTick })
       }
     }
-    if (!started.length) return
+    if (!started.length) {
+      this.clearGesture(g)
+      return onEnd?.('skipped')
+    }
 
+    const run = { onEnd }
+    const prev = this.playing.get(g)
+    this.playing.set(g, run)
+    prev?.onEnd?.('interrupted')
     this.later(() => {
+      // Restarted since: the newer run owns these layers and the clear. This
+      // timer used to strip the restarted animation partway through.
+      if (this.playing.get(g) !== run) return
+      this.playing.delete(g)
+      let mine = false
       for (const { el, animation } of started) {
-        if (el.style.animation === animation) el.style.animation = ''
+        if (el.style.animation !== animation) continue
+        el.style.animation = ''
+        mine = true
       }
       this.clearGesture(g)
+      // Every part taken over by another gesture means this one was cut off.
+      onEnd?.(mine ? 'done' : 'interrupted')
     }, dur * 1000)
   }
 
@@ -1191,7 +1236,7 @@ export class ActorRig {
    * Writing `this.frame` directly would be undone by the next tick.
    */
   private clearGesture(g: Gesture): void {
-    if (this.interp.goal.gesture === g) this.apply({ gesture: null })
+    if (this.interp.goal.gesture === g) this.commit({ gesture: null })
   }
 
   /**
@@ -1274,7 +1319,8 @@ export class ActorRig {
     this.cssGestures = []
     this.scrubbing.clear()
     this.grads = []
-    this.lastGesture = null
+    this.lastGesture = this.sentGesture = null
+    this.playing.clear()
     if (this.host) this.host.innerHTML = ''
     this.host = this.svg = this.mouthG = this.browsG = null
     this.root = this.mood = null
