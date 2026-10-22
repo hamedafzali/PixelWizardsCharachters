@@ -31,17 +31,39 @@ import { CharacterActor } from 'pixel-wizards-charachters/react'
 />
 ```
 
-For speech and gestures, grab the rig — these mutate the DOM directly and never
-trigger a React re-render:
+Every `ActorRig` option is a prop: `onFrame`, `onSettled`, `onGestureBlocked`,
+`onInvalidFrame`, `reducedMotion`, `motion`, `micro`, `interpolation`, as well as
+`emotions`, `size` and `blink`. Callbacks, `emotions` and `motion` change live;
+pass a new function and the next frame calls it. `character`, `size`, `blink`,
+`reducedMotion`, `micro` and `interpolation` rebuild the rig, which carries on
+with the current `frame`. `micro` and `interpolation` are compared by value.
+`emotions` and `motion` are compared by identity, so memoize them.
+
+For speech and gestures, use `useActor()`. Its calls mutate the DOM directly and
+never trigger a React re-render:
 
 ```tsx
-const rig = useRef<ActorRig | null>(null)
+import { CharacterActor, useActor } from 'pixel-wizards-charachters/react'
 
-<CharacterActor character="roozi" frame={frame} rigRef={rig} />
+const actor = useActor()
 
-rig.current?.speak('سلام دوست من')
-rig.current?.playGesture('wave')
+<CharacterActor character="roozi" frame={frame} rigRef={actor.rigRef} />
+
+actor.speak('سلام دوست من')
+actor.playGesture('wave', { onEnd: (how) => console.log(how) }) // 'done', 'interrupted', …
 ```
+
+`actor.rig` is the mounted `ActorRig` (or `null`), and the component re-renders
+when it changes. `rigRef` also still takes a plain ref object or a callback ref.
+
+**Server rendering.** Until the rig mounts — on the server, and on the client's
+first paint — `<CharacterActor>` holds the static SVG of its `frame` (see
+[Static SVG](#static-svg-ssr-thumbnails-tests)). A settled rig matches that
+render part for part, so hydration is clean and the hand-over does not jump.
+`ssr={false}` renders an empty `<div>` there instead.
+
+An unknown `character` renders nothing, and outside production builds it logs a
+console warning once per name.
 
 ### Vanilla DOM
 

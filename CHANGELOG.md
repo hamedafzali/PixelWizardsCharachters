@@ -24,6 +24,16 @@
   Blinks, breathing, the gait cycle, gestures and the idle loop stay
   rig-only. **Snapshots of static renders change** for any frame with a
   non-neutral emotion, gaze, brows, yaw or locomotion.
+- **`<CharacterActor>` server-renders the character (PW-07).** It used to
+  render an empty `<div>` until the rig mounted, so a server-rendered page
+  showed nothing there and then the character popped in. It now holds the
+  static SVG of its `frame` until then, which the rig matches when it takes
+  over, and the rig mounts already on that frame instead of easing in from
+  neutral. `ssr={false}` restores the empty `<div>`. **Markup snapshots of the
+  component change.**
+- **`<CharacterActor>` callback props are live (PW-07).** `onFrame` used to be
+  the function from the first render, kept until the character, size or
+  `blink` changed.
 
 **Added**
 
@@ -33,6 +43,17 @@
 - `renderActorSVG(spec, frame, size, emotions, { motion })`: the rig's
   `motion` option, so a static render matches a rig tuned with it. New type
   `RenderOptions`.
+- `<CharacterActor>` takes every `ActorRig` option as a prop: `onSettled`,
+  `onGestureBlocked`, `onInvalidFrame`, `reducedMotion`, `motion`, `micro` and
+  `interpolation`, as well as the existing ones. `emotions` and `motion`
+  change live, and the rest rebuild the rig onto the current frame. `rigRef`
+  also takes a callback ref.
+- `useActor()` in `pixel-wizards-charachters/react`: a handle with `rigRef` to
+  pass to `<CharacterActor>`, the mounted `rig`, and `apply`, `speak`,
+  `playGesture` (with `onEnd`), `blink` and `finish`, which go to whichever
+  rig is mounted. New type `ActorHandle`.
+- `<CharacterActor>` with an unknown `character` logs a console warning once
+  per name, outside production builds. It used to render nothing silently.
 
 **Fixes**
 
