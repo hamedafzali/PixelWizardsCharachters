@@ -60,6 +60,7 @@
     "check:pack": "node scripts/check-pack.mjs",
     "check:consumer": "node scripts/check-consumer.mjs",
     "sheet": "npm run build && node tools/sheet.mjs",
+    "export:flow": "npm run build && node tools/flow-export/index.mjs",
     "mutate": "node tools/mutate.mjs",
     "baseline": "npm run build && node tools/baseline.mjs",
     "speech-gap": "npm run build && node tools/speech-gap.mjs",

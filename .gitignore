@@ -4,3 +4,4 @@ out/
 test-results/
 playwright-report/
 .dist-check/
+exports/

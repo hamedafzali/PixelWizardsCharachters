@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>flow-export</title>
+<style>
+  html, body { margin: 0; padding: 0; background: transparent; }
+  /* One thing on stage at a time, at the top left, at its exact pixel size. */
+  #stage { position: absolute; left: 0; top: 0; line-height: 0; }
+  #stage > * { display: block; }
+  /* Off-screen but laid out, so getBoundingClientRect measures for real. */
+  #measure { position: absolute; left: 0; top: 0; visibility: hidden; line-height: 0; }
+</style>
+<script type="importmap">
+{ "imports": { "three": "/node_modules/three/build/three.module.js" } }
+</script>
+</head>
+<body>
+<div id="stage"></div>
+<div id="measure"></div>
+<script type="module" src="./page.mjs"></script>
+</body>
+</html>
