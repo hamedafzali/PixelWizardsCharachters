@@ -120,11 +120,13 @@ so check the [current help](https://support.google.com/flow/answer/16353334)
 if a step does not match.
 
 **Characters (the reusable way).** In a Flow project, open **Characters**
-in the left panel and create a new character. Upload `reference.png` and
-`face.png`; Flow takes one or two images per character. Name it, for
-example `roozi`, and paste the fixed character block from `veo-prompt.md`
-into the description. In any prompt, write `@roozi` to use it. Flow then
-keeps the look without re-uploading
+in the left panel and choose **New character**. The editor has two image
+slots: upload `face.png` to **Portrait**, then open **Create body** and
+upload `reference.png` there. Use **Upload** for both, not the prompt box,
+which would generate a new image. Name the character, for example `roozi`,
+and paste the fixed character block from `veo-prompt.md` into **Character
+info**. In any prompt, write `@roozi` to use it. Flow then keeps the look
+without re-uploading
 ([help](https://support.google.com/flow/answer/16935308)).
 
 **Ingredients (per clip).** Choose **Video → Ingredients** and drag in

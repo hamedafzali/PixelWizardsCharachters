@@ -100,7 +100,7 @@ test('the character block is built only from metadata', () => {
   assert.match(block, /orange fur; pointed ears/)
   assert.match(block, /#e8892f, #fbe9d0/)
   assert.match(block, /about 1\.1 times as tall/)
-  assert.match(block, /45% of its total height/)
+  assert.match(block, /top 45% of its height/)
   assert.doesNotMatch(block, /Clothing:/, 'no clothing line for a character without clothing')
 })
 

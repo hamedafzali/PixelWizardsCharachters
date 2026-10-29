@@ -32,6 +32,8 @@ const SCHEMA = 'pixel-wizards-charachters/flow-export@1'
 /** Sizes, in pixels. Every reference is square, so Flow never crops a character. */
 const SIZE = { reference: 1536, face: 1024, view: 1024, turnCell: 512, expression: 1016, allCell: 500, contactSlot: 280 }
 /** How much of the square the subject fills: the whole character, or the eyes-brows-mouth box. */
+/** Above this, the head layer's box is mostly something hanging from the head, not the head. */
+const HEAD_SHARE_MAX = 0.8
 const FILL = { reference: 0.8, face: 0.6 }
 /** The expressions the brief asks for, in its order; any the library lacks are reported, not substituted. */
 const REQUESTED_EXPRESSIONS = ['neutral', 'happy', 'sad', 'surprised', 'worried']
@@ -249,6 +251,14 @@ async function exportCharacter(page, lib, slug, opts, log) {
     limitations.push('No turnaround was exported (run without --no-3d to produce one from the 3D renderer).')
   }
   if (!structure.hasHeadLayer) limitations.push('The drawing has no separate head (the face sits on the body), so head proportions are not reported.')
+  // The head layer carries whatever hangs off the head: ears, crest, hair.
+  // Long enough hair (ava's pigtails reach the hem) makes its box the whole
+  // figure, which is no head-to-body ratio at all.
+  const headShare = m.head ? round(m.head.h / m.body.h) : null
+  const headShareOfHeight = headShare != null && headShare <= HEAD_SHARE_MAX ? headShare : null
+  if (headShare != null && headShareOfHeight == null) {
+    limitations.push(`The head layer, which includes what hangs from the head (hair, ears), spans ${Math.round(headShare * 100)}% of the figure's height, so it gives no head-to-body proportion and none is reported.`)
+  }
   if (!structure.hasArms) limitations.push('The drawing has no arms.')
   if (slug === 'ava') limitations.push('The drawing ends at the dress hem: there are no legs or feet in the source, so the reference is not a head-to-toe figure.')
   if (curated.kind === null) limitations.push('The source does not name what kind of creature this is; the metadata leaves it unset rather than guessing.')
@@ -282,7 +292,8 @@ async function exportCharacter(page, lib, slug, opts, log) {
       body: box(m.body),
       heightToWidth: round(m.body.h / m.body.w),
       head: box(m.head),
-      headShareOfHeight: m.head ? round(m.head.h / m.body.h) : null,
+      headShareOfHeight,
+      headShareMeasures: 'height of the head layer, including ears, hair or crest, over the height of the whole figure',
       face: box(m.face),
       eyes: spec.eyes,
     },

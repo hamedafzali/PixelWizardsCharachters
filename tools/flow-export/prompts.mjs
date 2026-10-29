@@ -24,7 +24,7 @@ export function characterBlock(meta) {
   if (meta.accessories.length) lines.push(`Accessories: ${meta.accessories.join('; ')}.`)
   lines.push(`Colours: ${meta.colorWords} (main colours by area: ${meta.colors.dominant.slice(0, 5).map((c) => c.hex).join(', ')}).`)
   const shape = [`about ${p.heightToWidth} times as tall as it is wide`]
-  if (p.headShareOfHeight != null) shape.push(`the head is about ${Math.round(p.headShareOfHeight * 100)}% of its total height`)
+  if (p.headShareOfHeight != null) shape.push(`the head, with its ears, hair or crest, takes up about the top ${Math.round(p.headShareOfHeight * 100)}% of its height`)
   lines.push(`Proportions: ${shape.join('; ')}; chunky, rounded, child-friendly shapes.`)
   lines.push(`Style: ${meta.rendering.style}.`)
   return lines.join('\n')
